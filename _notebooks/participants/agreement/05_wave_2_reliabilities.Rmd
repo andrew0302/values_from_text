@@ -1,0 +1,78 @@
+---
+title: "reliability_comparison"
+author: "Andrew M. Demetriou"
+---
+
+```{r}
+library("here")
+library("tidyverse")
+library("cowplot")
+```
+
+```{r}
+file_path <- here("_data", "_intermediary_data")
+
+ethnicity_subsample_ICC_dfs <- readRDS(file = here(file_path, "ethnicity_subsample_ICC_dfs.RDS"))
+spectrum_subsample_ICC_dfs <- readRDS(file = here(file_path, "spectrum_subsample_ICC_dfs.RDS"))
+```
+
+```{r}
+plot_summary_by_metric <- function(df, metric, metric_lower, metric_upper, text) {
+  
+  subsets <- as.list(df$subset%>%unique())
+  
+  lapply(subsets, function(sub){
+    
+    df %>%
+      filter(subset == sub) %>%
+      ggplot(aes(y=value, x={{metric}}, color = value)) +
+      geom_point() +
+      geom_errorbar(aes(xmin = {{metric_lower}}, xmax = {{metric_upper}})) +
+      theme_minimal() +
+      xlim(-.5, 1) +
+      geom_vline(xintercept = 0.75, color = "red", size = .2 ) +
+      scale_color_viridis_d(option = "plasma") +
+      theme(legend.position="none") +
+      ggtitle(paste0(text, ":", sub))
+    })
+  }
+```
+
+```{r}
+# compute plots
+wave_2_lyrics_agreement_plots <- plot_summary_by_metric(ethnicity_subsample_ICC_dfs[[1]], ICC2k, ICC2k_lower, ICC2k_upper, "lyrics")
+
+wave_2_speeches1_agreement_plots <- plot_summary_by_metric(ethnicity_subsample_ICC_dfs[[2]], ICC2k, ICC2k_lower, ICC2k_upper, "speeches")
+
+wave_2_speeches2_agreement_plots <- plot_summary_by_metric(spectrum_subsample_ICC_dfs, ICC2k, ICC2k_lower, ICC2k_upper, "speeches")
+```
+
+
+```{r}
+plots <- wave_2_lyrics_agreement_plots
+plot_grid(
+  plots[[1]]+xlim(.5, 1), #overall
+  plot_grid(plots[[2]]+xlim(.6, 1), plots[[3]]+xlim(.6, 1), plots[[4]]+xlim(.6, 1), plots[[5]]+xlim(.6, 1)), #by ethnicity
+  ncol = 1)
+ggsave(here("wave_2", "_images", "wave_2_lyrics_ICC2k.png"), 
+       dpi = "retina", width = 7, height = 7)
+
+plots <- wave_2_speeches1_agreement_plots
+plot_grid(
+  plots[[1]], #overall
+  plot_grid(plots[[2]], plots[[3]], plots[[4]], plots[[5]]), #by ethnicity
+  ncol = 1)
+ggsave(here("wave_2", "_images", "wave_2_speeches1_ICC2k.png"), 
+       dpi = "retina", width = 7, height = 7)
+
+plots <- wave_2_speeches2_agreement_plots
+plot_grid(
+  plots[[1]], #overall
+  plot_grid(plots[[2]], plots[[3]], plots[[4]]), #by ethnicity
+  ncol = 1)
+ggsave(here("wave_2", "_images", "wave_2_speeches2_ICC2k.png"), 
+       dpi = "retina", width = 7, height = 7)
+```
+
+
+

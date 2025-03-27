@@ -1,0 +1,66 @@
+---
+title: "plot bootstrap reliabilities"
+---
+
+
+```{r}
+library('here')       # file logistics
+library('tidyverse')  # code logistics
+library('cowplot')
+library('gridExtra')
+library('patchwork')
+
+values <- c("POWER", "ACHIEVEMENT", "HEDONISM",  
+            "STIMULATION", "SELF", "UNIVERSALISM", 
+            "BENEVOLENCE", "TRADITION",  
+            "CONFORMITY", "SECURITY")
+
+path <- here("_data", "_intermediary_data", "wave_2")
+bootstrap_dfs <-  readRDS(here(path, "bootstrap_dfs.RDS"))
+```
+
+```{r}
+plot_raters <- function(df, metric, name){
+  df %>%
+    ggplot(aes(x = {{metric}}, color = as.factor(n))) +
+    geom_line(stat = "density", alpha = .5, size = .75) +
+    xlim(0, 1) +
+    scale_color_viridis_d(option = "plasma") +
+    labs(
+      title = paste("     ", name, "by Run N\n"), 
+      color = "Number of runs\n") +
+    theme_minimal()
+}
+```
+
+```{r}
+plot_raters_by_model <- function(df, name){
+  df <- df %>% filter(n<8 & n>=2)
+  plot_raters(df, ICC2k, name) + geom_vline(xintercept = 0.75, color = "red", size = .4 )
+}
+```
+
+
+```{r}
+lyrics_plots <- lapply(seq_along(bootstrap_dfs[['lyrics']]), function(i){
+  plot_raters_by_model(bootstrap_dfs[['lyrics']][[i]], names(bootstrap_dfs[['lyrics']][i]))
+})
+
+wrap_plots(lyrics_plots) + plot_layout(guides = "collect") & theme(legend.position = "bottom")
+```
+
+```{r}
+plot_raters_by_model <- function(df, name){
+  df <- df %>% filter(n<8 & n>=2)
+  plot_raters(df, r, name) + geom_vline(xintercept = 0.9, color = "red", size = .4 )
+}
+```
+
+```{r}
+lyrics_plots <- lapply(seq_along(bootstrap_dfs[['lyrics']]), function(i){
+  plot_raters_by_model(bootstrap_dfs[['lyrics']][[i]], names(bootstrap_dfs[['lyrics']][i]))
+})
+
+wrap_plots(lyrics_plots) + plot_layout(guides = "collect") & theme(legend.position = "bottom")
+```
+

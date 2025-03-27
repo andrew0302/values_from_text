@@ -1,0 +1,315 @@
+---
+title: "correlations"
+author: "Andrew M. Demetriou"
+---
+
+```{r}
+library('here')       # file logistics
+library('tidyverse')  # code logistics
+library('corrr')      # correlation logistics
+library('ggcorrplot') # plot correlations
+library('cowplot')    # merge plots
+
+values <- c("POWER", "ACHIEVEMENT", "HEDONISM",  
+            "STIMULATION", "SELF", "UNIVERSALISM", 
+            "BENEVOLENCE", "TRADITION",  
+            "CONFORMITY", "SECURITY")
+
+
+
+options(scipen=999)
+```
+
+```{r}
+# read in LLM data
+path <- here("_data", "_intermediary_data", "wave_2")
+llm_df <- readRDS(here(path, "pilot_dfs.RDS"))
+rm(path)
+
+# format into list of dfs
+llm_df <- llm_df %>% 
+  pivot_longer(cols = all_of(contains("run")), names_to = "run", values_to = "score") %>%
+  pivot_wider(names_from = "value", values_from = "score") %>%
+  mutate(item_ID = item_ID %>% as.character() %>% str_pad(., 4, pad = "0", side = "left"))
+
+# split into a list with one df per text type (lyrics / speeches)
+llm_dfs <- split(llm_df, f = llm_df$text)
+
+# split again with one df per model
+llm_dfs <- lapply(llm_dfs, function(df){split(df, f = df$model)})
+
+rm(llm_df)
+```
+
+```{r}
+# compute means per item
+llm_mean_dfs <- lapply(llm_dfs, function(df_list){
+  lapply(df_list, function(df){
+    df %>% group_by(item_ID) %>%
+      # compute mean for all columns
+      dplyr::summarise(across(-c(model, text, run), mean, na.rm=T))
+  }) 
+})
+```
+
+```{r}
+# read in participant data
+pilot_2_dfs <- readRDS(here("_data", "_raw_data", "wave_2", "pilot_2_dfs.RDS"))
+
+pilot_2_dfs[1:2] <- lapply(pilot_2_dfs[1:2], function(df){
+  df %>% filter(!item_ID == "attention") %>%
+    select(item_ID, participant_ID, all_of(values), Ethnicity)
+})
+
+pilot_2_dfs[[3]] <- pilot_2_dfs[[3]] %>% filter(!item_ID == "attention") %>%
+  select(item_ID, participant_ID, all_of(values), `Political spectrum (us)`) %>%
+  rename(spectrum = "Political spectrum (us)")
+```
+
+```{r}
+# compute mean per item
+pilot_2_mean_dfs <- lapply(pilot_2_dfs[1:2], function(df){
+  df %>% group_by(item_ID) %>%
+    dplyr::summarise(
+      across(-c(participant_ID, -Ethnicity), 
+        mean, na.rm=T)) %>%
+    select(-Ethnicity)
+})
+
+pilot_2_mean_dfs[3] <- lapply(pilot_2_dfs[3], function(df){
+  df %>% group_by(item_ID) %>%
+    dplyr::summarise(
+      across(-c(participant_ID, -spectrum), 
+        mean, na.rm=T)) %>%
+    select(-spectrum)
+})
+
+names(pilot_2_mean_dfs) <- c("lyrics", "speeches1", "speeches2")
+```
+
+
+```{r}
+# treat NAs as 0s:
+pilot_2_0na_dfs <- lapply(pilot_2_dfs, function(df){
+    df <- df %>% mutate(across(everything(), ~replace_na(.x, 0)))
+  })
+
+pilot_2_0na_mean_dfs <- lapply(pilot_2_0na_dfs[1:2], function(df){
+  
+  df %>% group_by(item_ID) %>%
+    dplyr::summarise(
+      across(-c(participant_ID, -Ethnicity), 
+        mean, na.rm=T)) %>%
+    select(-Ethnicity)
+})
+
+pilot_2_0na_mean_dfs[3] <- lapply(pilot_2_0na_dfs[3], function(df){
+  df %>% group_by(item_ID) %>%
+    dplyr::summarise(
+      across(-c(participant_ID, -spectrum), 
+        mean, na.rm=T)) %>%
+    select(-spectrum)
+})
+
+names(pilot_2_0na_mean_dfs) <- c("lyrics", "speeches1", "speeches2")
+```
+
+## overall correlations
+
+```{r}
+# format dfs
+
+# function to pivot values dfs to long format
+pivot_values_long <- function(df){df %>% 
+    pivot_longer(cols = values, names_to = "value", values_to = "rating")}
+
+# pivot LLM dfs long
+llm_overall_dfs <- list(
+  lyrics = lapply(llm_mean_dfs[['lyrics']], pivot_values_long), 
+  speeches = lapply(llm_mean_dfs[['speeches']], pivot_values_long)
+)
+
+# pivot participant dfs long, and merge
+participant_overall_dfs <- list(
+  lyrics = merge(
+    # merge means estimated w & w/out into same df
+    pilot_2_mean_dfs[[1]] %>% pivot_values_long() %>% rename(participant_mean = rating), 
+    pilot_2_0na_mean_dfs[[1]] %>% pivot_values_long() %>% rename(participant_mean_0na = rating), 
+      by = c("item_ID", "value")), 
+  speeches = merge(
+    pilot_2_mean_dfs[[3]] %>% pivot_values_long() %>% rename(participant_mean = rating), 
+     pilot_2_0na_mean_dfs[[3]] %>% pivot_values_long() %>% rename(participant_mean_0na = rating), 
+          by = c("item_ID", "value"))
+)
+
+overall_dfs <- list(
+  lyrics = lapply(llm_overall_dfs[['lyrics']], function(df){
+    merge(df, participant_overall_dfs[['lyrics']], by = c("item_ID", "value"))
+  }), 
+  speeches = lapply(llm_overall_dfs[['speeches']], function(df){
+    merge(df, participant_overall_dfs[['speeches']], by = c("item_ID", "value"))
+  })
+)
+
+rm(pivot_values_long, participant_overall_dfs, llm_overall_dfs)
+```
+
+```{r}
+# plot overall correlations
+overall_lyrics_cor <- list(
+  mean = map_dfr(overall_dfs[['lyrics']], function(df){
+    cor(df$rating, df$participant_mean)}), 
+  mean_0na = map_dfr(overall_dfs[['lyrics']], function(df){
+    cor(df$rating, df$participant_mean_0na)})
+) %>% bind_rows(.id = "mean")
+  
+overall_speeches_cor <- list(
+  mean = map_dfr(overall_dfs[['speeches']], function(df){
+    cor(df$rating, df$participant_mean)}), 
+  mean_0na = map_dfr(overall_dfs[['speeches']], function(df){
+    cor(df$rating, df$participant_mean_0na)})
+) %>% bind_rows(.id = "mean")
+  
+plot_overall_cor <- function(cor_df, title){
+  cor_df %>%
+    pivot_longer(cols = -c(mean), names_to = "model", values_to = "correlation") %>%
+      ggplot(., aes(x=model, y=mean, fill = correlation)) +
+        geom_tile(color = "white") +
+        geom_text(aes(label = round(correlation, 2)), color = "black") +
+        scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
+        theme_minimal() +
+        ylab("") + xlab("") + ggtitle(title)}
+
+plot_grid(plot_overall_cor(overall_lyrics_cor, "lyrics"),
+plot_overall_cor(overall_speeches_cor, "speeches"), ncol = 1)
+
+rm(overall_lyrics_cor, overall_speeches_cor, plot_overall_cor)
+```
+
+# correlations among models
+
+```{r}
+# plot correlation matrix for models within text type
+imap(overall_dfs, function(df_list, name){
+  # create single dataframe per text type
+  overall_df <- bind_rows(df_list, .id = "model")
+  
+  # format df, pivot wider, drop id columns, correlate
+  cor_mat <- overall_df %>% select(model, item_ID, value, rating) %>%
+    pivot_wider(names_from = model, values_from = rating) %>%
+    select(-item_ID, -value) %>% cor()
+  
+  ggcorrplot(cor_mat, lab = T) + ggtitle(name)
+  
+})
+```
+
+# correlations by value
+
+```{r}
+# merge dfs 
+llm_lyrics_dfs <- lapply(llm_mean_dfs[['lyrics']], function(df){
+    df <- merge(pilot_2_mean_dfs[[1]], df, by = "item_ID")
+    colnames(df) <- gsub("\\.x", "", colnames(df))
+    return(df)  
+})
+
+llm_speeches_dfs <- lapply(llm_mean_dfs[['speeches']], function(df){
+    df <- merge(pilot_2_mean_dfs[[3]], df, by = "item_ID")
+    colnames(df) <- gsub("\\.x", "", colnames(df))
+    return(df)
+  })
+
+
+llm_lyrics_0na_dfs <- lapply(llm_mean_dfs[['lyrics']], function(df){
+    df <- merge(pilot_2_0na_mean_dfs[[1]], df, by = "item_ID")
+    colnames(df) <- gsub("\\.x", "", colnames(df))
+    return(df)  
+})
+
+llm_speeches_0na_dfs <- lapply(llm_mean_dfs[['speeches']], function(df){
+    df <- merge(pilot_2_0na_mean_dfs[[3]], df, by = "item_ID")
+    colnames(df) <- gsub("\\.x", "", colnames(df))
+    return(df)
+  })
+```
+
+
+```{r}
+# assemble correlation df list
+make_cor_df <- function(df_list){
+  
+  lapply(seq_along(df_list), function(df, n, i) {
+    
+      cor_list <- lapply(values, function(value){
+        result <- df[[i]] %>% select(starts_with(value)) %>%
+          correlate(use = "na.or.complete", quiet = T) %>%
+          focus(!!!value)
+  
+        result$term <- gsub(".y", "", result$term)
+        colnames(result) <- c("value", n[[i]])
+        return(result)
+    })
+  
+    bind_rows(cor_list)
+  
+  }, df=df_list, n=names(df_list))
+}
+```
+
+```{r}
+# format results for mean
+overall_lyrics_cor_dfs <- make_cor_df(llm_lyrics_dfs)
+
+overall_lyrics_cor_df <- bind_cols(overall_lyrics_cor_dfs) %>%
+  select(-`value...3`, -`value...5`, -value...7, -value...9, -value...11) %>%
+  rename(value = value...1) %>%
+  mutate(text = "lyrics")
+
+overall_speeches_cor_dfs <- make_cor_df(llm_speeches_dfs)
+
+overall_speeches_cor_df <- bind_cols(overall_speeches_cor_dfs) %>%
+  select(-`value...3`, -`value...5`, -value...7, -value...9, -value...11) %>%
+  rename(value = value...1) %>%
+  mutate(text = "speeches")
+
+# format results for mean with NAs as 0
+overall_0na_lyrics_cor_dfs <- make_cor_df(llm_lyrics_0na_dfs)
+
+overall_0na_lyrics_cor_df <- bind_cols(overall_0na_lyrics_cor_dfs) %>%
+  select(-`value...3`, -`value...5`, -value...7, -value...9, -value...11) %>%
+  rename(value = value...1) %>%
+  mutate(text = "lyrics")
+
+overall_0na_speeches_cor_dfs <- make_cor_df(llm_speeches_0na_dfs)
+
+overall_0na_speeches_cor_df <- bind_cols(overall_0na_speeches_cor_dfs) %>%
+  select(-`value...3`, -`value...5`, -value...7, -value...9, -value...11) %>%
+  rename(value = value...1) %>%
+  mutate(text = "speeches")
+```
+
+```{r}
+# plot correlations
+plot_cor <- function(cor_df){
+  cor_df %>%
+    pivot_longer(cols = -c(value, text), names_to = "model", values_to = "correlation") %>%
+      ggplot(., aes(x=model, y=value, fill = correlation)) +
+      geom_tile(color = "white") +
+      geom_text(aes(label = round(correlation, 2)), color = "black") +
+      scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
+      ylab("") + xlab("") +
+    theme_minimal() +
+    ggtitle(cor_df$text)
+}
+```
+
+```{r}
+plot_cor(overall_lyrics_cor_df)
+plot_cor(overall_0na_lyrics_cor_df)
+```
+```{r}
+plot_cor(overall_speeches_cor_df)
+plot_cor(overall_0na_speeches_cor_df)
+```
+

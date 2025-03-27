@@ -1,0 +1,9 @@
+---
+title: "About"
+format:
+  html: default
+---
+
+# About
+
+This project explores data analysis using Quarto notebooks.

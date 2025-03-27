@@ -1,0 +1,217 @@
+---
+title: "correlations"
+author: "Andrew M. Demetriou"
+---
+
+```{r}
+library('here')       # file logistics
+library('tidyverse')  # code logistics
+library('corrr')
+#library('cowplot')    # merge plots
+#library('gridExtra')
+library('patchwork')
+
+values <- c("POWER", "ACHIEVEMENT", "HEDONISM",  
+            "STIMULATION", "SELF", "UNIVERSALISM", 
+            "BENEVOLENCE", "TRADITION",  
+            "CONFORMITY", "SECURITY")
+
+options(scipen=999)
+```
+
+```{r}
+# read in & format LLM data
+path <- here("_data", "_intermediary_data", "wave_2")
+llm_df <- readRDS(here(path, "pilot_dfs.RDS"))
+rm(path)
+
+llm_df <- llm_df %>% pivot_longer(
+    cols = all_of(contains("run")), names_to = "run", values_to = "score") %>%
+    pivot_wider(names_from = "value", values_from = "score") %>%
+    mutate(item_ID = item_ID %>% as.character() %>% str_pad(., 4, pad = "0", side = "left"))
+
+llm_dfs <- split(llm_df, f = llm_df$text)
+
+llm_dfs <- lapply(llm_dfs, function(df){
+  split(df, f = df$model)
+})
+
+llm_mean_dfs <- lapply(llm_dfs, function(df_list){
+  
+  lapply(df_list, function(df){
+  df %>% group_by(item_ID) %>%
+    dplyr::summarise(
+      across(-c(model, text, run), 
+        mean, na.rm=T))
+  }) 
+})
+
+rm(llm_df, llm_dfs)
+```
+
+
+```{r}
+# read in participant data
+pilot_2_dfs <- readRDS(here("_data", "_raw_data", "wave_2", "pilot_2_dfs.RDS"))
+
+pilot_2_dfs[1:2] <- lapply(pilot_2_dfs[1:2], function(df){
+  df %>% filter(!item_ID == "attention") %>%
+    select(item_ID, participant_ID, all_of(values), Ethnicity)
+})
+
+pilot_2_dfs[[3]] <- pilot_2_dfs[[3]] %>% filter(!item_ID == "attention") %>%
+  select(item_ID, participant_ID, all_of(values), `Political spectrum (us)`) %>%
+  rename(spectrum = "Political spectrum (us)")
+
+# make second set with NAs set as 0
+pilot_2_0na_dfs <- lapply(pilot_2_dfs, function(df){
+    df <- df %>% mutate(across(everything(), ~replace_na(.x, 0)))
+  })
+```
+
+
+```{r}
+# split by spectrum
+pilot_2_spectrum_dfs <- split(pilot_2_dfs[[3]], f = pilot_2_dfs[[3]]$spectrum)
+
+# compute means within spectrum
+pilot_2_spectrum_mean_dfs <- lapply(pilot_2_spectrum_dfs, function(df){
+  
+  df %>% group_by(item_ID) %>%
+    dplyr::summarise(
+      across(-c(participant_ID, -spectrum), 
+        mean, na.rm=T)) %>%
+    select(-spectrum)
+})
+
+# second set with NAs set at 0
+pilot_2_spectrum_0na_dfs <- split(pilot_2_0na_dfs[[3]], f = pilot_2_0na_dfs[[3]]$spectrum)
+
+# compute means within spectrum
+pilot_2_spectrum_mean_0na_dfs <- lapply(pilot_2_spectrum_0na_dfs, function(df){
+  
+  df %>% group_by(item_ID) %>%
+    dplyr::summarise(
+      across(-c(participant_ID, -spectrum), 
+        mean, na.rm=T)) %>%
+    select(-spectrum)
+})
+
+rm(pilot_2_spectrum_dfs, pilot_2_spectrum_0na_dfs)
+```
+
+
+```{r}
+# llm_lyrics_dfs <- lapply(llm_mean_dfs[['lyrics']], function(df){
+#     df <- merge(pilot_2_mean_dfs[[1]], df, by = "item_ID")
+#     colnames(df) <- gsub("\\.x", "", colnames(df))
+#     return(df)  
+# })
+# 
+# llm_speeches_dfs <- lapply(llm_mean_dfs[['speeches']], function(df){
+#     df <- merge(pilot_2_mean_dfs[[3]], df, by = "item_ID")
+#     colnames(df) <- gsub("\\.x", "", colnames(df))
+#     return(df)
+#   })
+# 
+# 
+# llm_lyrics_0na_dfs <- lapply(llm_mean_dfs[['lyrics']], function(df){
+#     df <- merge(pilot_2_0na_mean_dfs[[1]], df, by = "item_ID")
+#     colnames(df) <- gsub("\\.x", "", colnames(df))
+#     return(df)  
+# })
+# 
+# llm_speeches_0na_dfs <- lapply(llm_mean_dfs[['speeches']], function(df){
+#     df <- merge(pilot_2_0na_mean_dfs[[3]], df, by = "item_ID")
+#     colnames(df) <- gsub("\\.x", "", colnames(df))
+#     return(df)
+#   })
+```
+
+```{r}
+# merge spectrum dfs with llm dfs
+llm_speeches_spectrum_dfs <- lapply(llm_mean_dfs[['speeches']], function(llm_df){
+  lapply(pilot_2_spectrum_mean_dfs, function(participant_df){
+    df <- merge(participant_df, llm_df, by = "item_ID")
+      colnames(df) <- gsub("\\.x", "", colnames(df))
+    return(df)
+  })
+})
+
+llm_speeches_spectrum_0na_dfs <- lapply(llm_mean_dfs[['speeches']], function(llm_df){
+  lapply(pilot_2_spectrum_mean_0na_dfs, function(participant_df){
+    df <- merge(participant_df, llm_df, by = "item_ID")
+      colnames(df) <- gsub("\\.x", "", colnames(df))
+    return(df)
+  })
+})
+```
+
+
+```{r}
+# function to correlate value scores in participant df with scores in llm df
+make_cor_df <- function(df_list){
+  
+  lapply(seq_along(df_list), function(df, n, i) {
+  
+      cor_list <- lapply(values, function(value){
+        result <- df[[i]] %>% select(starts_with(value)) %>%
+          correlate(use = "na.or.complete", quiet = T) %>%
+          focus(!!!value)
+  
+        result$term <- gsub(".y", "", result$term)
+        colnames(result) <- c("value", n[[i]])
+        return(result)
+    })
+  
+    bind_rows(cor_list)
+  
+  }, df=df_list, n=names(df_list))
+}
+```
+
+```{r}
+# function to plot correlations
+plot_cor <- function(cor_df){
+  cor_df %>%
+    pivot_longer(cols = -c(value, text), names_to = "model", values_to = "correlation") %>%
+      ggplot(., aes(x=model, y=value, fill = correlation)) +
+      geom_tile(color = "white") +
+      geom_text(aes(label = round(correlation, 2)), color = "black") +
+      scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
+      ylab("") + xlab("") +
+    ggtitle(cor_df$text)
+}
+```
+
+```{r}
+# estimate correlations between spectrum participant dfs and llm dfs
+llm_speeches_spectrum_cor_dfs <- lapply(llm_speeches_spectrum_dfs, make_cor_df)
+llm_speeches_spectrum_0na_cor_dfs <- lapply(llm_speeches_spectrum_0na_dfs, make_cor_df)
+
+# format dfs
+llm_speeches_spectrum_cor_dfs <- imap(llm_speeches_spectrum_cor_dfs, function(df_list, name){
+    bind_cols(df_list) %>%
+     select(-`value...3`, -`value...5`) %>%
+     rename(value = value...1) %>%
+    mutate(text = name)
+})
+
+
+llm_speeches_spectrum_0na_cor_dfs <- imap(llm_speeches_spectrum_0na_cor_dfs, function(df_list, name){
+    bind_cols(df_list) %>%
+     select(-`value...3`, -`value...5`) %>%
+     rename(value = value...1) %>%
+     mutate(text = name)
+})
+```
+
+```{r}
+llm_speeches_spectrum_cor_plots <- lapply(llm_speeches_spectrum_cor_dfs, plot_cor)
+llm_speeches_spectrum_0na_cor_dfs <- lapply(llm_speeches_spectrum_0na_cor_dfs, plot_cor)
+
+for(i in 1:length(llm_speeches_spectrum_cor_plots)){
+  p <- plot_grid(llm_speeches_spectrum_cor_plots[[i]], llm_speeches_spectrum_0na_cor_dfs[[i]], ncol = 1)
+  print(p)
+}
+```

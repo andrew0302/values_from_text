@@ -1,0 +1,172 @@
+---
+title: "reliability"
+author: "Andrew M. Demetriou"
+---
+
+```{r}
+library('here')       # file logistics
+library('tidyverse')  # code logistics
+library('psych')      # ICC2k
+library('cowplot')    # merge multiple plots
+library('patchwork')  # merge multiple plots
+
+values <- c("POWER", "ACHIEVEMENT", "HEDONISM",  
+            "STIMULATION", "SELF", "UNIVERSALISM", 
+            "BENEVOLENCE", "TRADITION",  
+            "CONFORMITY", "SECURITY")
+
+options(scipen=999)
+```
+
+```{r}
+path <- here("_data", "_intermediary_data", "wave_2")
+llm_df <- readRDS(here(path, "wave_df.RDS"))
+
+llm_df <- llm_df %>% 
+  pivot_longer(
+    cols = all_of(contains("run")), names_to = "run", values_to = "score") %>%
+  pivot_wider(names_from = "value", values_from = "score")
+
+dfs <- split(llm_df, f = llm_df$text)
+
+dfs <- lapply(dfs, function(df){
+  split(df, f = df$model)
+})
+```
+
+
+```{r}
+make_overall_icc_df <- function(df){
+
+  # iterate over list of values
+  list_of_icc_dfs <- lapply(values,function(value){
+    
+  # select columns
+  df <- df %>% dplyr::select(run, item_ID, value) %>%
+    # pivot so that participants are columns
+    pivot_wider(names_from = run, values_from = value)
+  
+  # remove item_ID column
+  icc_df <- df %>% select(-item_ID) %>% 
+    # pass to ICC function
+    psych::ICC()
+  
+  # select relevant ICC output
+  icc_df <- icc_df$results %>% filter(type =="ICC2" | type =="ICC2k")
+  icc_df$value <- value
+  return(icc_df)
+})
+  
+  # bind list of icc dfs
+  icc_df <- bind_rows(list_of_icc_dfs)
+  
+  rownames(icc_df) <- NULL
+  
+  icc_df <- format_ICC_df(icc_df)
+  
+  return(icc_df)
+}
+```
+
+```{r}
+format_ICC_df <- function(df){
+  df <- df %>% 
+    select(ICC, type, value, `lower bound`, `upper bound`) %>% 
+    pivot_wider(values_from = c(ICC, `lower bound`, `upper bound`), 
+                names_from = type)
+  
+  colnames(df) <- c("value", 
+                    "ICC2", "ICC2k", 
+                    "ICC2_lower", "ICC2k_lower", 
+                    "ICC2_upper", "ICC2k_upper")
+  
+  return(df)
+}
+```
+
+```{r}
+icc_dfs <- lapply(dfs, function(df_list){
+  lapply(df_list, make_overall_icc_df)
+})
+```
+
+```{r}
+plot_ICC2k_reliabilities <- function(df){
+
+  plots <- lapply(df, function(df){
+      df %>%
+        ggplot(aes(y=value, x=ICC2k, color = value)) +
+        geom_point() +
+        geom_errorbar(aes(xmin = ICC2k_lower, xmax = ICC2k_upper)) +
+        theme_minimal() +
+        #xlim(-.5, 1) +
+      xlim(0.4, 1) +
+        geom_vline(xintercept = 0.75, color = "red", size = .2 ) +
+        scale_color_viridis_d(option = "plasma") +
+        theme(legend.position="none")
+      })
+  
+    p1 <- plots[[1]] + ggtitle(names(plots)[[1]])  
+    p2 <- plots[[2]] + ggtitle(names(plots)[[2]]) +
+          theme(axis.text.y = element_blank(),
+                axis.title.y = element_blank(),
+                axis.ticks.y = element_blank())
+    
+    p3 <- plots[[3]] + ggtitle(names(plots)[[3]]) +
+          theme(axis.text.y = element_blank(),
+                axis.title.y = element_blank(),
+                axis.ticks.y = element_blank())    
+    p1 + p2 + p3 + plot_layout(ncol = 3)
+
+}
+```
+
+
+```{r}
+plot_ICC2_reliabilities <- function(df){
+  
+  plots <- lapply(df, function(df){
+      df %>%
+        ggplot(aes(y=value, x=ICC2, color = value)) +
+        geom_point() +
+        geom_errorbar(aes(xmin = ICC2_lower, xmax = ICC2_upper)) +
+        theme_minimal() +
+        #xlim(-.5, 1) +
+        xlim(0.3, 1) +
+        geom_vline(xintercept = 0.75, color = "red", size = .2 ) +
+        scale_color_viridis_d(option = "plasma") +
+        theme(legend.position="none")
+      })
+  
+  
+    p1 <- plots[[1]] + ggtitle(names(plots)[[1]])  
+    p2 <- plots[[2]] + ggtitle(names(plots)[[2]]) +
+          theme(axis.text.y = element_blank(),
+                axis.title.y = element_blank(),
+                axis.ticks.y = element_blank())
+    
+    p3 <- plots[[3]] + ggtitle(names(plots)[[3]]) +
+          theme(axis.text.y = element_blank(),
+                axis.title.y = element_blank(),
+                axis.ticks.y = element_blank())    
+    p1 + p2 + p3 + plot_layout(ncol = 3)
+  
+}
+```
+
+```{r}
+plot_ICC2k_reliabilities(icc_dfs[['lyrics']])
+```
+
+
+```{r}
+plot_grid(plot_ICC2k_reliabilities(icc_dfs[['lyrics']]), 
+          plot_ICC2_reliabilities(icc_dfs[['lyrics']]), 
+          cols = 1)
+```
+
+
+```{r}
+#plot_ICC2k_reliabilities(icc_dfs[['speeches']])
+#plot_ICC2_reliabilities(icc_dfs[['speeches']])
+```

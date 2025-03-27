@@ -1,0 +1,23 @@
+project:
+  title: "values_from_text"
+  type: website
+  output-dir: docs
+
+bibliography: references.bib
+csl: apa.csl
+
+website:
+  title: "Values from Text"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+      - about.qmd
+
+format:
+  html:
+    toc: true
+    number-sections: true
+  docx:
+    toc: true
+    number-sections: true

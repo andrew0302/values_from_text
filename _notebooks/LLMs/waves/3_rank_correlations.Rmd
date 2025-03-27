@@ -1,0 +1,146 @@
+---
+title: "correlations"
+author: "Andrew M. Demetriou"
+---
+
+```{r}
+library('here')       # file logistics
+library('tidyverse')  # code logistics
+library('corrr')      # correlation logistics
+library('ggcorrplot') # plot correlations
+library('cowplot')    # merge plots
+library('psych')
+library('ggridges')        # visualization
+
+values <- c("POWER", "ACHIEVEMENT", "HEDONISM",  
+            "STIMULATION", "SELF", "UNIVERSALISM", 
+            "BENEVOLENCE", "TRADITION",  
+            "CONFORMITY", "SECURITY")
+
+
+
+options(scipen=999)
+```
+
+```{r}
+# read in LLM data
+path <- here("_data", "_intermediary_data", "wave_2")
+llm_df <- readRDS(here(path, "wave_df.RDS"))
+rm(path)
+
+# format into list of dfs
+llm_df <- llm_df %>% 
+  pivot_longer(cols = all_of(contains("run")), names_to = "run", values_to = "score") %>%
+  pivot_wider(names_from = "value", values_from = "score") %>%
+  mutate(item_ID = item_ID %>% as.character() %>% str_pad(., 4, pad = "0", side = "left"))
+
+# split into a list with one df per text type (lyrics / speeches)
+llm_dfs <- split(llm_df, f = llm_df$text)
+
+# split again with one df per model
+llm_dfs <- lapply(llm_dfs, function(df){split(df, f = df$model)})
+
+rm(llm_df)
+```
+
+```{r}
+# compute means per item
+llm_mean_rank_dfs <- lapply(llm_dfs, function(df_list){
+  lapply(df_list, function(df){
+    df %>% group_by(item_ID) %>%
+      # compute mean for all columns
+      dplyr::summarise(across(-c(model, text, run), mean, na.rm=T)) %>% 
+      pivot_longer(cols = all_of(values), 
+                 names_to = "value", 
+                 values_to = "rating") %>%
+      group_by(item_ID) %>%
+      mutate(ranks = 11-rank(rating))%>%
+      arrange(as.numeric(ranks),.by_group = TRUE) %>%
+      ungroup() %>%
+      select(-rating)
+  }) 
+})
+
+llm_mean_rank_dfs[['lyrics']] <- imap(llm_mean_rank_dfs[['lyrics']], ~ rename(.x, !!.y := ranks))
+
+llm_mean_rank_df <- reduce(llm_mean_rank_dfs[['lyrics']], full_join, by = c("item_ID", "value"))
+```
+
+```{r}
+# read in participant data
+wave_2_dfs <- readRDS(here("_data", "_raw_data", "wave_2", "wave_2_dfs.RDS"))
+
+wave_2_dfs[1:2] <- lapply(wave_2_dfs[1:2], function(df){
+  df %>% filter(!item_ID == "attention") %>%
+    select(item_ID, participant_ID, all_of(values), Ethnicity) 
+})
+
+wave_2_dfs[3:4] <- lapply(wave_2_dfs[3:4], function(df){
+  df %>% filter(!item_ID == "attention") %>%
+    select(item_ID, participant_ID, all_of(values), `Political spectrum (us)`) %>%
+    rename(spectrum = "Political spectrum (us)")
+})
+
+# treat NAs as 0s:
+wave_2_0na_dfs <- lapply(wave_2_dfs, function(df){
+    df <- df %>% mutate(across(everything(), ~replace_na(.x, 0)))
+  })
+
+wave_2_0na_mean_rank_dfs <- lapply(wave_2_0na_dfs[1:2], function(df){
+  
+  df %>% group_by(item_ID) %>%
+    dplyr::summarise(
+      across(-c(participant_ID, -Ethnicity), 
+        mean, na.rm=T)) %>%
+    select(-Ethnicity) %>%
+          pivot_longer(cols = all_of(values), 
+                 names_to = "value", 
+                 values_to = "rating") %>%
+      group_by(item_ID) %>%
+      mutate(ranks = 11-rank(rating))%>%
+      arrange(as.numeric(ranks),.by_group = TRUE) %>%
+      ungroup() %>% select(-rating)
+    
+})
+
+rm(wave_2_dfs, wave_2_0na_dfs)
+```
+
+```{r}
+df <- merge(llm_mean_rank_df, wave_2_0na_mean_rank_dfs[['lyrics1']], by = c("item_ID", "value"))
+df <- df %>% rename(participants = ranks)
+
+correlate(df, method = "kendall")
+
+kendall_df <- df %>% pivot_longer(cols = c(`gemma2:9b`, phi4, `qwen2.5:7b`), 
+                    names_to = "model", values_to = "rank") %>%
+  group_by(item_ID, model) %>%
+  summarize(kendall_t = cor(rank, participants, method = "kendall"))
+```
+
+```{r}
+kendall_df %>%
+  ggplot(aes(kendall_t, model, fill = model)) +
+    geom_density_ridges(alpha = 0.6) +
+  scale_fill_viridis_d(option = "inferno") +
+  theme_minimal() +
+  ylab('')+
+  xlab("Kendall's Tau") +
+  theme(legend.position = "none")
+```
+
+```{r}
+summary_df <- kendall_df %>% group_by(model) %>%
+  summarize(mean = mean(kendall_t, na.rm=T), 
+            sd = sd(kendall_t, na.rm=T), 
+            median = median(kendall_t, na.rm=T))
+```
+
+```{r}
+kendall_df %>% 
+  group_by(model) %>%
+  filter(kendall_t >= .2) %>%
+  count() %>%
+  mutate(prop = n / 400 * 100)
+```
+

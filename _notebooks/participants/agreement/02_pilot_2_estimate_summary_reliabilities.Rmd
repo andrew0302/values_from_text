@@ -1,0 +1,262 @@
+---
+title: "summary reliabilities"
+author: "andrew demetriou"
+---
+
+```{r setup, include=FALSE}
+library('here')                 # file logistics
+library('dplyr')                # data manipulation
+library('tidyr')                # data manipulation
+library('psych')                # ICC2k
+library('krippendorffsalpha')   # krippendorf's alpha
+
+values <- c("POWER", "ACHIEVEMENT", "HEDONISM",  
+            "STIMULATION", "SELF", "UNIVERSALISM", 
+            "BENEVOLENCE", "TRADITION",  
+            "CONFORMITY", "SECURITY")
+
+quiz_vars <- c("Quiz_score", "attention_3", "attention_score")
+```
+
+
+```{r}
+# load subsample lists
+file_path <- here("_data", "_intermediary_data")
+
+pilot_2_dfs <- readRDS(here("_data", "_raw_data", "wave_2", "pilot_2_dfs.RDS"))
+
+pilot_2_lyrics_subsample_list <- readRDS(
+  here(file_path, "pilot_2_lyrics_subsample_list.RDS"))
+pilot_2_speeches1_subsample_list <- readRDS(
+  here(file_path, "pilot_2_speeches1_subsample_list.RDS"))
+pilot_2_speeches2_subsample_list <- readRDS(
+  here(file_path,"pilot_2_speeches2_subsample_list.RDS"))
+
+rm(quiz_dfs)
+```
+
+```{r}
+# simplify ethnicity
+pilot_2_dfs[['lyrics']] <- pilot_2_dfs[['lyrics']] %>%
+  mutate(ethnicity = case_when(
+    Ethnicity == "South East Asian" ~ "Asian", 
+    Ethnicity == "South Asian" ~ "Asian", 
+    Ethnicity == "East Asian" ~ "Asian", 
+    .default = Ethnicity))
+
+pilot_2_dfs[['speeches1']] <- pilot_2_dfs[['speeches1']] %>%
+    mutate(ethnicity = case_when(
+    Ethnicity == "South East Asian" ~ "Asian", 
+    Ethnicity == "South Asian" ~ "Asian", 
+    Ethnicity == "East Asian" ~ "Asian", 
+    .default = Ethnicity))
+```
+
+```{r}
+pilot_2_lyrics_subsample_list <- c(pilot_2_lyrics_subsample_list, 
+  split(pilot_2_dfs[['lyrics']], pilot_2_dfs[['lyrics']]$ethnicity))
+
+pilot_2_speeches1_subsample_list <- c(pilot_2_speeches1_subsample_list, 
+  split(pilot_2_dfs[['speeches1']], pilot_2_dfs[['speeches1']]$ethnicity))
+
+pilot_2_speeches2_subsample_list <- c(pilot_2_speeches2_subsample_list, 
+  split(pilot_2_dfs[['speeches2']], pilot_2_dfs[['speeches2']]$`Political spectrum (us)`))
+
+rm(pilot_2_dfs, quiz_vars)
+```
+
+
+```{r}
+format_ICC_df <- function(df){
+  df <- df %>% 
+    select(ICC, type, value, `lower bound`, `upper bound`) %>% 
+    pivot_wider(values_from = c(ICC, `lower bound`, `upper bound`), 
+                names_from = type)
+  
+  colnames(df) <- c("value", 
+                    "ICC2", "ICC2k", 
+                    "ICC2_lower", "ICC2k_lower", 
+                    "ICC2_upper", "ICC2k_upper")
+  
+  return(df)
+}
+```
+
+```{r}
+make_overall_icc_df <- function(df){
+  # iterate over list of values
+  list_of_icc_dfs <- lapply(values,function(value){
+  
+    # select columns
+  df <- df %>% dplyr::select(participant_ID, item_ID, value) %>%
+    # pivot so that participants are columns
+    pivot_wider(names_from = participant_ID, values_from = value)
+  
+  # remove item_ID column
+  icc_df <- df %>% select(-item_ID) %>% 
+    # pass to ICC function
+    psych::ICC()
+  
+  # select relevant ICC output
+  icc_df <- icc_df$results %>% filter(type =="ICC2" | type =="ICC2k")
+  icc_df$value <- value
+  return(icc_df)
+})
+  
+  # bind list of icc dfs
+  icc_df <- bind_rows(list_of_icc_dfs)
+  
+  rownames(icc_df) <- NULL
+  
+  icc_df <- format_ICC_df(icc_df)
+  
+  return(icc_df)
+}
+```
+
+```{r}
+pilot_2_lyrics_icc_df <- lapply(pilot_2_lyrics_subsample_list, make_overall_icc_df) %>% 
+  bind_rows(.id = "subset")
+pilot_2_speeches1_icc_df <- lapply(pilot_2_speeches1_subsample_list, make_overall_icc_df) %>%
+  bind_rows(.id = "subset")
+pilot_2_speeches2_icc_df <- lapply(pilot_2_speeches2_subsample_list, make_overall_icc_df) %>% 
+  bind_rows(.id = "subset")
+```
+
+```{r}
+make_overall_kripp_df <- function(df){
+  
+  # iterate over list of values
+  list_of_kripp_dfs <- lapply(values,function(value){
+  
+    # select columns
+    df <- df %>% dplyr::select(participant_ID, item_ID, value) %>%
+      # pivot so that participants are columns
+      pivot_wider(names_from = participant_ID, values_from = value)
+  
+    kripp_df <- df %>% 
+      dplyr::select(-item_ID) %>% as.matrix() %>%
+      krippendorffs.alpha(., 
+                          level = "ordinal",  
+                          confint = TRUE, 
+                          control = list(parallel = TRUE, nodes = 11),
+                          verbose = TRUE)
+    
+    # create df for results
+    alpha <- kripp_df$alpha.hat %>% t() %>%as.data.frame()
+    alpha$lower <- confint(kripp_df)[[1]]
+    alpha$upper <- confint(kripp_df)[[2]]
+    colnames(alpha) <- c("kripp_alpha", "kripp_lower", "kripp_upper")
+  
+  return(alpha)
+})
+  
+  names(list_of_kripp_dfs) <- values
+  
+  # bind list of kripp dfs
+  kripp_df <- bind_rows(list_of_kripp_dfs, .id = "value")
+  return(kripp_df)
+}
+```
+
+```{r}
+pilot_2_lyrics_kripp_df <- lapply(pilot_2_lyrics_subsample_list, make_overall_kripp_df) %>% 
+  bind_rows(.id = "subset")
+pilot_2_speeches1_kripp_df <- lapply(pilot_2_speeches1_subsample_list, make_overall_kripp_df) %>%
+  bind_rows(.id = "subset")
+pilot_2_speeches2_kripp_df <- lapply(pilot_2_speeches2_subsample_list, make_overall_kripp_df) %>%
+  bind_rows(.id = "subset")
+```
+
+```{r}
+pilot_2_likert_summary_dfs <- list(
+  lyrics = merge(pilot_2_lyrics_icc_df, pilot_2_lyrics_kripp_df, 
+                 by = c("value", "subset")), 
+  speeches1 = merge(pilot_2_speeches1_icc_df, pilot_2_speeches1_kripp_df, 
+                    by = c("value", "subset")), 
+  speeches2 = merge(pilot_2_speeches2_icc_df, pilot_2_speeches2_kripp_df, 
+                    by = c("value", "subset"))
+)
+
+saveRDS(pilot_2_likert_summary_dfs, here("_data", "_intermediary_data", "pilot_2_likert_summary_dfs.RDS"))
+
+rm(pilot_2_lyrics_icc_df, pilot_2_speeches1_icc_df, pilot_2_speeches2_icc_df, 
+   pilot_2_lyrics_kripp_df, pilot_2_speeches1_kripp_df, pilot_2_speeches2_kripp_df)
+```
+
+
+
+```{r}
+# compute binary reliability
+convert_to_binary <- function(df){
+  df %>%
+    pivot_longer(cols = values, names_to = "value", values_to = "score") %>%
+    mutate(score = case_when(is.na(score) == T ~ 0, is.na(score) == F ~ 1)) %>%
+    pivot_wider(names_from =  value, values_from = score)
+}
+```
+
+```{r}
+binary_pilot_2_lyric_subsample_dfs     <- lapply(pilot_2_lyrics_subsample_list, convert_to_binary)
+binary_pilot_2_speeches1_subsample_dfs <- lapply(pilot_2_speeches1_subsample_list, convert_to_binary)
+binary_pilot_2_speeches2_subsample_dfs <- lapply(pilot_2_speeches2_subsample_list, convert_to_binary)
+```
+
+```{r}
+make_overall_kripp_df <- function(df){
+  
+  # iterate over list of values
+  list_of_kripp_dfs <- lapply(values,function(value){
+  
+    # select columns
+    df <- df %>% dplyr::select(participant_ID, item_ID, value) %>%
+      # pivot so that participants are columns
+      pivot_wider(names_from = participant_ID, values_from = value)
+  
+    kripp_df <- df %>% 
+      dplyr::select(-item_ID) %>% as.matrix() %>%
+      krippendorffs.alpha(., 
+                          level = "nominal",  
+                          confint = TRUE, 
+                          control = list(parallel = TRUE, nodes = 11),
+                          verbose = TRUE)
+    
+    # create df for results
+    alpha <- kripp_df$alpha.hat %>% t() %>%as.data.frame()
+    alpha$lower <- confint(kripp_df)[[1]]
+    alpha$upper <- confint(kripp_df)[[2]]
+    colnames(alpha) <- c("kripp_alpha", "kripp_lower", "kripp_upper")
+  
+  return(alpha)
+})
+  
+  names(list_of_kripp_dfs) <- values
+  
+  # bind list of kripp dfs
+  kripp_df <- bind_rows(list_of_kripp_dfs, .id = "value")
+  return(kripp_df)
+}
+```
+
+```{r}
+binary_pilot_2_lyrics_kripp_df <- lapply(
+  binary_pilot_2_lyric_subsample_dfs, make_overall_kripp_df) %>% 
+  bind_rows(.id = "subset")
+binary_pilot_2_speeches1_kripp_df <- lapply(
+  binary_pilot_2_speeches1_subsample_dfs, make_overall_kripp_df) %>%
+  bind_rows(.id = "subset")
+binary_pilot_2_speeches2_kripp_df <- lapply(
+  binary_pilot_2_speeches2_subsample_dfs, make_overall_kripp_df) %>%
+  bind_rows(.id = "subset")
+```
+
+```{r}
+pilot_2_binary_summary_dfs <- list(
+  lyrics = binary_pilot_2_lyrics_kripp_df, 
+  speeches1 = binary_pilot_2_speeches1_kripp_df, 
+  speeches2 = binary_pilot_2_speeches2_kripp_df)
+
+saveRDS(pilot_2_binary_summary_dfs, here("_data", "_intermediary_data", "pilot_2_binary_summary_dfs.RDS"))
+
+rm(binary_pilot_2_lyrics_kripp_df, binary_pilot_2_speeches1_kripp_df, binary_pilot_2_speeches2_kripp_df)
+```

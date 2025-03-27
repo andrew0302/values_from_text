@@ -1,0 +1,275 @@
+---
+title: "R Notebook"
+---
+
+```{r}
+library("here")         # file logistics
+library("lme4")         # mixed effects metric
+library("lmerTest")     # p values
+library("tidyverse")    # code logistics
+library("broom.mixed")  # model outputs as data frames
+library("emmeans")      # estimated marginal means
+library("cowplot")      # merge plots
+library("specr")        # specification curves
+library("patchwork")    # merge plots
+
+# TO "CENTER" CATEGORICAL PREDICTORS, set the coding to contr.sum (deviations from the average)
+options(scipen = 999, contrasts = c("contr.sum", "contr.poly"))
+```
+
+
+```{r}
+# read in data
+wave_2_dfs <- readRDS(here("_data", "_intermediary_data", "wave_2_dfs.RDS"))
+
+# read in models
+wave_2_lyrics_mods <- readRDS(here("_data", "_intermediary_data", "models", "wave_2_lyrics_mods.RDS"))
+wave_2_speeches_ethnicity_mods <- readRDS(here("_data", "_intermediary_data", "models", "wave_2_speeches_ethnicity_mods.RDS"))
+wave_2_speeches_spectrum_mods <- readRDS(here("_data", "_intermediary_data", "models", "wave_2_speeches_spectrum_mods.RDS"))
+```
+
+
+```{r}
+print("wave 2 lyrics")
+anova(wave_2_lyrics_mods$wave_2_lyrics$lmer, type = "II")
+
+print("wave 2 speeches ethnicity")
+anova(wave_2_speeches_ethnicity_mods$wave_2_speeches$lmer, type = "II")
+
+print("wave 2 speeches spectrum")
+anova(wave_2_speeches_spectrum_mods$wave_2_speeches$lmer, type = "II")
+```
+
+```{r}
+mods <- list( wave_2_lyrics_mods$wave_2_lyrics$lmer,
+              wave_2_speeches_ethnicity_mods$wave_2_speeches$lmer,
+              wave_2_speeches_spectrum_mods$wave_2_speeches$lmer)
+
+# lapply(mods[1:2], function(mod){
+#   plot(emmeans(mod, ~Ethnicity), comparisons = TRUE) + 
+#     theme_minimal()
+# })
+# 
+# plot(emmeans(mods[[3]], ~spectrum), comparisons = TRUE) + 
+#     theme_minimal()
+```
+
+```{r}
+# lyrics by ethnicity
+p1 <- plot(emmeans(mods[[1]], ~Ethnicity) , comparisons = TRUE) + 
+  ggtitle("lyrics") +
+  theme_minimal()
+
+p2 <- plot(emmeans(mods[[2]], ~Ethnicity) , comparisons = TRUE) + 
+  ggtitle("speeches") +
+  theme_minimal()
+
+p3 <- plot(emmeans(mods[[3]], ~spectrum) , comparisons = TRUE) + 
+  ggtitle("speeches") +
+  theme_minimal()
+
+plot_grid(p1, p2, p3, ncol=1)
+```
+
+```{r}
+mod <- lmer(rating ~ Ethnicity + value + genre + Ethnicity*value + (1|item_ID) + (1|participant_ID), data = wave_2_dfs[['wave_2_lyrics']])
+
+plot(emmeans(mod, ~Ethnicity|value), comparisons =T)
+```
+
+
+```{r}
+# read in spec curve
+#spec_curve_df <- readRDS(here("_data", "_intermediary_data", "spec_curves", "demo.RDS"))
+
+wave_2_lyrics_ethnicity_curve_df <- readRDS(here("_data", "_intermediary_data", "spec_curves", "wave_2_lyrics_ethnicity_curve_df.RDS"))
+
+wave_2_lyrics_ethnicity_curve_df_500 <- readRDS(here("_data", "_intermediary_data", "spec_curves", "wave_2_lyrics_ethnicity_curve_df_500.RDS"))
+
+wave_2_lyrics_ethnicity_curve_df <- bind_rows(wave_2_lyrics_ethnicity_curve_df, wave_2_lyrics_ethnicity_curve_df_500)
+
+wave_2_speeches_ethnicity_curve_df <- readRDS(here("_data", "_intermediary_data", "spec_curves", "wave_2_speeches_ethnicity_curve_df.RDS"))
+
+wave_2_speeches_spectrum_curve_df <- readRDS(here("_data", "_intermediary_data", "spec_curves", "wave_2_speeches_spectrum_curve_df.RDS"))
+```
+
+```{r}
+plot_spec_curve_ethnicity <- function(spec_curve_df, var){
+  
+  spec_curve_df <- spec_curve_df %>%
+    arrange(desc(AIC)) %>% 
+    mutate(num = rep(1:(nrow(spec_curve_df)/4), each = 4))
+  
+  p1 <- spec_curve_df %>%
+    ggplot(aes(x=num, y = emmean, 
+               fill = Ethnicity)) +
+      #geom_point(size = 2, aes(color = Ethnicity)) +
+      geom_ribbon(aes(ymin = asymp.LCL, ymax = asymp.UCL), alpha = .6) +
+      scale_fill_viridis_d(option = "magma") +
+      scale_color_viridis_d(option = "magma") +
+      theme_minimal()
+  
+  specs_long <- spec_curve_df %>% select(value:num, AIC) %>%
+    pivot_longer(cols = !c(num, AIC), names_to = 'variable', values_drop_na = FALSE) %>%
+    mutate(value = replace_na(value, ""))
+  
+  p2 <- specs_long %>% 
+    ggplot(aes(num, variable, color = AIC)) +
+      geom_text(aes(label = value)) +
+    scale_color_viridis_c(option = "magma", direction=-1) +
+    theme_minimal()
+  
+  p1/p2 + plot_layout(heights = c(4,3), guides = "collect")
+
+}
+```
+
+```{r}
+plot_spec_curve_ethnicity(wave_2_speeches_ethnicity_curve_df)
+plot_spec_curve_ethnicity(wave_2_lyrics_ethnicity_curve_df)
+```
+
+```{r}
+plot_spec_curve_spectrum <- function(spec_curve_df, var){
+  
+  spec_curve_df <- spec_curve_df %>%
+    arrange(desc(AIC)) %>% 
+    mutate(num = rep(1:(nrow(spec_curve_df)/4), each = 4))
+  
+  p1 <- spec_curve_df %>%
+    ggplot(aes(x=num, y = emmean, 
+               fill = spectrum)) +
+      #geom_point(size = 2, aes(color = spectrum)) +
+      geom_ribbon(aes(ymin = asymp.LCL, ymax = asymp.UCL), alpha = .6) +
+      scale_fill_viridis_d(option = "magma") +
+      scale_color_viridis_d(option = "magma") +
+      theme_minimal()
+  
+  specs_long <- spec_curve_df %>% select(value:num, AIC) %>%
+    pivot_longer(cols = !c(num, AIC), names_to = 'variable', values_drop_na = FALSE) %>%
+    mutate(value = replace_na(value, ""))
+  
+  p2 <- specs_long %>% 
+    ggplot(aes(num, variable, color = AIC)) +
+      geom_text(aes(label = value)) +
+    scale_color_viridis_c(option = "magma", direction=-1) +
+    theme_minimal()
+  
+  p1/p2 + plot_layout(heights = c(4,3), guides = "collect")
+
+}
+```
+
+```{r}
+plot_spec_curve_spectrum(wave_2_speeches_spectrum_curve_df)
+```
+
+```{r}
+# run models of subsets by factor to visualize interactions
+run_subset_mods <- function(df, factor, formula){
+  
+  factors <- df %>% select(factor)
+  colnames(factors) <- "column"
+  factors <- factors$column %>% unique() %>% as.character() %>% as.list(.)
+  
+  mods <- lapply(factors, function(factor){
+    lmer(formula, df%>%filter(genre==factor), REML = TRUE)
+  })
+}
+
+wave_2_lyrics_mods$wave_2_lyrics$lmer %>% 
+  tidy() %>% filter(grepl("Ethnicity", term) & p.value < .05)
+
+spec_lyrics_ethnicity <- as.formula("rating ~ Ethnicity * value + (1|participant_ID)+(1|item_ID)")
+
+mods <- run_subset_mods(
+  df = wave_2_dfs$wave_2_lyrics,
+  factor = "genre",
+  formula = spec_lyrics_ethnicity)
+
+plot(emmeans(mods[[21]], ~Ethnicity|value), comparisons = T) + ggtitle("genre 9")
+plot(emmeans(mods[[9]], ~Ethnicity|value), comparisons = T) + ggtitle("genre 11")
+plot(emmeans(mods[[1]], ~Ethnicity|value), comparisons = T) + ggtitle("genre 19")
+plot(emmeans(mods[[11]], ~Ethnicity|value), comparisons = T) + ggtitle("genre 23")
+```
+
+```{r}
+# run models of subsets by factor to visualize interactions
+run_subset_mods <- function(df, factor, formula){
+  
+  factors <- df %>% select(factor)
+  colnames(factors) <- "column"
+  factors <- factors$column %>% unique() %>% as.character() %>% as.list(.)
+  
+  mods <- lapply(factors, function(factor){
+    lmer(formula, df%>%filter(party==factor), REML = TRUE)
+  })
+}
+
+wave_2_speeches_ethnicity_mods$wave_2_speeches$lmer %>% 
+  tidy() %>% filter(grepl("Ethnicity", term) & p.value < .05)
+
+spec_speeches_ethnicity <- as.formula("rating ~ Ethnicity * value + (1|participant_ID)+(1|item_ID)")
+
+mods <- run_subset_mods(
+  df = wave_2_dfs$wave_2_speeches,
+  factor = "party",
+  formula = spec_speeches_ethnicity)
+
+
+plot(emmeans(mods[[1]], ~Ethnicity|value), comparisons = T) + ggtitle("Democratic")
+plot(emmeans(mods[[2]], ~Ethnicity|value), comparisons = T) + ggtitle("Republican")
+```
+
+```{r}
+# run models of subsets by factor to visualize interactions
+run_subset_mods <- function(df, factor, formula){
+  
+  factors <- df %>% select(factor)
+  colnames(factors) <- "column"
+  factors <- factors$column %>% unique() %>% as.character() %>% as.list(.)
+  
+  mods <- lapply(factors, function(factor){
+    lmer(formula, df%>%filter(party==factor), REML = TRUE)
+  })
+}
+
+wave_2_speeches_ethnicity_mods$wave_2_speeches$lmer %>% 
+  tidy() %>% filter(grepl("spectrum", term) & p.value < .05)
+
+spec_speeches_spectrum <- as.formula("rating ~ spectrum * value + (1|participant_ID)+(1|item_ID)")
+
+mods <- run_subset_mods(
+  df = wave_2_dfs$wave_2_speeches,
+  factor = "party",
+  formula = spec_speeches_spectrum)
+
+
+plot(emmeans(mods[[1]], ~spectrum|value), comparisons = T) + ggtitle("Democratic")
+plot(emmeans(mods[[2]], ~spectrum|value), comparisons = T) + ggtitle("Republican")
+```
+
+```{r}
+# run models of subsets by factor to visualize interactions
+run_subset_mods <- function(df, factor, formula){
+  
+  factors <- df %>% select(factor)
+  colnames(factors) <- "column"
+  factors <- factors$column %>% unique() %>% as.character() %>% as.list(.)
+  
+  mods <- lapply(factors, function(factor){
+    lmer(formula, df%>%filter(w==factor), REML = TRUE)
+  })
+}
+
+spec_speeches_spectrum <- as.formula("rating ~ spectrum * value + (1|participant_ID)+(1|item_ID)")
+
+mods <- run_subset_mods(
+  df = wave_2_dfs$wave_2_speeches,
+  factor = "w",
+  formula = spec_speeches_spectrum)
+
+
+plot(emmeans(mods[[1]], ~spectrum|value), comparisons = T) + ggtitle("Democratic")
+plot(emmeans(mods[[2]], ~spectrum|value), comparisons = T) + ggtitle("Republican")
+```

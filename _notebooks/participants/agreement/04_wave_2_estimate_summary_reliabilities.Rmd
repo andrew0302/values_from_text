@@ -1,0 +1,147 @@
+---
+title: "summary reliabilities"
+author: "andrew demetriou"
+---
+
+```{r setup, include=FALSE}
+library('here')                 # file logistics
+library('dplyr')                # data manipulation
+library('tidyr')                # data manipulation
+library('psych')                # ICC2k
+
+values <- c("POWER", "ACHIEVEMENT", "HEDONISM",  
+            "STIMULATION", "SELF", "UNIVERSALISM", 
+            "BENEVOLENCE", "TRADITION",  
+            "CONFORMITY", "SECURITY")
+```
+
+
+```{r}
+# load subsample lists
+file_path <- here("_data", "_intermediary_data")
+
+wave_2_dfs <- readRDS(here("_data", "_raw_data", "wave_2", "wave_2_dfs.RDS"))
+
+wave_2_dfs <- lapply(wave_2_dfs, function(df){
+  df %>% 
+    filter(item_ID != "attention") %>%
+    mutate(Ethnicity = case_when(
+      Ethnicity == "South East Asian" ~ "Asian",
+      Ethnicity == "South Asian" ~ "Asian",
+      Ethnicity == "East Asian" ~ "Asian",
+      Ethnicity == "CONSENT_REVOKED" ~ NA, 
+      .default = Ethnicity))
+})
+
+wave_2_dfs[1:2] <- lapply(wave_2_dfs[1:2], function(df){
+  df %>% select(item_ID, participant_ID, Ethnicity, all_of(values))
+})
+
+wave_2_dfs[3:4] <- lapply(wave_2_dfs[3:4], function(df){
+  df %>% rename(Spectrum = `Political spectrum (us)`) %>%
+    select(item_ID, participant_ID, Ethnicity, Spectrum, all_of(values))
+})
+
+wave_2_dfs <- list(
+  lyrics = bind_rows(wave_2_dfs[[1]], wave_2_dfs[[2]]), 
+  speeches = bind_rows(wave_2_dfs[[3]], wave_2_dfs[[4]]) 
+)
+```
+
+
+```{r}
+# subsample by participant characteristics
+ethnicity_subsample_lists <- lapply(wave_2_dfs, function(df){
+  c(list(overall = df), split(df, df$Ethnicity))
+})
+
+spectrum_subsample_lists <- lapply(wave_2_dfs[2], function(df){
+  c(list(overall = df), split(df, df$Spectrum))
+})
+```
+
+
+```{r}
+format_ICC_df <- function(df){
+  df <- df %>% 
+    select(ICC, type, value, `lower bound`, `upper bound`) %>% 
+    pivot_wider(values_from = c(ICC, `lower bound`, `upper bound`), 
+                names_from = type)
+  
+  colnames(df) <- c("value", 
+                    "ICC2", "ICC2k", 
+                    "ICC2_lower", "ICC2k_lower", 
+                    "ICC2_upper", "ICC2k_upper")
+  
+  return(df)
+}
+```
+
+
+```{r}
+make_overall_icc_df <- function(df){
+
+  # iterate over list of values
+  list_of_icc_dfs <- lapply(values,function(value){
+    
+  # select columns
+  df <- df %>% dplyr::select(participant_ID, item_ID, value) %>%
+    # pivot so that participants are columns
+    pivot_wider(names_from = participant_ID, values_from = value)
+  
+  # remove item_ID column
+  icc_df <- df %>% select(-item_ID) %>% 
+    # pass to ICC function
+    psych::ICC()
+  
+  # select relevant ICC output
+  icc_df <- icc_df$results %>% filter(type =="ICC2" | type =="ICC2k")
+  icc_df$value <- value
+  return(icc_df)
+})
+  
+  # bind list of icc dfs
+  icc_df <- bind_rows(list_of_icc_dfs)
+  
+  rownames(icc_df) <- NULL
+  
+  icc_df <- format_ICC_df(icc_df)
+  
+  return(icc_df)
+}
+```
+
+```{r}
+ethnicity_subsample_ICC_dfs <- list(
+ lyrics = lapply(ethnicity_subsample_lists[['lyrics']], make_overall_icc_df) %>% bind_rows(.id = "subset"), 
+ speeches = lapply(ethnicity_subsample_lists[['speeches']], make_overall_icc_df) %>% bind_rows(.id = "subset")
+)
+```
+
+
+```{r}
+#ethnicity_subsample_ICC_dfs <- list(
+# lyrics1 = lapply(ethnicity_subsample_lists[['lyrics1']], make_overall_icc_df) %>% bind_rows(.id = "subset"), 
+# lyrics2 = lapply(ethnicity_subsample_lists[['lyrics2']], make_overall_icc_df) %>% bind_rows(.id = "subset"), 
+# speeches1 = lapply(ethnicity_subsample_lists[['speeches1']], make_overall_icc_df) %>% bind_rows(.id = "subset"),
+# speeches2 = lapply(ethnicity_subsample_lists[['speeches2']], make_overall_icc_df) %>% bind_rows(.id = "subset"))
+```
+
+```{r}
+spectrum_subsample_ICC_dfs <- lapply(spectrum_subsample_lists[['speeches']], make_overall_icc_df) %>% bind_rows(.id = "subset")
+```
+
+
+```{r}
+#spectrum_subsample_ICC_dfs <- list(
+# speeches1 = lapply(spectrum_subsample_lists[['speeches1']], make_overall_icc_df) %>% bind_rows(.id = "subset"),
+# speeches2 = lapply(spectrum_subsample_lists[['speeches2']], make_overall_icc_df) %>% bind_rows(.id = "subset"))
+```
+
+
+```{r}
+file_path <- here("_data", "_intermediary_data")
+saveRDS(ethnicity_subsample_ICC_dfs, file = here(file_path, "ethnicity_subsample_ICC_dfs.RDS"))
+saveRDS(spectrum_subsample_ICC_dfs, file = here(file_path, "spectrum_subsample_ICC_dfs.RDS"))
+```
+

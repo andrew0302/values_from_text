@@ -1,0 +1,159 @@
+---
+title: "reliability_comparison"
+author: "Andrew M. Demetriou"
+---
+
+```{r}
+library("here")
+library("tidyverse")
+library("cowplot")
+```
+
+```{r}
+file_path <- here("_data", "_intermediary_data")
+
+# summarydfs
+pilot_2_likert_summary_dfs <- readRDS(here("_data", "_intermediary_data", "pilot_2_likert_summary_dfs.RDS"))
+
+# text type sampled by row
+pilot_2_lyrics_by_row_dfs <- readRDS(here(file_path, "pilot_2_lyrics_by_row_dfs.RDS"))
+pilot_2_speeches1_by_row_dfs <- readRDS(here(file_path, "pilot_2_speeches1_by_row_dfs.RDS"))
+pilot_2_speeches2_by_row_dfs <- readRDS(here(file_path, "pilot_2_speeches2_by_row_dfs.RDS"))
+
+rm(file_path)
+```
+
+
+```{r}
+plot_summary_by_metric <- function(df, metric, metric_lower, metric_upper, text) {
+  
+  subsets <- as.list(df$subset%>%unique())
+  
+  lapply(subsets, function(sub){
+    
+    df %>%
+      filter(subset == sub) %>%
+      ggplot(aes(y=value, x={{metric}}, color = value)) +
+      geom_point() +
+      geom_errorbar(aes(xmin = {{metric_lower}}, xmax = {{metric_upper}})) +
+      theme_minimal() +
+      xlim(-.5, 1) +
+      scale_color_viridis_d(option = "plasma") +
+      geom_vline(xintercept = 0.75, color = "red", size = .2 )+
+      theme(legend.position="none") +
+      ggtitle(paste0(text, ":", sub))
+    })
+  }
+```
+
+```{r}
+# compute plots
+pilot_2_lyrics_agreement_plots <- plot_summary_by_metric(pilot_2_likert_summary_dfs[[1]], ICC2k, ICC2k_lower, ICC2k_upper, "lyrics")
+
+pilot_2_speeches1_agreement_plots <- plot_summary_by_metric(pilot_2_likert_summary_dfs[[2]], ICC2k, ICC2k_lower, ICC2k_upper, "speeches1")
+
+pilot_2_speeches2_agreement_plots <- plot_summary_by_metric(pilot_2_likert_summary_dfs[[3]], ICC2k, ICC2k_lower, ICC2k_upper, "speeches2")
+```
+
+
+```{r}
+plots <- pilot_2_lyrics_agreement_plots
+plot_grid(
+  plots[[4]], #overall
+  plot_grid(plots[[1]], plots[[2]], plots[[3]], plots[[6]]), #by ethnicity
+  ncol = 1)
+ggsave(here("wave_2", "_images", "pilot_2_lyrics_ICC2k.png"), 
+       dpi = "retina", width = 7, height = 7)
+
+plots <- pilot_2_speeches1_agreement_plots
+plot_grid(
+  plots[[4]], #overall
+  plot_grid(plots[[1]], plots[[2]], plots[[3]], plots[[6]]), #by ethnicity
+  ncol = 1)
+ggsave(here("wave_2", "_images", "pilot_2_speeches1_ICC2k.png"), 
+       dpi = "retina", width = 7, height = 7)
+
+plots <- pilot_2_speeches2_agreement_plots
+plot_grid(
+  plots[[4]], # overall
+  plot_grid(plots[[1]], plots[[2]], plots[[3]]), 
+  ncol = 1) #by spectrum
+ggsave(here("wave_2", "_images", "pilot_2_speeches2_ICC2k.png"), 
+       dpi = "retina", width = 7, height = 7)
+```
+
+```{r}
+rm(plots, plot_summary_by_metric, 
+   pilot_2_speeches2_agreement_plots, 
+   pilot_2_speeches1_agreement_plots, 
+   pilot_2_lyrics_agreement_plots, 
+   pilot_2_likert_summary_dfs)
+```
+
+```{r}
+plot_raters <- function(df, metric, name){
+  df %>%
+    ggplot(aes(x = {{metric}}, color = as.factor(n))) +
+    geom_line(stat = "density", alpha = .5, size = .75) +
+    xlim(0, 1) +
+    scale_color_viridis_d(option = "plasma") +
+    labs(
+      #title = paste("     ", name, "by Rater N\n"), 
+      color = "Rater N\n") +
+    theme_minimal()
+}
+```
+
+```{r}
+df <- pilot_2_lyrics_by_row_dfs[[1]] %>% filter(n <= 25)
+p1 <- plot_grid(
+  plot_raters(df, metric = r, name = "Lyrics Pilot: r") + 
+    geom_vline(xintercept = 0.9, color = "red", size = .4 ) + 
+    ggtitle("Pilot: Lyrics"), 
+  plot_raters(df, metric = ICC2k, name = "ICC2k") +  geom_vline(xintercept = 0.75, color = "red", size = .4 ), 
+  ncol = 1)
+
+df <- pilot_2_speeches1_by_row_dfs[[1]] %>% filter(n >= 25)
+p2 <- plot_grid(
+  plot_raters(df, metric = r, name = "Speeches1 Pilot: r") + 
+    geom_vline(xintercept = 0.9, color = "red", size = .4 )+ 
+    ggtitle("Pilot: Speeches1"),
+  plot_raters(df, metric = ICC2k, name = "ICC2k") +  geom_vline(xintercept = 0.75, color = "red", size = .4 ), 
+  ncol = 1)
+
+df <- pilot_2_speeches2_by_row_dfs[[1]] %>% filter(n >= 25)
+p3 <- plot_grid(
+  plot_raters(df, metric = r, name = "Speeches2 Pilot: r") + 
+    geom_vline(xintercept = 0.9, color = "red", size = .4 ) + 
+    ggtitle("Pilot: Speeches2"),
+  plot_raters(df, metric = ICC2k, name = "ICC2k") +  geom_vline(xintercept = 0.75, color = "red", size = .4 ), 
+  ncol = 1)
+
+p1
+p2
+p3
+
+# plot_grid(p1, p2, p3, ncol = 1)
+# ggsave(here("wave_2", "_images", "pilot_2_rater_number.png"), 
+#        dpi = "retina", width = 7, height = 9)
+```
+
+```{r}
+p1 <- plot_raters(pilot_2_lyrics_by_row_dfs[[1]] %>% filter(n <= 25), 
+                  metric = ICC2k, name = "ICC2k") +  
+  geom_vline(xintercept = 0.75, color = "red", size = .4 ) + 
+  ggtitle("lyrics")
+
+p2 <- plot_raters(pilot_2_speeches2_by_row_dfs[[1]] %>% filter(n >= 30), 
+                  metric = ICC2k, name = "ICC2k") +  
+  geom_vline(xintercept = 0.75, color = "red", size = .4 ) +
+  ggtitle("speeches1")
+
+p3 <- plot_raters(pilot_2_speeches2_by_row_dfs[[1]] %>% filter(n >= 30), 
+                  metric = ICC2k, name = "ICC2k") +  
+  geom_vline(xintercept = 0.75, color = "red", size = .4 ) +
+  ggtitle("speeches1")
+
+plot_grid(p1, p2, p3, ncol = 1)
+```
+

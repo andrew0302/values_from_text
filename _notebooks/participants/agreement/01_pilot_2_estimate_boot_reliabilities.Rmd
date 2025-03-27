@@ -1,0 +1,144 @@
+---
+title: "pilot 2 estimate boot reliabilities"
+author: "Andrew M. Demetriou"
+---
+
+```{r}
+library("here")
+library("tidyverse")
+
+values <- c("POWER", "ACHIEVEMENT", "HEDONISM",  
+            "STIMULATION", "SELF", "UNIVERSALISM", 
+            "BENEVOLENCE", "TRADITION",  
+            "CONFORMITY", "SECURITY")
+```
+
+```{r}
+# read in data
+pilot_2_dfs <- readRDS(here("_data", "_raw_data", "wave_2", "pilot_2_dfs.RDS"))
+
+# quiz variables
+quiz_vars <- c("Quiz_score", "attention_3", "attention_score")
+
+# group by item, subsample rows: ICC only, pilots and waves
+source(here("_functions", "by_item_bootstrap_reliability.R"))
+
+# subsample rows: ICC and cronbach, pilots only
+source(here("_functions", "by_row_bootstrap_reliability.R"))
+
+file_path <- here("_data", "_intermediary_data")
+```
+
+```{r}
+# adjust function to only estimate ICC
+by_row_bootstrap_reliability <- function(df, n_samples, n_raters){
+  
+  sample_by_row_list <- sub_sample_by_row(df=df, 
+                                          n_samples = n_samples, 
+                                          n_raters = n_raters)
+  
+  canon_r_to_sample_list <- lapply(
+    sample_by_row_list, 
+    function(sample){
+      canon_r_to_sample(data_sample = sample, canon_df = df)})
+  
+  icc_list <- lapply(sample_by_row_list, function(sample){
+  tryCatch(lapply(values, compute_ICC, data_sample = sample) %>% bind_rows(), 
+           error = function(e){
+             return(NA)
+           })
+        })
+  
+    pilot_by_row_df <- merge_df_list(canon_r_to_sample_list, icc_list) %>%
+      bind_rows()
+    
+}
+```
+
+
+```{r}
+quiz_dfs <- lapply(pilot_2_dfs, function(df){
+  df %>% 
+    select(participant_ID, item_ID, 
+           all_of(values), 
+           Quiz_score, attention_3, attention_score)
+})
+```
+
+```{r}
+select_vars <- function(df){
+  df %>% 
+    select(item_ID, participant_ID, all_of(values)) %>%
+    filter(!grepl("attention", item_ID))
+}
+```
+
+
+```{r}
+pilot_2_lyrics_subsample_list <- list(
+  overall = pilot_2_dfs[['lyrics']]%>%select_vars(), 
+  `quiz_score_>=_2` = quiz_dfs[['lyrics']] %>% 
+    filter(Quiz_score >= 2) %>% select_vars()
+  )
+
+pilot_2_speeches1_subsample_list <- list(
+  overall = pilot_2_dfs[['speeches1']]%>%select_vars(), 
+  `quiz_score_>=_2` = quiz_dfs[['speeches1']] %>% 
+    filter(Quiz_score >= 2) %>% select_vars()
+)
+  
+pilot_2_speeches2_subsample_list <- list(
+  overall = pilot_2_dfs[['speeches2']]%>%select_vars(), 
+  `quiz_score_>=_2` = quiz_dfs[['speeches2']] %>% 
+    filter(Quiz_score >= 2) %>% select_vars()
+)
+
+saveRDS(pilot_2_lyrics_subsample_list, 
+        here(file_path, "pilot_2_lyrics_subsample_list.RDS"))
+saveRDS(pilot_2_speeches1_subsample_list, 
+        here(file_path, "pilot_2_speeches1_subsample_list.RDS"))
+saveRDS(pilot_2_speeches2_subsample_list, 
+        here(file_path, "pilot_2_speeches2_subsample_list.RDS"))
+```
+
+```{r}
+pilot_2_lyrics_by_item_dfs <- lapply(pilot_2_lyrics_subsample_list, function(df){
+  by_item_bootstrap_reliability(df = df, n_samples = 25, n_raters = seq(5, 50, by = 5))
+})
+
+pilot_2_speeches1_by_item_dfs <- lapply(pilot_2_speeches1_subsample_list, function(df){
+  by_item_bootstrap_reliability(df = df, n_samples = 25, n_raters = seq(5, 50, by = 5))
+})
+
+pilot_2_speeches2_by_item_dfs <- lapply(pilot_2_speeches2_subsample_list, function(df){
+  by_item_bootstrap_reliability(df = df, n_samples = 25, n_raters = seq(5, 50, by = 5))
+})
+
+saveRDS(pilot_2_lyrics_by_item_dfs, 
+        here(file_path, "pilot_2_lyrics_by_item_dfs.RDS"))
+saveRDS(pilot_2_speeches1_by_item_dfs, 
+        here(file_path, "pilot_2_speeches1_by_item_dfs.RDS"))
+saveRDS(pilot_2_speeches2_by_item_dfs, 
+        here(file_path, "pilot_2_speeches2_by_item_dfs.RDS"))
+```
+
+```{r}
+pilot_2_lyrics_by_row_dfs <- lapply(pilot_2_lyrics_subsample_list, function(df){
+  by_row_bootstrap_reliability(df = df, n_samples = 25, n_raters = seq(5, 50, by = 5))
+})
+
+pilot_2_speeches1_by_row_dfs <- lapply(pilot_2_speeches1_subsample_list, function(df){
+  by_row_bootstrap_reliability(df = df, n_samples = 25, n_raters = seq(5, 50, by = 5))
+})
+
+pilot_2_speeches2_by_row_dfs <- lapply(pilot_2_speeches2_subsample_list, function(df){
+  by_row_bootstrap_reliability(df = df, n_samples = 25, n_raters = seq(5, 50, by = 5))
+})
+
+saveRDS(pilot_2_lyrics_by_row_dfs, 
+        here(file_path, "pilot_2_lyrics_by_row_dfs.RDS"))
+saveRDS(pilot_2_speeches1_by_row_dfs, 
+        here(file_path, "pilot_2_speeches1_by_row_dfs.RDS"))
+saveRDS(pilot_2_speeches2_by_row_dfs, 
+        here(file_path, "pilot_2_speeches2_by_row_dfs.RDS"))
+```

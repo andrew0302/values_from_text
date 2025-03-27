@@ -1,0 +1,40 @@
+---
+title: "4_energy_consumption"
+---
+
+```{r}
+library(here)
+```
+
+```{r}
+energy <- read.csv(here("_data", "_machine_scores", "LLMs", "wave_2", "energy.csv"))
+```
+
+```{r}
+# https://www.overstappen.nl/energie/compare-energy/energy-prices-netherlands/#:~:text=The%20current%20energy%20prices%20are,the%2019%20largest%20energy%20suppliers.
+C <- .32 # average consumer energy price per kWh
+
+print("total energy in kWh:")
+total_energy <- energy$Total.Energy..Wh./1000
+total_energy
+
+print("energy per song in Wh:")
+energy_per_song <- (energy$Total.Energy..Wh.)/400
+energy_per_song
+
+print("total cost in EU @ .32 per kWh:")
+total_cost <- C*total_energy
+total_cost
+
+print("cost per song:")
+cost_per_song <- total_cost / 400
+cost_per_song
+
+print("cost per million songs:")
+cost_per_million <- cost_per_song*1000000
+cost_per_million
+
+print("cost per hundred million:")
+cost_per_hundred_million <- cost_per_million*100
+cost_per_hundred_million
+```
