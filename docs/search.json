@@ -1,0 +1,30 @@
+[
+  {
+    "objectID": "about.html",
+    "href": "about.html",
+    "title": "About",
+    "section": "",
+    "text": "1 About\nThis project explores data analysis using Quarto notebooks."
+  },
+  {
+    "objectID": "values_from_text.html",
+    "href": "values_from_text.html",
+    "title": "values_from_text",
+    "section": "",
+    "text": "Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see https://quarto.org."
+  },
+  {
+    "objectID": "values_from_text.html#quarto",
+    "href": "values_from_text.html#quarto",
+    "title": "values_from_text",
+    "section": "",
+    "text": "Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see https://quarto.org."
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Welcome",
+    "section": "",
+    "text": "1 Welcome to My Project\nThis site shows the results of various notebooks and experiments.\nDemetriou et al. (2024)\n\n\n\n\n\nReferences\n\nDemetriou, A. M., Kim, J., Manolios, S., & Liem, C. (2024). Towards estimating personal values in song lyrics. ISMIR, 137–145."
+  }
+]
