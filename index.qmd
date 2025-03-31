@@ -47,6 +47,12 @@ We thus proceed with a target median 15 ratings per song lyric, and median 40 ra
 
 ## Main Study
 
+### Initial Validation
+
+We take a first look at the SSVS by examining multidimensional scaling plots from participant self-ratings. We compare to an MDS plot from the correlation matrix reported in a landmark study. Although not identical, and not quite as circular we do observe most of the expected patterns. 
+
+![](images/wave_2_participant_MDS.png)
+
 ### Inter-rater reliability
 
 In general we observe sufficient ICC2k scores , with no visible improvement when estimated by ethnicity or political leaning.
@@ -62,4 +68,14 @@ Ratings of political speeches exceed our threshold overall, though ratings do no
 We observe a similar pattern when separating groups by political affiliation. 
 
 ![](images/wave_2_speeches2_ICC2k.png)
+
+
+### MDS plots of text annotations
+
+![](images/wave_2_lyrics_speeches_MDS.png)
+
+
+
+
+
 
