@@ -63,7 +63,7 @@ plot_grid(
   plot_grid(plots[[2]], plots[[3]], plots[[4]], plots[[5]]), #by ethnicity
   ncol = 1)
 
-ggsave(here("images", "pilot_2_lyrics_ICC2k.png"), dpi = "retina")
+ggsave(here("images", "pilot_2_lyrics_ICC2k.png"), dpi = "retina", width = 7, height = 9)
 
 plots <- pilot_2_speeches1_agreement_plots
 plot_grid(
@@ -71,7 +71,7 @@ plot_grid(
   plot_grid(plots[[2]], plots[[3]], plots[[4]], plots[[5]]), #by ethnicity
   ncol = 1)
 
-ggsave(here("images", "pilot_2_speeches1_ICC2k.png"), dpi = "retina")
+ggsave(here("images", "pilot_2_speeches1_ICC2k.png"), dpi = "retina", width = 7, height = 9)
 
 plots <- pilot_2_speeches2_agreement_plots
 plot_grid(
@@ -79,7 +79,7 @@ plot_grid(
   plot_grid(plots[[2]], plots[[3]], plots[[4]]), 
   ncol = 1) #by spectrum
 
-ggsave(here("images", "pilot_2_speeches2_ICC2k.png"), dpi = "retina")
+ggsave(here("images", "pilot_2_speeches2_ICC2k.png"), dpi = "retina", width = 7, height = 9)
 ```
 
 ```{r}

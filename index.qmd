@@ -10,7 +10,7 @@ format:
 
 ## Pilot Study
 
-### Determining whether annotator sample must be stratified
+### Determining annotator sample strata
 
 We estimate ICC2k overall, and for subgroups separately. For our lyrics pilot, we observe overall 'good' ICC2k estimates, with the exception of `SELF-DIRECTION`, which shows a large confidence interval that exceeds our threshold. These ICC2k scores overall do not appear to improve when we estimate them separately for each Ethnicity. 
 
@@ -44,3 +44,22 @@ Our sample of annotators in our first speeches pilot were stratified by politica
 ![](images/pilot_2_speeches2_rater_N.png)
 
 We thus proceed with a target median 15 ratings per song lyric, and median 40 ratings per political speech. 
+
+## Main Study
+
+### Inter-rater reliability
+
+In general we observe sufficient ICC2k scores , with no visible improvement when estimated by ethnicity or political leaning.
+
+ICC2k scores for lyrics ratings appear to be exceptionally high overall, and when estimated separately within Ethnic groups. 
+
+![](images/wave_2_lyrics_ICC2k.png)
+
+Ratings of political speeches exceed our threshold overall, though ratings do not always meet the threshold when estimated separately within Ethnic groups. 
+
+![](images/wave_2_speeches1_ICC2k.png)
+
+We observe a similar pattern when separating groups by political affiliation. 
+
+![](images/wave_2_speeches2_ICC2k.png)
+

@@ -17,7 +17,7 @@ website:
 format:
   html:
     toc: true
-    number-sections: true
+    number-sections: false
   docx:
-    toc: true
-    number-sections: true
+    toc: false
+    number-sections: false
