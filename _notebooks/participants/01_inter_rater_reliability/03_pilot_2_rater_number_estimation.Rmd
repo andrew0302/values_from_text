@@ -3,16 +3,19 @@ title: "reliability_comparison"
 author: "Andrew M. Demetriou"
 ---
 
+AIM: Plot bootstrapping and overall reliability results, determine number of ratings needed, and whether ethnicity and political leaning are useful strata
+
 ```{r}
-library("here")
-library("tidyverse")
-library("cowplot")
+library('here')       # file logistics
+library("tidyverse")  # code logistics
+library("cowplot")    # merge plots
 ```
 
 ```{r}
+# read in data
 file_path <- here("_data", "_intermediary_data")
 
-# summarydfs
+# summary dfs
 pilot_2_likert_summary_dfs <- readRDS(here("_data", "_intermediary_data", "pilot_2_likert_summary_dfs.RDS"))
 
 # text type sampled by row
@@ -25,6 +28,7 @@ rm(file_path)
 
 
 ```{r}
+# plot ICC2k and 95% CI by value
 plot_summary_by_metric <- function(df, metric, metric_lower, metric_upper, text) {
   
   subsets <- as.list(df$subset%>%unique())
@@ -57,6 +61,8 @@ pilot_2_speeches2_agreement_plots <- plot_summary_by_metric(pilot_2_likert_summa
 
 
 ```{r}
+# merge ICC2k by value plot for overall dataset, 
+# and datasets with only observations for each ethncity/political leaning group
 plots <- pilot_2_lyrics_agreement_plots
 plot_grid(
   plots[[1]], #overall
@@ -76,13 +82,14 @@ ggsave(here("images", "pilot_2_speeches1_ICC2k.png"), dpi = "retina", width = 7,
 plots <- pilot_2_speeches2_agreement_plots
 plot_grid(
   plots[[1]], # overall
-  plot_grid(plots[[2]], plots[[3]], plots[[4]]), 
-  ncol = 1) #by spectrum
+  plot_grid(plots[[2]], plots[[3]], plots[[4]]), #by spectrum
+  ncol = 1) 
 
 ggsave(here("images", "pilot_2_speeches2_ICC2k.png"), dpi = "retina", width = 7, height = 9)
 ```
 
 ```{r}
+# remove
 rm(plots, plot_summary_by_metric, 
    pilot_2_speeches2_agreement_plots, 
    pilot_2_speeches1_agreement_plots, 
@@ -91,6 +98,7 @@ rm(plots, plot_summary_by_metric,
 ```
 
 ```{r}
+# density plot of bootstrapping procedure
 plot_raters <- function(df, metric, name){
   df %>%
     ggplot(aes(x = {{metric}}, color = as.factor(n))) +
@@ -105,6 +113,7 @@ plot_raters <- function(df, metric, name){
 ```
 
 ```{r}
+# merge density plot for ICC2k and correlation between subsample mean and overall mean
 df <- pilot_2_lyrics_by_row_dfs[[1]] %>% filter(n <= 25)
 p1 <- plot_grid(
   plot_raters(df, metric = r, name = "Lyrics Pilot: r") + 

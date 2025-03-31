@@ -3,6 +3,8 @@ title: "summary reliabilities"
 author: "andrew demetriou"
 ---
 
+AIM: estimate reliability by value for primary study dataset
+
 ```{r setup, include=FALSE}
 library('here')                 # file logistics
 library('dplyr')                # data manipulation
@@ -17,11 +19,13 @@ values <- c("POWER", "ACHIEVEMENT", "HEDONISM",
 
 
 ```{r}
-# load subsample lists
+# output file path
 file_path <- here("_data", "_intermediary_data")
 
+# read in data
 wave_2_dfs <- readRDS(here("_data", "_participant_scores", "wave_2", "wave_2_dfs.RDS"))
 
+# merge ethnicity
 wave_2_dfs <- lapply(wave_2_dfs, function(df){
   df %>% 
     filter(item_ID != "attention") %>%
@@ -33,6 +37,7 @@ wave_2_dfs <- lapply(wave_2_dfs, function(df){
       .default = Ethnicity))
 })
 
+# rename variables
 wave_2_dfs[1:2] <- lapply(wave_2_dfs[1:2], function(df){
   df %>% select(item_ID, participant_ID, Ethnicity, all_of(values))
 })
@@ -119,24 +124,12 @@ ethnicity_subsample_ICC_dfs <- list(
 ```
 
 
-```{r}
-#ethnicity_subsample_ICC_dfs <- list(
-# lyrics1 = lapply(ethnicity_subsample_lists[['lyrics1']], make_overall_icc_df) %>% bind_rows(.id = "subset"), 
-# lyrics2 = lapply(ethnicity_subsample_lists[['lyrics2']], make_overall_icc_df) %>% bind_rows(.id = "subset"), 
-# speeches1 = lapply(ethnicity_subsample_lists[['speeches1']], make_overall_icc_df) %>% bind_rows(.id = "subset"),
-# speeches2 = lapply(ethnicity_subsample_lists[['speeches2']], make_overall_icc_df) %>% bind_rows(.id = "subset"))
-```
+
 
 ```{r}
 spectrum_subsample_ICC_dfs <- lapply(spectrum_subsample_lists[['speeches']], make_overall_icc_df) %>% bind_rows(.id = "subset")
 ```
 
-
-```{r}
-#spectrum_subsample_ICC_dfs <- list(
-# speeches1 = lapply(spectrum_subsample_lists[['speeches1']], make_overall_icc_df) %>% bind_rows(.id = "subset"),
-# speeches2 = lapply(spectrum_subsample_lists[['speeches2']], make_overall_icc_df) %>% bind_rows(.id = "subset"))
-```
 
 
 ```{r}

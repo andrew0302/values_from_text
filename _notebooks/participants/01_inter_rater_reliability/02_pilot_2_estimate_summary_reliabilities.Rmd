@@ -3,6 +3,8 @@ title: "summary reliabilities"
 author: "andrew demetriou"
 ---
 
+AIM: Estimate reliability (ICC) per dataset, overall, and by ethnicity (lyrics & speeches1), or by political leaning (speeches2)
+
 ```{r setup, include=FALSE}
 library('here')                 # file logistics
 library('dplyr')                # data manipulation
@@ -13,17 +15,17 @@ values <- c("POWER", "ACHIEVEMENT", "HEDONISM",
             "STIMULATION", "SELF", "UNIVERSALISM", 
             "BENEVOLENCE", "TRADITION",  
             "CONFORMITY", "SECURITY")
-
-#quiz_vars <- c("Quiz_score", "attention_3", "attention_score")
 ```
 
 
 ```{r}
-# load subsample lists
+# output file path
 file_path <- here("_data", "_intermediary_data")
 
+# load datasets
 pilot_2_dfs <- readRDS(here("_data", "_participant_scores", "wave_2", "pilot_2_dfs.RDS"))
 
+# load subsample lists
 pilot_2_lyrics_subsample_list <- readRDS(
   here(file_path, "pilot_2_lyrics_subsample_list.RDS"))
 pilot_2_speeches1_subsample_list <- readRDS(
@@ -33,7 +35,7 @@ pilot_2_speeches2_subsample_list <- readRDS(
 ```
 
 ```{r}
-# simplify ethnicity
+# merge ethnicity (Prolific has 3 separate US Asian Ethnicity categories)
 pilot_2_dfs[['lyrics']] <- pilot_2_dfs[['lyrics']] %>%
   mutate(ethnicity = case_when(
     Ethnicity == "South East Asian" ~ "Asian", 
@@ -50,12 +52,19 @@ pilot_2_dfs[['speeches1']] <- pilot_2_dfs[['speeches1']] %>%
 ```
 
 ```{r}
-pilot_2_lyrics_subsample_list <- c(pilot_2_lyrics_subsample_list, 
+# add to lists
+pilot_2_lyrics_subsample_list <- c(
+  # prior subsample list which only contains overall pilot dataset
+  pilot_2_lyrics_subsample_list, 
+  # split overall dataframe into list of dataframes,
+  # where each dataframe is only participants of one ethnicity group
   split(pilot_2_dfs[['lyrics']], pilot_2_dfs[['lyrics']]$ethnicity))
 
+# repeat with speeches1
 pilot_2_speeches1_subsample_list <- c(pilot_2_speeches1_subsample_list, 
   split(pilot_2_dfs[['speeches1']], pilot_2_dfs[['speeches1']]$ethnicity))
 
+# same, only speeches2 was stratified by political leaning
 pilot_2_speeches2_subsample_list <- c(pilot_2_speeches2_subsample_list, 
   split(pilot_2_dfs[['speeches2']], pilot_2_dfs[['speeches2']]$`Political spectrum (us)`))
 
@@ -64,6 +73,7 @@ rm(pilot_2_dfs)
 
 
 ```{r}
+# select relevant columns and pivot a results dataframe
 format_ICC_df <- function(df){
   df <- df %>% 
     select(ICC, type, value, `lower bound`, `upper bound`) %>% 
@@ -80,6 +90,7 @@ format_ICC_df <- function(df){
 ```
 
 ```{r}
+# estimate ICC and ICC2k per value for a given dataset
 make_overall_icc_df <- function(df){
   # iterate over list of values
   list_of_icc_dfs <- lapply(values,function(value){

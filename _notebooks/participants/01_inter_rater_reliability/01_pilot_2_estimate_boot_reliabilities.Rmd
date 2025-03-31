@@ -2,11 +2,15 @@
 title: "pilot: estimate bootstrapped reliabilities"
 ---
 
-```{r}
-library("here")
-library("tidyverse")
-library("psych")
+AIM: Use bootstrapping procedure to estimate reliability for different subsample sizes. 
 
+
+```{r}
+library("here")       # file logistics
+library("tidyverse")  # code logistics
+library("psych")      # estimating ICC
+
+# 10 Schwartz values
 values <- c("POWER", "ACHIEVEMENT", "HEDONISM",  
             "STIMULATION", "SELF", "UNIVERSALISM", 
             "BENEVOLENCE", "TRADITION",  
@@ -17,13 +21,15 @@ values <- c("POWER", "ACHIEVEMENT", "HEDONISM",
 # read in data
 pilot_2_dfs <- readRDS(here("_data", "_participant_scores", "wave_2", "pilot_2_dfs.RDS"))
 
+# path for output data
 file_path <- here("_data", "_intermediary_data")
 ```
 
 ```{r}
+# estimate mean per value per item for a given subsample dataframe
 get_means <- function(data){
     
-  # get mean per value
+  # get mean per value as list
   means_per_value <- lapply(values, function(value){
     
     means <- data %>%
@@ -45,6 +51,7 @@ get_means <- function(data){
 ```
 
 ```{r}
+# compute correlation between subsample mean and overall mean
 canon_r_to_sample <- function(data_sample, canon_df){
   
   n <- data_sample$n %>% unique()
@@ -63,6 +70,7 @@ canon_r_to_sample <- function(data_sample, canon_df){
     
   }) 
   
+  # name items in list
   names(r_list) <- values
   canon_r_to_sample_df <- bind_rows(r_list, .id = "value")
   colnames(canon_r_to_sample_df) <- c("value", "r")
@@ -74,9 +82,10 @@ canon_r_to_sample <- function(data_sample, canon_df){
 ```
 
 ```{r}
+# sample n_raters, n_samples number of times, per dataframe
 sub_sample_by_row <- function(
     df, 
-    n_samples = 10, 
+    n_samples = 25, 
     n_raters = seq(5, 50, by = 5)
     ){
     
@@ -110,6 +119,7 @@ sub_sample_by_row <- function(
 ```
 
 ```{r}
+# compute icc for each value in dataset
 compute_ICC <-   function(data_sample, value){ 
   
   # compute ICC
@@ -138,18 +148,23 @@ compute_ICC <-   function(data_sample, value){
 
 
 ```{r}
-# adjust function to only estimate ICC
+# estimate reliability by subsampling n_samples of rows
 by_row_bootstrap_reliability <- function(df, n_samples, n_raters){
   
+  # create a long list of subsample dfs
   sample_by_row_list <- sub_sample_by_row(df=df, 
                                           n_samples = n_samples, 
                                           n_raters = n_raters)
   
+  # per subsample:
+  # compute correlation between subsample mean and overall mean
   canon_r_to_sample_list <- lapply(
     sample_by_row_list, 
     function(sample){
       canon_r_to_sample(data_sample = sample, canon_df = df)})
   
+  # per subsample:
+  # compute ICC2k
   icc_list <- lapply(sample_by_row_list, function(sample){
   tryCatch(lapply(values, compute_ICC, data_sample = sample) %>% bind_rows(), 
            error = function(e){
@@ -157,8 +172,9 @@ by_row_bootstrap_reliability <- function(df, n_samples, n_raters){
            })
         })
   
-    pilot_by_row_df <- merge_df_list(canon_r_to_sample_list, icc_list) %>%
-      bind_rows()
+  # merge correlation and ICC lists
+  pilot_by_row_df <- merge_df_list(canon_r_to_sample_list, icc_list) %>%
+    bind_rows()
     
 }
 ```
@@ -166,12 +182,15 @@ by_row_bootstrap_reliability <- function(df, n_samples, n_raters){
 ```{r}
 select_vars <- function(df){
   df %>% 
+    # select relevant variables
     select(item_ID, participant_ID, all_of(values)) %>%
+    # remove attention check questions
     filter(!grepl("attention", item_ID))
 }
 ```
 
 ```{r}
+# zip two lists of dfs
 merge_df_list <- function(df_list_1, df_list_2){
   mapply(FUN = function(i, j)
     tryCatch(merge(x = i, y = j, by = c("value"), all = T), error = function(e){return(NA)}), 
@@ -182,6 +201,9 @@ merge_df_list <- function(df_list_1, df_list_2){
 
 
 ```{r}
+# create lists of dfs for each pilot we ran
+# in the next notebook, I create subsets by ethnicity and political leaning
+
 pilot_2_lyrics_subsample_list <- list(
   overall = pilot_2_dfs[['lyrics']]%>%select_vars()
   )
