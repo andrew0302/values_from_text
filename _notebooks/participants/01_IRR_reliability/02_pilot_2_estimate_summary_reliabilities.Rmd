@@ -1,0 +1,127 @@
+---
+title: "summary reliabilities"
+author: "andrew demetriou"
+---
+
+```{r setup, include=FALSE}
+library('here')                 # file logistics
+library('dplyr')                # data manipulation
+library('tidyr')                # data manipulation
+library('psych')                # ICC2k
+
+values <- c("POWER", "ACHIEVEMENT", "HEDONISM",  
+            "STIMULATION", "SELF", "UNIVERSALISM", 
+            "BENEVOLENCE", "TRADITION",  
+            "CONFORMITY", "SECURITY")
+
+#quiz_vars <- c("Quiz_score", "attention_3", "attention_score")
+```
+
+
+```{r}
+# load subsample lists
+file_path <- here("_data", "_intermediary_data")
+
+pilot_2_dfs <- readRDS(here("_data", "_participant_scores", "wave_2", "pilot_2_dfs.RDS"))
+
+pilot_2_lyrics_subsample_list <- readRDS(
+  here(file_path, "pilot_2_lyrics_subsample_list.RDS"))
+pilot_2_speeches1_subsample_list <- readRDS(
+  here(file_path, "pilot_2_speeches1_subsample_list.RDS"))
+pilot_2_speeches2_subsample_list <- readRDS(
+  here(file_path,"pilot_2_speeches2_subsample_list.RDS"))
+```
+
+```{r}
+# simplify ethnicity
+pilot_2_dfs[['lyrics']] <- pilot_2_dfs[['lyrics']] %>%
+  mutate(ethnicity = case_when(
+    Ethnicity == "South East Asian" ~ "Asian", 
+    Ethnicity == "South Asian" ~ "Asian", 
+    Ethnicity == "East Asian" ~ "Asian", 
+    .default = Ethnicity))
+
+pilot_2_dfs[['speeches1']] <- pilot_2_dfs[['speeches1']] %>%
+    mutate(ethnicity = case_when(
+    Ethnicity == "South East Asian" ~ "Asian", 
+    Ethnicity == "South Asian" ~ "Asian", 
+    Ethnicity == "East Asian" ~ "Asian", 
+    .default = Ethnicity))
+```
+
+```{r}
+pilot_2_lyrics_subsample_list <- c(pilot_2_lyrics_subsample_list, 
+  split(pilot_2_dfs[['lyrics']], pilot_2_dfs[['lyrics']]$ethnicity))
+
+pilot_2_speeches1_subsample_list <- c(pilot_2_speeches1_subsample_list, 
+  split(pilot_2_dfs[['speeches1']], pilot_2_dfs[['speeches1']]$ethnicity))
+
+pilot_2_speeches2_subsample_list <- c(pilot_2_speeches2_subsample_list, 
+  split(pilot_2_dfs[['speeches2']], pilot_2_dfs[['speeches2']]$`Political spectrum (us)`))
+
+rm(pilot_2_dfs)
+```
+
+
+```{r}
+format_ICC_df <- function(df){
+  df <- df %>% 
+    select(ICC, type, value, `lower bound`, `upper bound`) %>% 
+    pivot_wider(values_from = c(ICC, `lower bound`, `upper bound`), 
+                names_from = type)
+  
+  colnames(df) <- c("value", 
+                    "ICC2", "ICC2k", 
+                    "ICC2_lower", "ICC2k_lower", 
+                    "ICC2_upper", "ICC2k_upper")
+  
+  return(df)
+}
+```
+
+```{r}
+make_overall_icc_df <- function(df){
+  # iterate over list of values
+  list_of_icc_dfs <- lapply(values,function(value){
+  
+    # select columns
+  df <- df %>% dplyr::select(participant_ID, item_ID, value) %>%
+    # pivot so that participants are columns
+    pivot_wider(names_from = participant_ID, values_from = value)
+  
+  # remove item_ID column
+  icc_df <- df %>% select(-item_ID) %>% 
+    # pass to ICC function
+    psych::ICC()
+  
+  # select relevant ICC output
+  icc_df <- icc_df$results %>% filter(type =="ICC2" | type =="ICC2k")
+  icc_df$value <- value
+  return(icc_df)
+})
+  
+  # bind list of icc dfs
+  icc_df <- bind_rows(list_of_icc_dfs)
+  
+  rownames(icc_df) <- NULL
+  
+  icc_df <- format_ICC_df(icc_df)
+  
+  return(icc_df)
+}
+```
+
+```{r}
+pilot_2_lyrics_icc_df <- lapply(pilot_2_lyrics_subsample_list, make_overall_icc_df) %>% 
+  bind_rows(.id = "subset")
+pilot_2_speeches1_icc_df <- lapply(pilot_2_speeches1_subsample_list, make_overall_icc_df) %>%
+  bind_rows(.id = "subset")
+pilot_2_speeches2_icc_df <- lapply(pilot_2_speeches2_subsample_list, make_overall_icc_df) %>% 
+  bind_rows(.id = "subset")
+
+pilot_2_likert_summary_dfs <- list(lyrics = pilot_2_lyrics_icc_df, 
+                                   speeches1 = pilot_2_speeches1_icc_df, 
+                                   speeches2 = pilot_2_speeches2_icc_df)
+
+saveRDS(pilot_2_likert_summary_dfs, here("_data", "_intermediary_data", "pilot_2_likert_summary_dfs.RDS"))
+```

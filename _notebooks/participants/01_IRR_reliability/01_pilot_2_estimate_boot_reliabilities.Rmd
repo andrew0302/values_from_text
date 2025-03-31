@@ -1,0 +1,225 @@
+---
+title: "pilot: estimate bootstrapped reliabilities"
+---
+
+```{r}
+library("here")
+library("tidyverse")
+library("psych")
+
+values <- c("POWER", "ACHIEVEMENT", "HEDONISM",  
+            "STIMULATION", "SELF", "UNIVERSALISM", 
+            "BENEVOLENCE", "TRADITION",  
+            "CONFORMITY", "SECURITY")
+```
+
+```{r}
+# read in data
+pilot_2_dfs <- readRDS(here("_data", "_participant_scores", "wave_2", "pilot_2_dfs.RDS"))
+
+file_path <- here("_data", "_intermediary_data")
+```
+
+```{r}
+get_means <- function(data){
+    
+  # get mean per value
+  means_per_value <- lapply(values, function(value){
+    
+    means <- data %>%
+      #select only stimuli columns
+      dplyr::select(item_ID, value, -participant_ID) %>%
+      #group by each column
+      group_by(item_ID) %>%
+      #calculate means of all columns
+      summarize_all(mean, na.rm=T)
+    
+    means$value <- value
+    means$mean <- means[[2]]
+    means <- means %>% dplyr::select(item_ID, value, mean)
+    
+  })%>% bind_rows()
+  
+  return(means_per_value)
+}
+```
+
+```{r}
+canon_r_to_sample <- function(data_sample, canon_df){
+  
+  n <- data_sample$n %>% unique()
+  data_sample <- data_sample %>% dplyr::select(-n)
+  
+  canon_means <- get_means(canon_df) %>% rename(canon_mean = mean)
+  sample_means <- get_means(data_sample) %>% rename(sample_mean = mean)
+  
+  means <- merge(canon_means, sample_means, by = c("item_ID", "value"))
+  
+  # calculate correlation between sample mean and canonical mean by value
+  r_list <- lapply(values, function(x){
+    r_df <- means %>% filter(value == x)
+    r <- cor(r_df$canon_mean, r_df$sample_mean) %>%
+      as.data.frame()
+    
+  }) 
+  
+  names(r_list) <- values
+  canon_r_to_sample_df <- bind_rows(r_list, .id = "value")
+  colnames(canon_r_to_sample_df) <- c("value", "r")
+  canon_r_to_sample_df$n <- n
+  
+  return(canon_r_to_sample_df)
+
+}  
+```
+
+```{r}
+sub_sample_by_row <- function(
+    df, 
+    n_samples = 10, 
+    n_raters = seq(5, 50, by = 5)
+    ){
+    
+    # list of n_raters
+    sampling_scheme <- rep(n_raters, each = n_samples) %>% as.list()
+
+    # create a list of subsampled dfs
+    data_samples_list <- lapply(sampling_scheme, function(n){
+      
+      data_sample <- df %>% 
+        dplyr::select(participant_ID, item_ID, POWER) %>% 
+        pivot_wider(names_from = item_ID, values_from = POWER) %>%
+        sample_n(n) %>%
+      pivot_longer(cols = !(participant_ID))
+
+      colnames(data_sample) <- c("participant_ID", "item_ID", "POWER")
+
+      data_sample <- merge(data_sample%>%dplyr::select(-POWER), df, 
+                           by = c("participant_ID", "item_ID"))
+    
+      
+      # sample size column
+      data_sample$n <- n
+  
+      return(data_sample)
+      
+    })
+    
+  return(data_samples_list)
+}
+```
+
+```{r}
+compute_ICC <-   function(data_sample, value){ 
+  
+  # compute ICC
+  icc_df <- data_sample %>%
+    dplyr::select(item_ID, participant_ID, value) %>%
+    pivot_wider(names_from = participant_ID, values_from = value) %>%
+    # select only columns with stimuli
+    dplyr::select(-item_ID) %>%
+    # do not transpose for ICC
+    ICC() 
+  
+    # subset rows
+    icc_df <- icc_df$results %>% filter(type == 'ICC2' |type == 'ICC2k') %>%
+      dplyr::select(type, ICC) %>%
+      pivot_wider(values_from = ICC, names_from = type)
+  
+    # remove rownames
+    rownames(icc_df) <- NULL
+  
+    # collect values to return
+    icc_df$value <- value
+  
+  return(icc_df)
+}  
+```
+
+
+```{r}
+# adjust function to only estimate ICC
+by_row_bootstrap_reliability <- function(df, n_samples, n_raters){
+  
+  sample_by_row_list <- sub_sample_by_row(df=df, 
+                                          n_samples = n_samples, 
+                                          n_raters = n_raters)
+  
+  canon_r_to_sample_list <- lapply(
+    sample_by_row_list, 
+    function(sample){
+      canon_r_to_sample(data_sample = sample, canon_df = df)})
+  
+  icc_list <- lapply(sample_by_row_list, function(sample){
+  tryCatch(lapply(values, compute_ICC, data_sample = sample) %>% bind_rows(), 
+           error = function(e){
+             return(NA)
+           })
+        })
+  
+    pilot_by_row_df <- merge_df_list(canon_r_to_sample_list, icc_list) %>%
+      bind_rows()
+    
+}
+```
+
+```{r}
+select_vars <- function(df){
+  df %>% 
+    select(item_ID, participant_ID, all_of(values)) %>%
+    filter(!grepl("attention", item_ID))
+}
+```
+
+```{r}
+merge_df_list <- function(df_list_1, df_list_2){
+  mapply(FUN = function(i, j)
+    tryCatch(merge(x = i, y = j, by = c("value"), all = T), error = function(e){return(NA)}), 
+    df_list_1, df_list_2, 
+    SIMPLIFY = F)
+}
+```
+
+
+```{r}
+pilot_2_lyrics_subsample_list <- list(
+  overall = pilot_2_dfs[['lyrics']]%>%select_vars()
+  )
+
+pilot_2_speeches1_subsample_list <- list(
+  overall = pilot_2_dfs[['speeches1']]%>%select_vars()
+)
+  
+pilot_2_speeches2_subsample_list <- list(
+  overall = pilot_2_dfs[['speeches2']]%>%select_vars()
+)
+
+saveRDS(pilot_2_lyrics_subsample_list, 
+        here(file_path, "pilot_2_lyrics_subsample_list.RDS"))
+saveRDS(pilot_2_speeches1_subsample_list, 
+        here(file_path, "pilot_2_speeches1_subsample_list.RDS"))
+saveRDS(pilot_2_speeches2_subsample_list, 
+        here(file_path, "pilot_2_speeches2_subsample_list.RDS"))
+```
+
+
+```{r}
+pilot_2_lyrics_by_row_dfs <- lapply(pilot_2_lyrics_subsample_list, function(df){
+  by_row_bootstrap_reliability(df = df, n_samples = 50, n_raters = seq(5, 50, by = 5))
+})
+
+pilot_2_speeches1_by_row_dfs <- lapply(pilot_2_speeches1_subsample_list, function(df){
+  by_row_bootstrap_reliability(df = df, n_samples = 50, n_raters = seq(5, 50, by = 5))
+})
+
+pilot_2_speeches2_by_row_dfs <- lapply(pilot_2_speeches2_subsample_list, function(df){
+  by_row_bootstrap_reliability(df = df, n_samples = 50, n_raters = seq(5, 50, by = 5))
+})
+
+saveRDS(pilot_2_lyrics_by_row_dfs, 
+        here(file_path, "pilot_2_lyrics_by_row_dfs.RDS"))
+saveRDS(pilot_2_speeches1_by_row_dfs, 
+        here(file_path, "pilot_2_speeches1_by_row_dfs.RDS"))
+saveRDS(pilot_2_speeches2_by_row_dfs, 
+        here(file_path, "pilot_2_speeches2_by_row_dfs.RDS"))
+```

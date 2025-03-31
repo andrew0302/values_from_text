@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Welcome – Values from Text</title>
+<title>Welcome – Estimating Personal Values in Text</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -20,27 +20,7 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-/* CSS for citations */
-div.csl-bib-body { }
-div.csl-entry {
-  clear: both;
-  margin-bottom: 0em;
-}
-.hanging-indent div.csl-entry {
-  margin-left:2em;
-  text-indent:-2em;
-}
-div.csl-left-margin {
-  min-width:2em;
-  float:left;
-}
-div.csl-right-inline {
-  margin-left:2em;
-  padding-left:1em;
-}
-div.csl-indent {
-  margin-left: 2em;
-}</style>
+</style>
 
 
 <script src="site_libs/quarto-nav/quarto-nav.js"></script>
@@ -98,7 +78,7 @@ div.csl-indent {
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
     <a class="navbar-brand" href="./index.html">
-    <span class="navbar-title">Values from Text</span>
+    <span class="navbar-title">Estimating Personal Values in Text</span>
     </a>
   </div>
             <div id="quarto-search" class="" title="Search"></div>
@@ -131,7 +111,14 @@ div.csl-indent {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#welcome-to-my-project" id="toc-welcome-to-my-project" class="nav-link active" data-scroll-target="#welcome-to-my-project"><span class="header-section-number">1</span> Welcome to My Project</a></li>
+  <li><a href="#results" id="toc-results" class="nav-link active" data-scroll-target="#results"><span class="header-section-number">1</span> Results</a>
+  <ul class="collapse">
+  <li><a href="#pilot-study" id="toc-pilot-study" class="nav-link" data-scroll-target="#pilot-study"><span class="header-section-number">1.1</span> Pilot Study</a>
+  <ul class="collapse">
+  <li><a href="#determining-whether-annotator-sample-must-be-stratified" id="toc-determining-whether-annotator-sample-must-be-stratified" class="nav-link" data-scroll-target="#determining-whether-annotator-sample-must-be-stratified"><span class="header-section-number">1.1.1</span> Determining whether annotator sample must be stratified</a></li>
+  <li><a href="#estimating-the-number-of-raters" id="toc-estimating-the-number-of-raters" class="nav-link" data-scroll-target="#estimating-the-number-of-raters"><span class="header-section-number">1.1.2</span> Estimating the number of raters</a></li>
+  </ul></li>
+  </ul></li>
   </ul>
 <div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="index.docx"><i class="bi bi-file-word"></i>MS Word</a></li></ul></div></nav>
     </div>
@@ -157,20 +144,37 @@ div.csl-indent {
 </header>
 
 
-<section id="welcome-to-my-project" class="level1" data-number="1">
-<h1 data-number="1"><span class="header-section-number">1</span> Welcome to My Project</h1>
-<p>This site shows the results of various notebooks and experiments.</p>
-<p><span class="citation" data-cites="demetriou2024towards">Demetriou et al. (<a href="#ref-demetriou2024towards" role="doc-biblioref">2024</a>)</span></p>
-
+<section id="results" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Results</h1>
+<section id="pilot-study" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="pilot-study"><span class="header-section-number">1.1</span> Pilot Study</h2>
+<section id="determining-whether-annotator-sample-must-be-stratified" class="level3" data-number="1.1.1">
+<h3 data-number="1.1.1" class="anchored" data-anchor-id="determining-whether-annotator-sample-must-be-stratified"><span class="header-section-number">1.1.1</span> Determining whether annotator sample must be stratified</h3>
+<p>We estimate ICC2k overall, and for subgroups separately. For our lyrics pilot, we observe overall ‘good’ ICC2k estimates, with the exception of <code>SELF-DIRECTION</code>, which shows a large confidence interval that exceeds our threshold. These ICC2k scores overall do not appear to improve when we estimate them separately for each Ethnicity.</p>
+<p><img src="images/pilot_2_lyrics_ICC2k.png" class="img-fluid"></p>
+<p>This is not the case for our two pilots which used political speech data. Overall, agreement on the speech data was unusably poor, however it appeared to improve when estimated separately for each ethnicity, with most values showing ICC2k scores over the threshold.</p>
+<p><img src="images/pilot_2_speeches1_ICC2k.png" class="img-fluid"></p>
+<p>We observe similar results for our second speeches pilot, which show substantially higher ICC2k scores when they are estimated separately for each political spectrum category.</p>
+<p><img src="images/pilot_2_speeches2_ICC2k.png" class="img-fluid"></p>
+<p>We tentatively conclude that Ethnicity will have a substantially smaller effect on ratings of song lyrics than either Ethnicity or Political Spectrum will have on ratings of speeches. Thus, the sample for our main study data collection will be stratified by Ethnicity, and for political speeches, it will also be stratified by political affiliation.</p>
+</section>
+<section id="estimating-the-number-of-raters" class="level3" data-number="1.1.2">
+<h3 data-number="1.1.2" class="anchored" data-anchor-id="estimating-the-number-of-raters"><span class="header-section-number">1.1.2</span> Estimating the number of raters</h3>
+<p>The results from our bootstrapping procedure show adequate ICC2k scores with 15 ratings for lyrics, in both ICC2k scores, and correlations between subsample means and the overall mean.</p>
+<p><img src="images/pilot_2_lyrics_rater_N.png" class="img-fluid"></p>
+<p>For both samples in our speech pilots, we observe a bimodal distribution in ICC2k scores, with peaks nearing our threshold, but also around 0.</p>
+<p>Our sample of annotators in our first speeches pilot were stratified by Ethncitiy. Our bootstrapping analysis shows sufficiently high correlations between subsample means and the overall mean at around 40 ratings, however, ICC2k scores do not reach sufficiently high ICC2k scores even with 50 ratings.</p>
+<p><img src="images/pilot_2_speeches1_rater_N.png" class="img-fluid"></p>
+<p>Our sample of annotators in our first speeches pilot were stratified by political affiliation. We observe a similar pattern, where the correlations between subsample means and the overall mean reach our threshold 35 ratings, but ICC2k scores are not sufficiently high even with 50 ratings.</p>
+<p><img src="images/pilot_2_speeches2_rater_N.png" class="img-fluid"></p>
+<p>We thus proceed with a target median 15 ratings per song lyric, and median 40 ratings per political speech.</p>
 
 
 </section>
+</section>
+</section>
 
-<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" data-line-spacing="2" role="list">
-<div id="ref-demetriou2024towards" class="csl-entry" role="listitem">
-Demetriou, A. M., Kim, J., Manolios, S., &amp; Liem, C. (2024). Towards estimating personal values in song lyrics. <em>ISMIR</em>, 137–145.
-</div>
-</div></section></div></main> <!-- /main -->
+</main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
 window.document.addEventListener("DOMContentLoaded", function (event) {
   const toggleBodyColorMode = (bsSheetEl) => {

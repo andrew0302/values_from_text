@@ -20,7 +20,7 @@ values <- c("POWER", "ACHIEVEMENT", "HEDONISM",
 # load subsample lists
 file_path <- here("_data", "_intermediary_data")
 
-wave_2_dfs <- readRDS(here("_data", "_raw_data", "wave_2", "wave_2_dfs.RDS"))
+wave_2_dfs <- readRDS(here("_data", "_participant_scores", "wave_2", "wave_2_dfs.RDS"))
 
 wave_2_dfs <- lapply(wave_2_dfs, function(df){
   df %>% 

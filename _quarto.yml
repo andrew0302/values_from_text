@@ -7,7 +7,7 @@ bibliography: references.bib
 csl: apa.csl
 
 website:
-  title: "Values from Text"
+  title: "Estimating Personal Values in Text"
   navbar:
     left:
       - href: index.qmd

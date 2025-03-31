@@ -54,24 +54,24 @@ plot_grid(
   plots[[1]]+xlim(.5, 1), #overall
   plot_grid(plots[[2]]+xlim(.6, 1), plots[[3]]+xlim(.6, 1), plots[[4]]+xlim(.6, 1), plots[[5]]+xlim(.6, 1)), #by ethnicity
   ncol = 1)
-ggsave(here("wave_2", "_images", "wave_2_lyrics_ICC2k.png"), 
-       dpi = "retina", width = 7, height = 7)
+# ggsave(here("wave_2", "_images", "wave_2_lyrics_ICC2k.png"), 
+#        dpi = "retina", width = 7, height = 7)
 
 plots <- wave_2_speeches1_agreement_plots
 plot_grid(
   plots[[1]], #overall
   plot_grid(plots[[2]], plots[[3]], plots[[4]], plots[[5]]), #by ethnicity
   ncol = 1)
-ggsave(here("wave_2", "_images", "wave_2_speeches1_ICC2k.png"), 
-       dpi = "retina", width = 7, height = 7)
+# ggsave(here("wave_2", "_images", "wave_2_speeches1_ICC2k.png"), 
+#        dpi = "retina", width = 7, height = 7)
 
 plots <- wave_2_speeches2_agreement_plots
 plot_grid(
   plots[[1]], #overall
   plot_grid(plots[[2]], plots[[3]], plots[[4]]), #by ethnicity
   ncol = 1)
-ggsave(here("wave_2", "_images", "wave_2_speeches2_ICC2k.png"), 
-       dpi = "retina", width = 7, height = 7)
+# ggsave(here("wave_2", "_images", "wave_2_speeches2_ICC2k.png"), 
+#        dpi = "retina", width = 7, height = 7)
 ```
 
 

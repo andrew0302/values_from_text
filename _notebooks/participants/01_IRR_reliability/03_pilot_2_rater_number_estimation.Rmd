@@ -59,27 +59,27 @@ pilot_2_speeches2_agreement_plots <- plot_summary_by_metric(pilot_2_likert_summa
 ```{r}
 plots <- pilot_2_lyrics_agreement_plots
 plot_grid(
-  plots[[4]], #overall
-  plot_grid(plots[[1]], plots[[2]], plots[[3]], plots[[6]]), #by ethnicity
+  plots[[1]], #overall
+  plot_grid(plots[[2]], plots[[3]], plots[[4]], plots[[5]]), #by ethnicity
   ncol = 1)
-ggsave(here("wave_2", "_images", "pilot_2_lyrics_ICC2k.png"), 
-       dpi = "retina", width = 7, height = 7)
+
+ggsave(here("images", "pilot_2_lyrics_ICC2k.png"), dpi = "retina")
 
 plots <- pilot_2_speeches1_agreement_plots
 plot_grid(
-  plots[[4]], #overall
-  plot_grid(plots[[1]], plots[[2]], plots[[3]], plots[[6]]), #by ethnicity
+  plots[[1]], #overall
+  plot_grid(plots[[2]], plots[[3]], plots[[4]], plots[[5]]), #by ethnicity
   ncol = 1)
-ggsave(here("wave_2", "_images", "pilot_2_speeches1_ICC2k.png"), 
-       dpi = "retina", width = 7, height = 7)
+
+ggsave(here("images", "pilot_2_speeches1_ICC2k.png"), dpi = "retina")
 
 plots <- pilot_2_speeches2_agreement_plots
 plot_grid(
-  plots[[4]], # overall
-  plot_grid(plots[[1]], plots[[2]], plots[[3]]), 
+  plots[[1]], # overall
+  plot_grid(plots[[2]], plots[[3]], plots[[4]]), 
   ncol = 1) #by spectrum
-ggsave(here("wave_2", "_images", "pilot_2_speeches2_ICC2k.png"), 
-       dpi = "retina", width = 7, height = 7)
+
+ggsave(here("images", "pilot_2_speeches2_ICC2k.png"), dpi = "retina")
 ```
 
 ```{r}
@@ -95,7 +95,7 @@ plot_raters <- function(df, metric, name){
   df %>%
     ggplot(aes(x = {{metric}}, color = as.factor(n))) +
     geom_line(stat = "density", alpha = .5, size = .75) +
-    xlim(0, 1) +
+    xlim(-.4, 1) +
     scale_color_viridis_d(option = "plasma") +
     labs(
       #title = paste("     ", name, "by Rater N\n"), 
@@ -112,6 +112,7 @@ p1 <- plot_grid(
     ggtitle("Pilot: Lyrics"), 
   plot_raters(df, metric = ICC2k, name = "ICC2k") +  geom_vline(xintercept = 0.75, color = "red", size = .4 ), 
   ncol = 1)
+ggsave(here("images", "pilot_2_lyrics_rater_N.png"), dpi = "retina")
 
 df <- pilot_2_speeches1_by_row_dfs[[1]] %>% filter(n >= 25)
 p2 <- plot_grid(
@@ -120,6 +121,7 @@ p2 <- plot_grid(
     ggtitle("Pilot: Speeches1"),
   plot_raters(df, metric = ICC2k, name = "ICC2k") +  geom_vline(xintercept = 0.75, color = "red", size = .4 ), 
   ncol = 1)
+ggsave(here("images", "pilot_2_speeches1_rater_N.png"), dpi = "retina")
 
 df <- pilot_2_speeches2_by_row_dfs[[1]] %>% filter(n >= 25)
 p3 <- plot_grid(
@@ -128,32 +130,10 @@ p3 <- plot_grid(
     ggtitle("Pilot: Speeches2"),
   plot_raters(df, metric = ICC2k, name = "ICC2k") +  geom_vline(xintercept = 0.75, color = "red", size = .4 ), 
   ncol = 1)
+ggsave(here("images", "pilot_2_speeches2_rater_N.png"), dpi = "retina")
 
 p1
 p2
 p3
-
-# plot_grid(p1, p2, p3, ncol = 1)
-# ggsave(here("wave_2", "_images", "pilot_2_rater_number.png"), 
-#        dpi = "retina", width = 7, height = 9)
-```
-
-```{r}
-p1 <- plot_raters(pilot_2_lyrics_by_row_dfs[[1]] %>% filter(n <= 25), 
-                  metric = ICC2k, name = "ICC2k") +  
-  geom_vline(xintercept = 0.75, color = "red", size = .4 ) + 
-  ggtitle("lyrics")
-
-p2 <- plot_raters(pilot_2_speeches2_by_row_dfs[[1]] %>% filter(n >= 30), 
-                  metric = ICC2k, name = "ICC2k") +  
-  geom_vline(xintercept = 0.75, color = "red", size = .4 ) +
-  ggtitle("speeches1")
-
-p3 <- plot_raters(pilot_2_speeches2_by_row_dfs[[1]] %>% filter(n >= 30), 
-                  metric = ICC2k, name = "ICC2k") +  
-  geom_vline(xintercept = 0.75, color = "red", size = .4 ) +
-  ggtitle("speeches1")
-
-plot_grid(p1, p2, p3, ncol = 1)
 ```
 
