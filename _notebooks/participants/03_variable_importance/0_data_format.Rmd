@@ -1,0 +1,230 @@
+---
+title: "data format basic"
+---
+
+```{r}
+library("tidyverse")
+library("here")
+
+# Schwartz value inventory
+values <- c("POWER", "ACHIEVEMENT", "HEDONISM",  
+            "STIMULATION", "SELF", "UNIVERSALISM", 
+            "BENEVOLENCE", "TRADITION",  
+            "CONFORMITY", "SECURITY")
+```
+
+```{r}
+# read in wave_2 wave data
+path <- here("_data", "_participant_scores", "wave_2")
+wave_2_dfs <- readRDS(here(path, "wave_2_dfs.RDS"))
+
+# merge wave 2 lists
+wave_2_dfs <- list(
+  wave_2_lyrics = bind_rows(wave_2_dfs$lyrics1, wave_2_dfs$lyrics2), 
+  wave_2_speeches = bind_rows(wave_2_dfs$speeches1, wave_2_dfs$speeches2)
+)
+
+rm(path)
+```
+
+```{r}
+# treat values as a fixed effect by pivoting to long
+pivot_value_vars <- function(df){
+  df <- df %>% pivot_longer(
+    cols = all_of(values), 
+    names_to = 'value', values_to = 'rating')
+}
+
+wave_2_dfs <- lapply(wave_2_dfs, pivot_value_vars)
+
+rm(pivot_value_vars)
+```
+
+```{r}
+# select relevant variables
+# add NAs to Ethnicity
+wave_2_dfs[1] <- lapply(wave_2_dfs[1], function(df){
+  df %>% select(
+    participant_ID, item_ID, 
+    Age, Ethnicity,Sex, 
+    w, f, c, value, rating) %>%
+    filter(item_ID != "attention")
+}) 
+
+wave_2_dfs[2] <- lapply(wave_2_dfs[2], function(df){
+  df %>% select(
+    participant_ID, item_ID, `Political spectrum (us)`, 
+    Age, Ethnicity, Sex, 
+    w, f, c, value, rating) %>%
+    filter(item_ID != "attention")
+}) 
+
+wave_2_dfs <- lapply(wave_2_dfs, function(df){
+  df %>% mutate(
+    Ethnicity = case_when(
+    # Prolific.co (participant platform) doesn't have a single "ASIAN" category
+    Ethnicity == "South Asian" ~ "Asian", 
+    Ethnicity == "East Asian" ~ "Asian", 
+    Ethnicity == "South East Asian" ~ "Asian", 
+    Ethnicity == "CONSENT_REVOKED" ~ NA, 
+    .default = Ethnicity
+    ))
+})
+```
+
+
+```{r}
+# import lyric data
+path <- here("_data", "_primary_data")
+lyrics_dt <- readRDS(here(path,"public_lyrics_dt.RDS"))
+
+# rename columns so they match participant df
+lyrics_dt <- lyrics_dt %>% 
+  #rename(item_ID = mxm_id) %>%
+  select(item_ID, lyrics_topic, 
+         artist_playlist_frequency_bin, artist_topic, 
+         release_year_bin)
+```
+
+```{r}
+# merge lyrics metadata
+wave_2_dfs[1] <- lapply(wave_2_dfs[1], function(df){
+  df <- merge(df, lyrics_dt, by = "item_ID", all.x = T, all.y = F)
+})
+
+rm(lyrics_dt)
+```
+
+```{r}
+# import speech data
+speech_df <- readRDS(here(path, "speech_df.RDS"))
+speech_df <- speech_df %>% rename(item_ID = id) %>%
+  select(item_ID, president, url, year, party) %>%
+  mutate(url = gsub("https://www.presidency.ucsb.edu/documents/", "", url))
+
+rm(path)
+```
+
+```{r}
+# merge speeches metadata
+wave_2_dfs[2] <- lapply(wave_2_dfs[2], function(df){
+  df <- merge(df, speech_df, by = "item_ID", all.x = T, all.y = F)
+})
+
+rm(speech_df)
+```
+
+```{r}
+# recode confidence scores
+wave_2_dfs <- lapply(wave_2_dfs, function(df){
+  df <- df %>% mutate(c = case_match(c, 
+    "Completely Confident" ~ 5,
+    "Somewhat Confident" ~ 4, 
+    "Neither Confident nor Unconfident" ~ 3,
+    "Somewhat Unconfident" ~ 2, 
+    "Completely Unconfident" ~ 1))
+  })
+```
+
+```{r}
+format_columns <- function(df_list){
+  df_list <- lapply(df_list, function(df){
+    df %>% mutate(
+      Age = as.numeric(Age), 
+      Ethnicity = as.factor(Ethnicity), 
+      Sex = as.factor(Sex), 
+      w = as.factor(w), 
+      f = as.factor(f), 
+      c = as.numeric(c), 
+      value = as.factor(value), 
+      rating = as.numeric(rating), 
+    )
+  })
+}
+
+wave_2_dfs <- format_columns(wave_2_dfs)
+
+rm(format_columns)
+```
+
+```{r}
+format_lyrics_columns <- function(df_list){
+  df_list <- lapply(df_list, function(df){
+    df %>% mutate(
+      lyrics_topic = as.factor(lyrics_topic), 
+      artist_playlist_frequency_bin = as.factor(artist_playlist_frequency_bin), 
+      artist_topic = as.factor(artist_topic), 
+      release_year_bin = as.factor(release_year_bin)
+    )
+  })
+}
+
+wave_2_dfs[1] <- format_lyrics_columns(wave_2_dfs[1])
+
+rm(format_lyrics_columns)
+```
+
+$ lyrics_topic                 : int  6 6 6 6 6 6 6 6 6 6 ...
+ $ artist_playlist_frequency_bin: int  6 6 6 6 6 6 6 6 6 6 ...
+ $ artist_topic                 : int  23 23 23 23 23 23 23 23 23 23 ...
+ $ release_year_bin             : int  5 5 5 5 5 5 5 5 5 5 ...
+
+```{r}
+format_speeches_columns <- function(df_list){
+  df_list <- lapply(df_list, function(df){
+    df %>% mutate(
+      president = as.factor(president), 
+      year = as.numeric(year), 
+      party = as.factor(party)
+    )
+  })
+}
+
+
+wave_2_dfs[2] <- format_speeches_columns(wave_2_dfs[2])
+wave_2_dfs[2] <- lapply(wave_2_dfs[2], function(df){
+  df %>% mutate(`Political spectrum (us)` = as.factor(`Political spectrum (us)`))
+})
+
+rm(format_speeches_columns)
+```
+
+```{r}
+# rename lyrics variables
+rename_vars <- function(df){
+  df %>% rename(
+      familiar = f, 
+      writer_is_speaker = w, 
+      year = release_year_bin, 
+      popular = artist_playlist_frequency_bin, 
+      genre = artist_topic)
+}
+
+
+wave_2_dfs[1] <- lapply(wave_2_dfs[1], rename_vars)
+
+rm(rename_vars)
+```
+
+```{r}
+wave_2_dfs[2] <- lapply(wave_2_dfs[2], function(df){
+  df %>% rename(
+    speech = url,
+    perceived_party = w, 
+    familiar = f
+    )
+})
+
+wave_2_dfs[[2]] <- wave_2_dfs[[2]] %>% rename(spectrum = `Political spectrum (us)`)
+```
+
+
+```{r}
+path <- here("_data", "_intermediary_data")
+saveRDS(wave_2_dfs, here(path, "wave_2_dfs.RDS"))
+```
+
+```{r}
+rm(path,wave_2_dfs, values)
+```
+

@@ -1,0 +1,89 @@
+---
+title: "R Notebook"
+---
+
+```{r}
+library("here")         # file logistics
+library("lme4")         # mixed effects metric
+library("lmerTest")     # p values
+library("performance")  # model performance for lmer
+library("ordinal")      # mixed effects ordinal
+library("broom.mixed")  # tidy model output
+library("tidyverse")    # code logistics
+library("sjPlot")       # plot mixed effects model output
+library("emmeans")      # estimate marginal means
+
+# Schwartz value inventory
+values <- c("POWER", "ACHIEVEMENT", "HEDONISM",  
+            "STIMULATION", "SELF", "UNIVERSALISM", 
+            "BENEVOLENCE", "TRADITION",  
+            "CONFORMITY", "SECURITY")
+
+options(scipen = 999)
+# TO "CENTER" CATEGORICAL PREDICTORS, set the coding to contr.sum (deviations from the average)
+options(contrasts = c("contr.sum", "contr.poly"))
+```
+
+
+```{r}
+# read in data
+path <- here("_data", "_intermediary_data")
+wave_2_dfs <- readRDS(here(path, "wave_2_dfs.RDS"))
+```
+
+```{r}
+# create ordered factor and logistic response variables
+wave_2_dfs <- lapply(wave_2_dfs, function(df){
+  df %>% mutate(
+    orating = factor(rating, ordered = TRUE),
+    brating = (rating+1)/8,
+  )
+})
+```
+
+# model specs
+
+```{r}
+spec_lyrics <- as.formula("rating ~ (1|participant_ID) +  (1|item_ID) + value + Ethnicity * genre")
+spec_speeches1 <- as.formula("rating ~ (1|participant_ID) +  (1|item_ID) + value + Ethnicity * party")
+spec_speeches2 <- as.formula("rating ~ (1|participant_ID) +  (1|item_ID) + value + spectrum * party")
+```
+
+# compute models
+
+
+```{r}
+df <- wave_2_dfs$wave_2_lyrics
+
+wave_2_lyrics_mods <- list(
+  lmer = lmer(spec_lyrics, df, REML = TRUE), 
+  clmm = clmm(spec_lyrics, df%>%mutate(rating = factor(rating, ordered = TRUE))), 
+  glmer = glmer(spec_lyrics, df%>%mutate(rating = (rating+1)/8), family=binomial()))
+
+saveRDS(wave_2_lyrics_mods, here("_data", "_intermediary_data", "models", "wave_2_lyrics_mods.RDS"))
+```
+
+```{r}
+df <- wave_2_dfs$wave_2_speeches
+
+wave_2_speeches_ethnicity_mods <- list(
+  lmer = lmer(spec_speeches1, df, REML = TRUE), 
+  clmm = clmm(spec_speeches1, df%>%mutate(rating = factor(rating, ordered = TRUE))), 
+  glmer = glmer(spec_speeches1, df%>%mutate(rating = (rating+1)/8), family=binomial()))
+
+saveRDS(wave_2_speeches_ethnicity_mods, here("_data", "_intermediary_data", "models", "wave_2_speeches_ethnicity_mods.RDS"))
+```
+
+```{r}
+df <- wave_2_dfs$wave_2_speeches
+
+wave_2_speeches_spectrum_mods <- list(
+  lmer = lmer(spec_speeches2, df, REML = TRUE), 
+  clmm = clmm(spec_speeches2, df%>%mutate(rating = factor(rating, ordered = TRUE))), 
+  glmer = glmer(spec_speeches2, df%>%mutate(rating = (rating+1)/8), family=binomial()))
+
+saveRDS(wave_2_speeches_spectrum_mods, here("_data", "_intermediary_data", "models", "wave_2_speeches_spectrum_mods.RDS"))
+```
+
+
+
