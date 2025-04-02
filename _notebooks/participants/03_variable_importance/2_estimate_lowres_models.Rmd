@@ -52,42 +52,32 @@ spec_speeches2 <- as.formula("rating ~ (1|participant_ID) +  (1|item_ID) + value
 # compute models
 
 ```{r}
-wave_2_lyrics_lowres_mods <- lapply(
-  list(pilot_2_lyrics = wave_2_dfs$pilot_2_lyrics, 
-       wave_2_lyrics = wave_2_dfs$wave_2_lyrics), 
-  function(df){
-    results <- list(
+df <- wave_2_dfs$wave_2_lyrics
+
+wave_2_lyrics_lowres_mods <- list(
       clmm = clmm(spec_lyrics, df%>%mutate(rating = cut(rating, breaks = c(-1,0,6,7))), Hess=T), 
       glmer = glmer(spec_lyrics, df%>%mutate(rating = ifelse(is.na(rating),0,1)), family=binomial())
     )
-  })
 
 saveRDS(wave_2_lyrics_lowres_mods, here("_data", "_intermediary_data", "models", "wave_2_lyrics_lowres_mods.RDS"))
 ```
 
 ```{r}
-wave_2_speeches_ethnicity_lowres_mods <- lapply(
-  list(pilot_2_speeches1 = wave_2_dfs$pilot_2_speeches1, 
-       wave_2_speeches = wave_2_dfs$wave_2_speeches), 
-  function(df){
-    results <- list(
+df <- wave_2_dfs$wave_2_speeches
+
+wave_2_speeches_ethnicity_lowres_mods <- list(
       clmm = clmm(spec_speeches1, df%>%mutate(rating = cut(rating, breaks = c(-1,0,6,7))), Hess=T), 
       glmer = glmer(spec_speeches1, df%>%mutate(rating = ifelse(is.na(rating),0,1)), family=binomial())
     )
-  })
+
 saveRDS(wave_2_speeches_ethnicity_lowres_mods, here("_data", "_intermediary_data", "models", "wave_2_speeches_ethnicity_lowres_mods.RDS"))
 ```
 
 ```{r}
-wave_2_speeches_spectrum_lowres_mods <- lapply(
-  list(pilot_2_speeches_2 = wave_2_dfs$pilot_2_speeches2, 
-       wave_2_speeches = wave_2_dfs$wave_2_speeches), 
-  function(df){
-    results <- list(
+wave_2_speeches_spectrum_lowres_mods <- list(
       clmm = clmm(spec_speeches2, df%>%mutate(rating = cut(rating, breaks = c(-1,0,6,7))), Hess=T), 
       glmer = glmer(spec_speeches2, df%>%mutate(rating = ifelse(is.na(rating),0,1)), family=binomial())
     )
-  })
 
 saveRDS(wave_2_speeches_spectrum_lowres_mods, here("_data", "_intermediary_data", "models", "wave_2_speeches_spectrum_lowres_mods.RDS"))
 ```
