@@ -25,11 +25,9 @@ options(scipen = 999, contrasts = c("contr.sum", "contr.poly"))
 
 ```{r}
 # read in data
-wave_1_dfs <- readRDS(here("_data", "_intermediary_data", "wave_1_dfs.RDS"))
 wave_2_dfs <- readRDS(here("_data", "_intermediary_data", "wave_2_dfs.RDS"))
 
 # read in likert models
-wave_1_mods <- readRDS(here("_data", "_intermediary_data", "models", "wave_1_mods.RDS"))
 wave_2_lyrics_mods <- readRDS(here("_data", "_intermediary_data", "models", "wave_2_lyrics_mods.RDS"))
 wave_2_speeches_ethnicity_mods <- readRDS(here("_data", "_intermediary_data", "models", "wave_2_speeches_ethnicity_mods.RDS"))
 wave_2_speeches_spectrum_mods <- readRDS(here("_data", "_intermediary_data", "models", "wave_2_speeches_spectrum_mods.RDS"))
@@ -39,7 +37,6 @@ wave_2_lyrics_lowres_mods  <- readRDS(here("_data", "_intermediary_data", "model
 wave_2_speeches_ethnicity_lowres_mods <- readRDS(here("_data", "_intermediary_data", "models", "wave_2_speeches_ethnicity_lowres_mods.RDS"))
 wave_2_speeches_spectrum_lowres_mods <- readRDS(here("_data", "_intermediary_data", "models", "wave_2_speeches_spectrum_lowres_mods.RDS"))
 ```
-
 
 
 ```{r}
@@ -71,38 +68,32 @@ predict_by_rating <- function(df, mod){
 ```
 
 ```{r}
-wave_1_yhat_dfs <- list(
-  pilot_1_lyrics = predict_by_rating(wave_1_dfs$pilot_1_lyrics, wave_1_mods$pilot_1_lyrics), 
-  wave_1_lyrics = predict_by_rating(wave_1_dfs$wave_1_lyrics, wave_1_mods$wave_1_lyrics))
-```
-
-```{r}
-#plot_observed_predicted <- function(df_list, column){
-df_list <- wave_1_yhat_dfs
-column <- "value"
-
-  lapply(seq_along(df_list), function(df, n, i){
-    
-    y <- df[[i]]$y
-    yhat <- df[[i]]$yhat
-  
-    tss <- sum((y-mean(y))^2)
-    rss <- sum((y-yhat)^2)
-    r2 <- 1-rss/tss
-     
-    plot_1 <- df[[i]] |>
-      mutate(y = y, yhat = yhat) |>
-      ggplot(aes(y,yhat)) +
-      geom_point(alpha = .03) +
-      geom_abline(intercept = 0, slope = 1, color = "red") +
-      labs(title = paste(collapse=" ", c(n[[i]], r2))) +
-      theme_minimal()
-    
-    plot_2 <- plot_1 + facet_wrap(~.data[[column]])
-    
-    plot_grid(plot_1, plot_2)
-    
-  }, n = names(df_list), df = df_list)
+# #plot_observed_predicted <- function(df_list, column){
+# df_list <- wave_1_yhat_dfs
+# column <- "value"
+# 
+#   lapply(seq_along(df_list), function(df, n, i){
+#     
+#     y <- df[[i]]$y
+#     yhat <- df[[i]]$yhat
+#   
+#     tss <- sum((y-mean(y))^2)
+#     rss <- sum((y-yhat)^2)
+#     r2 <- 1-rss/tss
+#      
+#     plot_1 <- df[[i]] |>
+#       mutate(y = y, yhat = yhat) |>
+#       ggplot(aes(y,yhat)) +
+#       geom_point(alpha = .03) +
+#       geom_abline(intercept = 0, slope = 1, color = "red") +
+#       labs(title = paste(collapse=" ", c(n[[i]], r2))) +
+#       theme_minimal()
+#     
+#     plot_2 <- plot_1 + facet_wrap(~.data[[column]])
+#     
+#     plot_grid(plot_1, plot_2)
+#     
+#   }, n = names(df_list), df = df_list)
 ```
 
 ```{r}
@@ -129,32 +120,23 @@ predict_by_rating <- function(df, mods){
 }
 ```
 
-```{r}
-pilot_2_lyrics_yhat_dfs <- predict_by_rating(wave_2_dfs$pilot_2_lyrics, wave_2_lyrics_mods$pilot_2_lyrics)
-saveRDS(pilot_2_lyrics_yhat_dfs, here("_data", "_intermediary_data", "models", "pilot_2_lyrics_yhat_dfs.RDS"))
 
-pilot_2_speeches1_yhat_dfs <- predict_by_rating(wave_2_dfs$pilot_2_speeches1, wave_2_speeches_ethnicity_mods$pilot_2_speeches1)
-saveRDS(pilot_2_speeches1_yhat_dfs, here("_data", "_intermediary_data", "models", "pilot_2_speeches1_yhat_dfs.RDS"))
-
-pilot_2_speeches2_yhat_dfs <- predict_by_rating(wave_2_dfs$pilot_2_speeches2, wave_2_speeches_spectrum_mods$pilot_2_speeches_2)
-saveRDS(pilot_2_speeches2_yhat_dfs, here("_data", "_intermediary_data", "models", "pilot_2_speeches2_yhat_dfs.RDS"))
-```
 
 ```{r}
-# wave_2_lyrics_yhat_dfs <- predict_by_rating(wave_2_dfs$wave_2_lyrics, wave_2_lyrics_mods$wave_2_lyrics)
-# saveRDS(wave_2_lyrics_yhat_dfs, here("_data", "_intermediary_data", "models", "wave_2_lyrics_yhat_dfs.RDS"))
+wave_2_lyrics_yhat_dfs <- predict_by_rating(wave_2_dfs$wave_2_lyrics, wave_2_lyrics_mods)
+saveRDS(wave_2_lyrics_yhat_dfs, here("_data", "_intermediary_data", "models", "wave_2_lyrics_yhat_dfs.RDS"))
 
-wave_2_lyrics_yhat_dfs <- readRDS(here("_data", "_intermediary_data", "models", "wave_2_lyrics_yhat_dfs.RDS"))
+#wave_2_lyrics_yhat_dfs <- readRDS(here("_data", "_intermediary_data", "models", "wave_2_lyrics_yhat_dfs.RDS"))
 
-# wave_2_speeches_ethnicity_yhat_dfs <- predict_by_rating(wave_2_dfs$wave_2_speeches, wave_2_speeches_ethnicity_mods$wave_2_speeches)
-# saveRDS(wave_2_speeches_ethnicity_yhat_dfs, here("_data", "_intermediary_data", "models", "wave_2_speeches_ethnicity_yhat_dfs.RDS"))
+wave_2_speeches_ethnicity_yhat_dfs <- predict_by_rating(wave_2_dfs$wave_2_speeches, wave_2_speeches_ethnicity_mods)
+saveRDS(wave_2_speeches_ethnicity_yhat_dfs, here("_data", "_intermediary_data", "models", "wave_2_speeches_ethnicity_yhat_dfs.RDS"))
 
-wave_2_speeches_ethnicity_yhat_dfs <- readRDS(here("_data", "_intermediary_data", "models", "wave_2_speeches_ethnicity_yhat_dfs.RDS"))
+#wave_2_speeches_ethnicity_yhat_dfs <- readRDS(here("_data", "_intermediary_data", "models", "wave_2_speeches_ethnicity_yhat_dfs.RDS"))
 
-# wave_2_speeches_spectrum_yhat_dfs <- predict_by_rating(wave_2_dfs$wave_2_speeches, wave_2_speeches_spectrum_mods$wave_2_speeches)
-# saveRDS(wave_2_speeches_spectrum_yhat_dfs, here("_data", "_intermediary_data", "models", "wave_2_speeches_spectrum_yhat_dfs.RDS"))
+wave_2_speeches_spectrum_yhat_dfs <- predict_by_rating(wave_2_dfs$wave_2_speeches, wave_2_speeches_spectrum_mods)
+saveRDS(wave_2_speeches_spectrum_yhat_dfs, here("_data", "_intermediary_data", "models", "wave_2_speeches_spectrum_yhat_dfs.RDS"))
 
-wave_2_speeches_spectrum_yhat_dfs <- readRDS(here("_data", "_intermediary_data", "models", "wave_2_speeches_spectrum_yhat_dfs.RDS"))
+#wave_2_speeches_spectrum_yhat_dfs <- readRDS(here("_data", "_intermediary_data", "models", "wave_2_speeches_spectrum_yhat_dfs.RDS"))
 ```
 
 ```{r}
@@ -187,9 +169,9 @@ plot_observed_predicted <- function(df_list, column){
 ```
 
 ```{r}
-plot_observed_predicted(pilot_2_lyrics_yhat_dfs, "value")
-plot_observed_predicted(pilot_2_speeches1_yhat_dfs, "value")
-plot_observed_predicted(pilot_2_speeches2_yhat_dfs, "value")
+# plot_observed_predicted(pilot_2_lyrics_yhat_dfs, "value")
+# plot_observed_predicted(pilot_2_speeches1_yhat_dfs, "value")
+# plot_observed_predicted(pilot_2_speeches2_yhat_dfs, "value")
 ```
 
 
@@ -201,7 +183,7 @@ plot_observed_predicted(wave_2_speeches_spectrum_yhat_dfs, "value")
 
 ```{r}
 df <- wave_2_dfs$wave_2_lyrics
-mod <- wave_2_lyrics_lowres_mods$wave_2_lyrics$glmer
+mod <- wave_2_lyrics_lowres_mods$glmer
 
 df <- mod@frame
 y <- df$rating
@@ -222,7 +204,7 @@ df %>%
 ```
 
 ```{r}
-mod <- wave_2_speeches_ethnicity_lowres_mods$wave_2_speeches$glmer
+mod <- wave_2_speeches_ethnicity_lowres_mods$glmer
 
 df <- mod@frame
 y <- df$rating
@@ -241,7 +223,7 @@ df %>%
         scale_y_continuous(limits = c(-.5, 1.5))+
         theme_minimal()
 
-mod <- wave_2_speeches_spectrum_lowres_mods$wave_2_speeches$glmer
+mod <- wave_2_speeches_spectrum_lowres_mods$glmer
 
 df <- mod@frame
 y <- df$rating
@@ -262,7 +244,7 @@ df %>%
 ```
 
 ```{r}
-mod <- wave_2_lyrics_lowres_mods$wave_2_lyrics$clmm
+mod <- wave_2_lyrics_lowres_mods$clmm
 
 df <- model.frame(mod)
 df <- df %>% mutate(y = case_when(
@@ -289,7 +271,7 @@ df %>%
 ```
 
 ```{r}
-mod <- wave_2_speeches_ethnicity_lowres_mods$wave_2_speeches$clmm
+mod <- wave_2_speeches_ethnicity_lowres_mods$clmm
 
 df <- model.frame(mod)
 df <- df %>% mutate(y = case_when(
@@ -316,7 +298,7 @@ df %>%
 ```
 
 ```{r}
-mod <- wave_2_speeches_spectrum_lowres_mods$wave_2_speeches$clmm
+mod <- wave_2_speeches_spectrum_lowres_mods$clmm
 
 df <- model.frame(mod)
 df <- df %>% mutate(y = case_when(
