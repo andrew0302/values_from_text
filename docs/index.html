@@ -123,6 +123,7 @@ ul.task-list li input[type="checkbox"] {
   <li><a href="#initial-validation" id="toc-initial-validation" class="nav-link" data-scroll-target="#initial-validation">Initial Validation</a></li>
   <li><a href="#inter-rater-reliability" id="toc-inter-rater-reliability" class="nav-link" data-scroll-target="#inter-rater-reliability">Inter-rater reliability</a></li>
   <li><a href="#mds-plots-of-text-annotations" id="toc-mds-plots-of-text-annotations" class="nav-link" data-scroll-target="#mds-plots-of-text-annotations">MDS plots of text annotations</a></li>
+  <li><a href="#model-approach-selection" id="toc-model-approach-selection" class="nav-link" data-scroll-target="#model-approach-selection">Model approach selection</a></li>
   </ul></li>
   </ul></li>
   </ul>
@@ -158,11 +159,14 @@ ul.task-list li input[type="checkbox"] {
 <h3 class="anchored" data-anchor-id="determining-annotator-sample-strata">Determining annotator sample strata</h3>
 <p>We estimate ICC2k overall, and for subgroups separately. For our lyrics pilot, we observe overall ‘good’ ICC2k estimates, with the exception of <code>SELF-DIRECTION</code>, which shows a large confidence interval that exceeds our threshold. These ICC2k scores overall do not appear to improve when we estimate them separately for each Ethnicity.</p>
 <p><img src="images/pilot_2_lyrics_ICC2k.png" class="img-fluid"></p>
-<p>This is not the case for our two pilots which used political speech data. Overall, agreement on the speech data was unusably poor, however it appeared to improve when estimated separately for each ethnicity, with most values showing ICC2k scores over the threshold.</p>
+<p>This is not the case for our two pilots which used political speech data. Overall, agreement on the speech data was unusably poor, however it appeared to improve when estimated separately for each ethnicity, with most values showing ICC2k scores over the threshold. Note that estimation for <code>HEDONISM</code> is generally poor in subsamples, and that <code>STIMULATION</code> is poor in some subsamples.</p>
 <p><img src="images/pilot_2_speeches1_ICC2k.png" class="img-fluid"></p>
 <p>We observe similar results for our second speeches pilot, which show substantially higher ICC2k scores when they are estimated separately for each political spectrum category.</p>
 <p><img src="images/pilot_2_speeches2_ICC2k.png" class="img-fluid"></p>
+<section id="conclusion" class="level4">
+<h4 class="anchored" data-anchor-id="conclusion">Conclusion</h4>
 <p>We tentatively conclude that Ethnicity will have a substantially smaller effect on ratings of song lyrics than either Ethnicity or Political Spectrum will have on ratings of speeches. Thus, the sample for our main study data collection will be stratified by Ethnicity, and for political speeches, it will also be stratified by political affiliation.</p>
+</section>
 </section>
 <section id="estimating-the-number-of-raters" class="level3">
 <h3 class="anchored" data-anchor-id="estimating-the-number-of-raters">Estimating the number of raters</h3>
@@ -173,31 +177,58 @@ ul.task-list li input[type="checkbox"] {
 <p><img src="images/pilot_2_speeches1_rater_N.png" class="img-fluid"></p>
 <p>Our sample of annotators in our first speeches pilot were stratified by political affiliation. We observe a similar pattern, where the correlations between subsample means and the overall mean reach our threshold 35 ratings, but ICC2k scores are not sufficiently high even with 50 ratings.</p>
 <p><img src="images/pilot_2_speeches2_rater_N.png" class="img-fluid"></p>
-<p>We thus proceed with a target median 15 ratings per song lyric, and median 40 ratings per political speech.</p>
+<section id="conclusion-1" class="level4">
+<h4 class="anchored" data-anchor-id="conclusion-1">Conclusion</h4>
+<p>We thus proceed with a target median 15 ratings per song lyric excerpt. Based on bootstrapped correlations between subsamples and the overall sample, as well as budgetary constraints, we aim for median 40 ratings per political speech excerpt.</p>
+</section>
 </section>
 </section>
 <section id="main-study" class="level2">
 <h2 class="anchored" data-anchor-id="main-study">Main Study</h2>
 <section id="initial-validation" class="level3">
 <h3 class="anchored" data-anchor-id="initial-validation">Initial Validation</h3>
-<p>We take a first look at the SSVS by examining multidimensional scaling plots from participant self-ratings. We compare to an MDS plot from the correlation matrix reported in a landmark study. Although not identical, and not quite as circular we do observe most of the expected patterns.</p>
+<p>We take a first look at the SSVS by examining multidimensional scaling plots from participant self-ratings, and compare these to the canonical Schwartz circumplex illustration:</p>
+<p><img src="images/Schwartz_circle.png" class="img-fluid"></p>
+<p>We further compare to an MDS plot from the correlation matrix reported in a landmark study. In general, the aim of the test is to observe whether values appear next to the appropriate neighbor; note that absolute position is not relevant.</p>
+<p>Although not identical, and not quite as circular as expected, we do observe most of the expected patterns. As we also see in the landmark study, not every point aligns with the canonical illustration.</p>
 <p><img src="images/wave_2_participant_MDS.png" class="img-fluid"></p>
 </section>
 <section id="inter-rater-reliability" class="level3">
 <h3 class="anchored" data-anchor-id="inter-rater-reliability">Inter-rater reliability</h3>
-<p>In general we observe sufficient ICC2k scores , with no visible improvement when estimated by ethnicity or political leaning.</p>
-<p>ICC2k scores for lyrics ratings appear to be exceptionally high overall, and when estimated separately within Ethnic groups.</p>
+<p>In contrast to our pilot study, in general we observe sufficient ICC2k scores, with no visible improvement when estimated by ethnicity or political leaning.</p>
+<p>ICC2k scores for lyrics ratings appear to be exceptionally high overall, and when estimated separately within Ethnic groups, and do not seem to improve when estimated separately for each Ethnic group.</p>
 <p><img src="images/wave_2_lyrics_ICC2k.png" class="img-fluid"></p>
-<p>Ratings of political speeches exceed our threshold overall, though ratings do not always meet the threshold when estimated separately within Ethnic groups.</p>
+<p>Ratings of political speeches exceed our threshold overall, though ratings do not always meet the threshold when estimated separately within Ethnic groups. In general, the estimates are visibly worse than for lyrics. Once again, we see issues with <code>HEDONISM</code> being poorly estimated for one group, and <code>STIMULATION</code> is poorly estimated for another group.</p>
 <p><img src="images/wave_2_speeches1_ICC2k.png" class="img-fluid"></p>
 <p>We observe a similar pattern when separating groups by political affiliation.</p>
 <p><img src="images/wave_2_speeches2_ICC2k.png" class="img-fluid"></p>
 </section>
 <section id="mds-plots-of-text-annotations" class="level3">
 <h3 class="anchored" data-anchor-id="mds-plots-of-text-annotations">MDS plots of text annotations</h3>
+<p>When examining the MDS plots for our lyrics annotations, we generally see acceptable patterns with most values appearing next to appropriate neighbors, although <code>STIMULATION</code> and <code>HEDONISM</code> appear transposed, and <code>ACHEIVEMENT</code> shows a shift from the perimeter of the circumplex. These patterns are visibly worse for speeches, where we observe a strong shift for <code>HEDONISM</code> from the perimeter of the circumplex.</p>
 <p><img src="images/wave_2_lyrics_speeches_MDS.png" class="img-fluid"></p>
+</section>
+<section id="model-approach-selection" class="level3">
+<h3 class="anchored" data-anchor-id="model-approach-selection">Model approach selection</h3>
+<p>We then determine a general modelling approach in order to estimate the effect of Ethnicity on ratings of lyrics, and Ethnicity and Political spectrum on ratings of political speeches.</p>
+<p>To do so we plot the observed vs.&nbsp;predicted values and estimate a pseudo R^2, for three models:</p>
+<ul>
+<li>general linear mixed effects model (lmer)</li>
+<li>ordinal mixed effects model (clmm)</li>
+<li>generalized linear mixed effects logistic model (glmer)</li>
+</ul>
+<p>Model fit was slightly worse for Lyrics:</p>
+<p><img src="images/wave_2_lyrics_yhat_plots.png" class="img-fluid"></p>
+<p>than for speeches:</p>
+<p><img src="images/wave_2_speeches_ethnicity_yhat_plots.png" class="img-fluid"></p>
+<p>or for speeches with spectrum also being estimated in place of Ethnicity:</p>
+<p><img src="images/wave_2_speeches_spectrum_yhat_plots.png" class="img-fluid"></p>
+<section id="conclusion-2" class="level4">
+<h4 class="anchored" data-anchor-id="conclusion-2">Conclusion</h4>
+<p>Model fit was consistently worse for ordinal mixed effects models, vs.&nbsp;general or generalized linear mixed effects models. We thus proceed to our specification curve analysis using general mixed effects models for ease of interpretation and computation.</p>
 
 
+</section>
 </section>
 </section>
 </section>

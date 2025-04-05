@@ -16,7 +16,7 @@ We estimate ICC2k overall, and for subgroups separately. For our lyrics pilot, w
 
 ![](images/pilot_2_lyrics_ICC2k.png)
 
-This is not the case for our two pilots which used political speech data. Overall, agreement on the speech data was unusably poor, however it appeared to improve when estimated separately for each ethnicity, with most values showing ICC2k scores over the threshold.
+This is not the case for our two pilots which used political speech data. Overall, agreement on the speech data was unusably poor, however it appeared to improve when estimated separately for each ethnicity, with most values showing ICC2k scores over the threshold. Note that estimation for `HEDONISM` is generally poor in subsamples, and that `STIMULATION` is poor in some subsamples. 
 
 ![](images/pilot_2_speeches1_ICC2k.png)
 
@@ -24,7 +24,9 @@ We observe similar results for our second speeches pilot, which show substantial
 
 ![](images/pilot_2_speeches2_ICC2k.png)
 
-We tentatively conclude that Ethnicity will have a substantially smaller effect on ratings of song lyrics than either Ethnicity or Political Spectrum will have on ratings of speeches. Thus, the sample for our main study data collection will be stratified by Ethnicity, and for political speeches, it will also be stratified by political affiliation. 
+#### Conclusion
+
+We tentatively conclude that Ethnicity will have a substantially smaller effect on ratings of song lyrics than either Ethnicity or Political Spectrum will have on ratings of speeches. Thus, the sample for our main study data collection will be stratified by Ethnicity, and for political speeches, it will also be stratified by political affiliation.
 
 
 ### Estimating the number of raters
@@ -43,25 +45,34 @@ Our sample of annotators in our first speeches pilot were stratified by politica
 
 ![](images/pilot_2_speeches2_rater_N.png)
 
-We thus proceed with a target median 15 ratings per song lyric, and median 40 ratings per political speech. 
+#### Conclusion
+
+We thus proceed with a target median 15 ratings per song lyric excerpt. Based on bootstrapped correlations between subsamples and the overall sample, as well as budgetary constraints, we aim for median 40 ratings per political speech excerpt. 
 
 ## Main Study
 
 ### Initial Validation
 
-We take a first look at the SSVS by examining multidimensional scaling plots from participant self-ratings. We compare to an MDS plot from the correlation matrix reported in a landmark study. Although not identical, and not quite as circular we do observe most of the expected patterns. 
+We take a first look at the SSVS by examining multidimensional scaling plots from participant self-ratings, and compare these to the canonical Schwartz circumplex illustration:
+
+![](images/Schwartz_circle.png)
+
+We further compare to an MDS plot from the correlation matrix reported in a landmark study. In general, the aim of the test is to observe whether values appear next to the appropriate neighbor; note that absolute position is not relevant. 
+
+Although not identical, and not quite as circular as expected, we do observe most of the expected patterns. As we also see in the landmark study, not every point aligns with the canonical illustration. 
 
 ![](images/wave_2_participant_MDS.png)
 
 ### Inter-rater reliability
 
-In general we observe sufficient ICC2k scores , with no visible improvement when estimated by ethnicity or political leaning.
+In contrast to our pilot study, in general we observe sufficient ICC2k scores, with no visible improvement when estimated by ethnicity or political leaning.
 
-ICC2k scores for lyrics ratings appear to be exceptionally high overall, and when estimated separately within Ethnic groups. 
+ICC2k scores for lyrics ratings appear to be exceptionally high overall, and when estimated separately within Ethnic groups, and do not seem to improve when estimated separately for each Ethnic group. 
 
 ![](images/wave_2_lyrics_ICC2k.png)
 
-Ratings of political speeches exceed our threshold overall, though ratings do not always meet the threshold when estimated separately within Ethnic groups. 
+Ratings of political speeches exceed our threshold overall, though ratings do not always meet the threshold when estimated separately within Ethnic groups. In general, the estimates are visibly worse than for lyrics. Once again, we see issues with
+`HEDONISM` being poorly estimated for one group, and `STIMULATION` is poorly estimated for another group. 
 
 ![](images/wave_2_speeches1_ICC2k.png)
 
@@ -69,13 +80,35 @@ We observe a similar pattern when separating groups by political affiliation.
 
 ![](images/wave_2_speeches2_ICC2k.png)
 
-
 ### MDS plots of text annotations
-
+ 
+When examining the MDS plots for our lyrics annotations, we generally see acceptable patterns with most values appearing next to appropriate neighbors, although `STIMULATION` and `HEDONISM` appear transposed, and `ACHEIVEMENT` shows a shift from the perimeter of the circumplex. These patterns are visibly worse for speeches, where we observe a strong shift for `HEDONISM` from the perimeter of the circumplex.  
+ 
 ![](images/wave_2_lyrics_speeches_MDS.png)
 
 
+### Model approach selection
 
+We then determine a general modelling approach in order to estimate the effect of Ethnicity on ratings of lyrics, and Ethnicity and Political spectrum on ratings of political speeches. 
 
+To do so we plot the observed vs. predicted values and estimate a pseudo R^2, for three models: 
 
+* general linear mixed effects model (lmer)
+* ordinal mixed effects model (clmm)
+* generalized linear mixed effects logistic model (glmer)
 
+Model fit was slightly worse for Lyrics:
+
+![](images/wave_2_lyrics_yhat_plots.png)
+
+than for speeches:
+
+![](images/wave_2_speeches_ethnicity_yhat_plots.png)
+
+or for speeches with spectrum also being estimated in place of Ethnicity:
+ 
+![](images/wave_2_speeches_spectrum_yhat_plots.png) 
+
+#### Conclusion
+
+Model fit was consistently worse for ordinal mixed effects models, vs. general or generalized linear mixed effects models. We thus proceed to our specification curve analysis using general mixed effects models for ease of interpretation and computation. 

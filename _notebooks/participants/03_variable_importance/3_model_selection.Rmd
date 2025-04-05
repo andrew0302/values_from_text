@@ -11,6 +11,7 @@ library("tidyverse")    # code logistics
 library("performance")  # model performance for lmer
 library("emmeans")      # estimated marginal means
 library("cowplot")      # merge plots
+library("patchwork")
 
 # Schwartz value inventory
 values <- c("POWER", "ACHIEVEMENT", "HEDONISM",  
@@ -21,7 +22,6 @@ values <- c("POWER", "ACHIEVEMENT", "HEDONISM",
 # TO "CENTER" CATEGORICAL PREDICTORS, set the coding to contr.sum (deviations from the average)
 options(scipen = 999, contrasts = c("contr.sum", "contr.poly"))
 ```
-
 
 ```{r}
 # read in data
@@ -67,34 +67,7 @@ predict_by_rating <- function(df, mod){
 }
 ```
 
-```{r}
-# #plot_observed_predicted <- function(df_list, column){
-# df_list <- wave_1_yhat_dfs
-# column <- "value"
-# 
-#   lapply(seq_along(df_list), function(df, n, i){
-#     
-#     y <- df[[i]]$y
-#     yhat <- df[[i]]$yhat
-#   
-#     tss <- sum((y-mean(y))^2)
-#     rss <- sum((y-yhat)^2)
-#     r2 <- 1-rss/tss
-#      
-#     plot_1 <- df[[i]] |>
-#       mutate(y = y, yhat = yhat) |>
-#       ggplot(aes(y,yhat)) +
-#       geom_point(alpha = .03) +
-#       geom_abline(intercept = 0, slope = 1, color = "red") +
-#       labs(title = paste(collapse=" ", c(n[[i]], r2))) +
-#       theme_minimal()
-#     
-#     plot_2 <- plot_1 + facet_wrap(~.data[[column]])
-#     
-#     plot_grid(plot_1, plot_2)
-#     
-#   }, n = names(df_list), df = df_list)
-```
+
 
 ```{r}
 # COMPUTE R^2 AND BOXPLOTS OF PREDICTION BY OBSERVED RATING
@@ -123,20 +96,20 @@ predict_by_rating <- function(df, mods){
 
 
 ```{r}
-wave_2_lyrics_yhat_dfs <- predict_by_rating(wave_2_dfs$wave_2_lyrics, wave_2_lyrics_mods)
-saveRDS(wave_2_lyrics_yhat_dfs, here("_data", "_intermediary_data", "models", "wave_2_lyrics_yhat_dfs.RDS"))
+# wave_2_lyrics_yhat_dfs <- predict_by_rating(wave_2_dfs$wave_2_lyrics, wave_2_lyrics_mods)
+# saveRDS(wave_2_lyrics_yhat_dfs, here("_data", "_intermediary_data", "models", "wave_2_lyrics_yhat_dfs.RDS"))
 
-#wave_2_lyrics_yhat_dfs <- readRDS(here("_data", "_intermediary_data", "models", "wave_2_lyrics_yhat_dfs.RDS"))
+wave_2_lyrics_yhat_dfs <- readRDS(here("_data", "_intermediary_data", "models", "wave_2_lyrics_yhat_dfs.RDS"))
 
-wave_2_speeches_ethnicity_yhat_dfs <- predict_by_rating(wave_2_dfs$wave_2_speeches, wave_2_speeches_ethnicity_mods)
-saveRDS(wave_2_speeches_ethnicity_yhat_dfs, here("_data", "_intermediary_data", "models", "wave_2_speeches_ethnicity_yhat_dfs.RDS"))
+# wave_2_speeches_ethnicity_yhat_dfs <- predict_by_rating(wave_2_dfs$wave_2_speeches, wave_2_speeches_ethnicity_mods)
+# saveRDS(wave_2_speeches_ethnicity_yhat_dfs, here("_data", "_intermediary_data", "models", "wave_2_speeches_ethnicity_yhat_dfs.RDS"))
 
-#wave_2_speeches_ethnicity_yhat_dfs <- readRDS(here("_data", "_intermediary_data", "models", "wave_2_speeches_ethnicity_yhat_dfs.RDS"))
+wave_2_speeches_ethnicity_yhat_dfs <- readRDS(here("_data", "_intermediary_data", "models", "wave_2_speeches_ethnicity_yhat_dfs.RDS"))
 
-wave_2_speeches_spectrum_yhat_dfs <- predict_by_rating(wave_2_dfs$wave_2_speeches, wave_2_speeches_spectrum_mods)
-saveRDS(wave_2_speeches_spectrum_yhat_dfs, here("_data", "_intermediary_data", "models", "wave_2_speeches_spectrum_yhat_dfs.RDS"))
+# wave_2_speeches_spectrum_yhat_dfs <- predict_by_rating(wave_2_dfs$wave_2_speeches, wave_2_speeches_spectrum_mods)
+# saveRDS(wave_2_speeches_spectrum_yhat_dfs, here("_data", "_intermediary_data", "models", "wave_2_speeches_spectrum_yhat_dfs.RDS"))
 
-#wave_2_speeches_spectrum_yhat_dfs <- readRDS(here("_data", "_intermediary_data", "models", "wave_2_speeches_spectrum_yhat_dfs.RDS"))
+wave_2_speeches_spectrum_yhat_dfs <- readRDS(here("_data", "_intermediary_data", "models", "wave_2_speeches_spectrum_yhat_dfs.RDS"))
 ```
 
 ```{r}
@@ -149,7 +122,7 @@ plot_observed_predicted <- function(df_list, column){
   
     tss <- sum((y-mean(y))^2)
     rss <- sum((y-yhat)^2)
-    r2 <- 1-rss/tss
+    r2 <- round(1-rss/tss, digits = 4)
      
     plot_1 <- df[[i]] |>
       mutate(y = y, yhat = yhat) |>
@@ -160,26 +133,55 @@ plot_observed_predicted <- function(df_list, column){
         labs(title = paste(collapse=" ", c(n[[i]], r2))) +
         theme_minimal()
     
-    plot_2 <- plot_1 + facet_wrap(~.data[[column]])
+    #plot_2 <- plot_1 + facet_wrap(~.data[[column]])
     
-    plot_grid(plot_1, plot_2)
+    #plot_grid(plot_1, plot_2)
+    
+    return(plot_1)
     
   }, n = names(df_list), df = df_list)
 }
 ```
 
 ```{r}
-# plot_observed_predicted(pilot_2_lyrics_yhat_dfs, "value")
-# plot_observed_predicted(pilot_2_speeches1_yhat_dfs, "value")
-# plot_observed_predicted(pilot_2_speeches2_yhat_dfs, "value")
-```
+merge_yhat_plots <- function(yhat_plot_list, name){
+  
+  # remove ticks from plots
+  p1 <- yhat_plot_list[[1]] 
+  
+  p2 <- yhat_plot_list[[2]] + 
+    theme(axis.title.y = element_blank(),
+          axis.text.y  = element_blank(),
+          axis.ticks.y = element_blank())
 
+  p3 <- yhat_plot_list[[3]] + 
+    theme(axis.title.y = element_blank(),
+          axis.text.y  = element_blank(),
+          axis.ticks.y = element_blank())
+  
+  (p1 + p2 + p3) + 
+    plot_layout(guides = "collect") + 
+    plot_annotation(title = paste0(name, ":"))
+}
+```
 
 ```{r}
-plot_observed_predicted(wave_2_lyrics_yhat_dfs, "value")
-plot_observed_predicted(wave_2_speeches_ethnicity_yhat_dfs, "value")
-plot_observed_predicted(wave_2_speeches_spectrum_yhat_dfs, "value")
+merge_yhat_plots(plot_observed_predicted(wave_2_lyrics_yhat_dfs, "value"), name = "Lyrics")
+
+ggsave(here("images", "wave_2_lyrics_yhat_plots.png"))
 ```
+
+```{r}
+merge_yhat_plots(plot_observed_predicted(wave_2_speeches_ethnicity_yhat_dfs, "value"), name = "Speeches, Ethnicity")
+
+ggsave(here("images", "wave_2_speeches_ethnicity_yhat_plots.png"))
+```
+
+```{r}
+merge_yhat_plots(plot_observed_predicted(wave_2_speeches_spectrum_yhat_dfs, "value"), name = "Speeches, Spectrum")
+ggsave(here("images", "wave_2_speeches_spectrum_yhat_plots.png"))
+```
+
 
 ```{r}
 df <- wave_2_dfs$wave_2_lyrics
