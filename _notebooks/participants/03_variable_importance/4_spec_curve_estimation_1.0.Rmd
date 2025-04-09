@@ -97,13 +97,13 @@ spec_out <- function(df, x, controls, formula_addition){
 speeches_ethnicity_specs <- spec_out(
   df=wave_2_dfs$wave_2_speeches, 
   x="Ethnicity", 
-  controls=c("Sex", "Age", "w", "f", "c", "year", "spectrum", "party"), 
+  controls=c("Sex", "Age", "perceived_party", "familiar", "c", "year", "spectrum", "party"), 
   formula_addition="Ethnicity*party")
 
 speeches_spectrum_specs <- spec_out(
   df=wave_2_dfs$wave_2_speeches, 
   x="spectrum", 
-  controls=c("Sex", "Age", "w", "f", "c", "year", "Ethnicity", "party"), 
+  controls=c("Sex", "Age", "perceived_party", "familiar", "c", "year", "Ethnicity", "party"), 
   formula_addition="spectrum*party")
 
 lyrics_ethnicity_specs <- spec_out(
@@ -115,34 +115,34 @@ lyrics_ethnicity_specs <- spec_out(
 ```
 
 ```{r}
-spec_out <- function(df, x, controls){
-  
-  # extract setups without and with interaction term:
-  specs <- setup(data = df, y = c("rating"), x = x, 
-                 model = c("lmer"),
-                 controls = controls, 
-                 fun1 = function(x) broom.mixed::tidy(x,conf.int = TRUE),
-                 add_to_formula = "value + (1|item_ID) + (1|participant_ID)",
-                 simplify = FALSE)
-  
-  specs <- specs$specs %>% as.data.frame()
-  
-  
-  # merge and format specs object
-  specs_df <- extract_specs(x, specs) %>% mutate(model_num = seq(1:nrow(specs)))
-  specs <- specs %>% mutate(model_num = seq(1:nrow(specs))) %>% select(-model, -subsets, -model_function)
-  specs <- merge(specs, specs_df, by = "model_num")
-  
-  return(specs)
-}
+# spec_out <- function(df, x, controls){
+#   
+#   # extract setups without and with interaction term:
+#   specs <- setup(data = df, y = c("rating"), x = x, 
+#                  model = c("lmer"),
+#                  controls = controls, 
+#                  fun1 = function(x) broom.mixed::tidy(x,conf.int = TRUE),
+#                  add_to_formula = "value + (1|item_ID) + (1|participant_ID)",
+#                  simplify = FALSE)
+#   
+#   specs <- specs$specs %>% as.data.frame()
+#   
+#   
+#   # merge and format specs object
+#   specs_df <- extract_specs(x, specs) %>% mutate(model_num = seq(1:nrow(specs)))
+#   specs <- specs %>% mutate(model_num = seq(1:nrow(specs))) %>% select(-model, -subsets, -model_function)
+#   specs <- merge(specs, specs_df, by = "model_num")
+#   
+#   return(specs)
+# }
 ```
 
 ```{r}
-lyrics_ethnicity_specs <- spec_out(
-  df = wave_2_dfs$wave_2_lyrics, 
-  x="Ethnicity", 
-  controls = c("Sex", "Age", "writer_is_speaker", "familiar", "c", 
-               "lyrics_topic", "popular", "genre", "year"))
+# lyrics_ethnicity_specs <- spec_out(
+#   df = wave_2_dfs$wave_2_lyrics, 
+#   x="Ethnicity", 
+#   controls = c("Sex", "Age", "writer_is_speaker", "familiar", "c", 
+#                "lyrics_topic", "popular", "genre", "year"))
 ```
 
 
@@ -183,66 +183,78 @@ run_spec_curve <- function(specs, df){
 # these only run if run one at a time
 
 ```{r}
-emm_options(rg.limit = 15000000)
+# emm_options(rg.limit = 15000000)
+# 
+# wave_2_lyrics_ethnicity_curve_df <- run_spec_curve(lyrics_ethnicity_specs%>%filter(model_num<500), df = wave_2_dfs$wave_2_lyrics)
+# 
+# saveRDS(wave_2_lyrics_ethnicity_curve_df, file = here("_data", "_intermediary_data", "spec_curves", "wave_2_lyrics_ethnicity_curve_df.RDS"))
+```
 
-wave_2_lyrics_ethnicity_curve_df <- run_spec_curve(lyrics_ethnicity_specs%>%filter(model_num<500), df = wave_2_dfs$wave_2_lyrics)
+```{r}
+# specs <- lyrics_ethnicity_specs%>%filter(model_num>=500)
+# formulae <- specs$formula%>%as.list()
+# names(formulae) <- specs$model_num
+# df <- wave_2_dfs$wave_2_lyrics
+# 
+#   
+#   # run all model formulae
+#   mods <- lapply(formulae, function(formula){
+#     lmer(as.formula(formula), data = df)
+#   
+#   })
+#   
+#   emm_options(rg.limit = 15000000)
+#   emms <- lapply(mods, function(mod){
+#     emm <- emmeans(mod, ~Ethnicity)
+#     
+#   })
+#   
+#   emm_dfs <- lapply(emms, function(emm){
+#     emm <- emm %>% as.data.frame()
+#   })
+#   
+#   spec_curve_df <- bind_rows(emm_dfs, .id = "model_num")
+# 
+#   AICs <- lapply(mods, function(mod){
+#     AIC <- AIC(mod) 
+#   }) 
+#   
+#   AIC_df <- AICs %>% as.data.frame() %>% t() %>% as.data.frame() %>%
+#     rownames_to_column(var = "model_num") %>%
+#     mutate(model_num = str_remove(model_num, "X")) %>%
+#     rename(AIC = V1)
+#   
+#   spec_curve_df <- merge(spec_curve_df, AIC_df, by = "model_num") %>%
+#     mutate(model_num = as.numeric(model_num))
+#   
+#   spec_curve_df <- merge(spec_curve_df, specs, by = "model_num")
+#   
+#   wave_2_lyrics_ethnicity_curve_df <- bind_rows(wave_2_lyrics_ethnicity_curve_df, spec_curve_df)
+#   
+#   
+# saveRDS(wave_2_lyrics_ethnicity_curve_df, file = here("_data", "_intermediary_data", "spec_curves", "wave_2_lyrics_ethnicity_curve_df_500.RDS"))
+```
+
+
+```{r}
+# emm_options(rg.limit = 15000000)
+# 
+# wave_2_lyrics_ethnicity_curve_df_500 <- run_spec_curve(lyrics_ethnicity_specs%>%filter(model_num>=500), df = wave_2_dfs$wave_2_lyrics)
+# 
+# saveRDS(wave_2_lyrics_ethnicity_curve_df_500, file = here("_data", "_intermediary_data", "spec_curves", "wave_2_lyrics_ethnicity_curve_df_500.RDS"))
+```
+
+```{r}
+emm_options(rg.limit = 15000000)
+```
+
+```{r}
+wave_2_lyrics_ethnicity_curve_df <- run_spec_curve(lyrics_ethnicity_specs, df = wave_2_dfs$wave_2_lyrics)
 
 saveRDS(wave_2_lyrics_ethnicity_curve_df, file = here("_data", "_intermediary_data", "spec_curves", "wave_2_lyrics_ethnicity_curve_df.RDS"))
+
 ```
 
-```{r}
-specs <- lyrics_ethnicity_specs%>%filter(model_num>=500)
-formulae <- specs$formula%>%as.list()
-names(formulae) <- specs$model_num
-df <- wave_2_dfs$wave_2_lyrics
-
-  
-  # run all model formulae
-  mods <- lapply(formulae, function(formula){
-    lmer(as.formula(formula), data = df)
-  
-  })
-  
-  emm_options(rg.limit = 15000000)
-  emms <- lapply(mods, function(mod){
-    emm <- emmeans(mod, ~Ethnicity)
-    
-  })
-  
-  emm_dfs <- lapply(emms, function(emm){
-    emm <- emm %>% as.data.frame()
-  })
-  
-  spec_curve_df <- bind_rows(emm_dfs, .id = "model_num")
-
-  AICs <- lapply(mods, function(mod){
-    AIC <- AIC(mod) 
-  }) 
-  
-  AIC_df <- AICs %>% as.data.frame() %>% t() %>% as.data.frame() %>%
-    rownames_to_column(var = "model_num") %>%
-    mutate(model_num = str_remove(model_num, "X")) %>%
-    rename(AIC = V1)
-  
-  spec_curve_df <- merge(spec_curve_df, AIC_df, by = "model_num") %>%
-    mutate(model_num = as.numeric(model_num))
-  
-  spec_curve_df <- merge(spec_curve_df, specs, by = "model_num")
-  
-  wave_2_lyrics_ethnicity_curve_df <- bind_rows(wave_2_lyrics_ethnicity_curve_df, spec_curve_df)
-  
-  
-saveRDS(wave_2_lyrics_ethnicity_curve_df, file = here("_data", "_intermediary_data", "spec_curves", "wave_2_lyrics_ethnicity_curve_df_500.RDS"))
-```
-
-
-```{r}
-emm_options(rg.limit = 15000000)
-
-wave_2_lyrics_ethnicity_curve_df_500 <- run_spec_curve(lyrics_ethnicity_specs%>%filter(model_num>=500), df = wave_2_dfs$wave_2_lyrics)
-
-saveRDS(wave_2_lyrics_ethnicity_curve_df_500, file = here("_data", "_intermediary_data", "spec_curves", "wave_2_lyrics_ethnicity_curve_df_500.RDS"))
-```
 
 ```{r}
 wave_2_speeches_ethnicity_curve_df <- run_spec_curve(speeches_ethnicity_specs, df = wave_2_dfs$wave_2_speeches)
