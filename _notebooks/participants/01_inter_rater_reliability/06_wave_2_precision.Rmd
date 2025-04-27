@@ -1,0 +1,133 @@
+---
+title: "summary reliabilities"
+author: "andrew demetriou"
+---
+
+AIM: estimate reliability by value for primary study dataset
+
+```{r setup, include=FALSE}
+library('here')                 # file logistics
+library('dplyr')                # data manipulation
+library('tidyr')                # data manipulation
+library('tidyverse')            # code logistics
+library('cowplot')
+library('viridis')
+
+values <- c("POWER", "ACHIEVEMENT", "HEDONISM",  
+            "STIMULATION", "SELF", "UNIVERSALISM", 
+            "BENEVOLENCE", "TRADITION",  
+            "CONFORMITY", "SECURITY")
+```
+
+
+```{r}
+# output file path
+file_path <- here("_data", "_intermediary_data")
+
+# read in data
+wave_2_dfs <- readRDS(here("_data", "_participant_scores", "wave_2", "wave_2_dfs.RDS"))
+
+# merge ethnicity
+wave_2_dfs <- lapply(wave_2_dfs, function(df){
+  df %>% 
+    filter(item_ID != "attention") %>%
+    mutate(Ethnicity = case_when(
+      Ethnicity == "South East Asian" ~ "Asian",
+      Ethnicity == "South Asian" ~ "Asian",
+      Ethnicity == "East Asian" ~ "Asian",
+      Ethnicity == "CONSENT_REVOKED" ~ NA, 
+      .default = Ethnicity))
+})
+
+# rename variables
+wave_2_dfs[1:2] <- lapply(wave_2_dfs[1:2], function(df){
+  df %>% select(item_ID, participant_ID, Ethnicity, all_of(values))
+})
+
+wave_2_dfs[3:4] <- lapply(wave_2_dfs[3:4], function(df){
+  df %>% rename(Spectrum = `Political spectrum (us)`) %>%
+    select(item_ID, participant_ID, Ethnicity, Spectrum, all_of(values))
+})
+
+wave_2_dfs <- list(
+  lyrics = bind_rows(wave_2_dfs[[1]], wave_2_dfs[[2]]), 
+  speeches = bind_rows(wave_2_dfs[[3]], wave_2_dfs[[4]]) 
+)
+```
+
+
+```{r}
+# subsample by participant characteristics
+ethnicity_subsample_lists <- lapply(wave_2_dfs, function(df){
+  c(list(overall = df), split(df, df$Ethnicity))
+})
+
+spectrum_subsample_lists <- lapply(wave_2_dfs[2], function(df){
+  c(list(overall = df), split(df, df$Spectrum))
+})
+```
+
+```{r}
+plot_precision <- function(df){
+  
+  # pivot to long format & estimate mean/sd per song/value
+  df <- df %>%
+    pivot_longer(cols = all_of(values), names_to = "value", values_to = "rating") %>%
+    group_by(item_ID, value) %>%
+    summarize(mean = mean(rating, na.rm=T), sd = sd(rating, na.rm=T))
+  
+  
+  p1 <- df %>% ggplot(aes(mean, sd, color=value)) + 
+    geom_point(alpha=.3) + 
+    scale_color_viridis_d(option = "magma") +
+    theme_minimal() + 
+    scale_y_continuous(limits = c(0,4)) +
+    scale_x_continuous(limits = c(-1,9), breaks = c(-1,0,1,2,3,4,5,6,7)) +
+    theme(legend.position = "none")
+
+  p2 <- p1 + facet_wrap(~value, ncol = 2) + 
+    theme(legend.position = "none")
+  
+  plot_grid(p1, p2)
+}
+```
+
+```{r}
+lapply(wave_2_dfs, plot_precision)
+```
+
+
+```{r}
+plot_na_percentage <- function(df){
+  
+  # long format
+  df <- df %>%
+    pivot_longer(cols = all_of(values), names_to = "value", values_to = "rating") %>%
+    group_by(item_ID, value)
+
+  # compute percentage of NA responses per item
+  percent_na_df <- df %>% 
+    group_by(value, item_ID) %>% 
+    mutate(is_na = is.na(rating)) %>% 
+    count(is_na) %>% 
+    mutate(percent = n / sum(n)*100) %>%
+    ungroup()
+  
+  # plot histograms
+  my_colors = viridis(10, option= "magma")
+
+  p1 <- percent_na_df %>%  
+    ggplot(aes(x=percent, fill=is_na)) +
+    geom_histogram(position="identity", alpha=.8, bins=25) +
+    scale_fill_manual(values = c(my_colors[5], my_colors[8]), labels=c("Present", "NA")) +
+    theme_minimal()
+    
+  p2 <- p1 + facet_wrap(~value, ncol = 2) + theme(legend.position = "none")
+  
+  plot_grid(p1, p2)
+}
+```
+
+```{r}
+lapply(wave_2_dfs, plot_na_percentage)
+```
