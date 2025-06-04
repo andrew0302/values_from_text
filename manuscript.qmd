@@ -1,0 +1,23 @@
+---
+title: "Grounding Personal Values in Text"
+format: html
+---
+
+```{r child="_manuscript/02_pilot_methods.qmd"}
+```
+
+```{r child="_manuscript/03_pilot_results.qmd"}
+```
+
+```{r child="_manuscript/04_main_methods.qmd"}
+```
+
+# References
+
+::: {#refs}
+:::
+
+# Appendix {.appendix}
+
+```{r child="_manuscript/07_appendix.qmd"}
+```

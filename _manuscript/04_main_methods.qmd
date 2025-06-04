@@ -1,0 +1,10 @@
+# Main Studies
+
+## Methods
+
+### Participants and Survey Software
+
+Our budget allowed us to compensate approximately 1700 participants for our final sample, 850 each per stimulus type (lyrics / speeches). 
+
+Quiz results: 
+Participants most often mistook "NA" and low-end scale responses in Quiz items 2 and 3. Thus, for Quiz 2 where the correct response was "NA", 13% of participants indicated "0" and "9"% indicated "-1", where 56% correctly indicated "NA". Similarly in Quiz 3, 13% of participants incorrectly indicated "NA" where 50% and 20% of participants correctly indicated "-1"' and "0" respectively. Thus, in the minds of many annotators, "NA" and the lower-end of the scale bear similar meaning. Participants who answered 2 quiz questions incorrectly were redirected back to Prolific and partially compensated for their time. 723 participants opted to take our survey, 427 of which passed both the attention checks and the quizzes.

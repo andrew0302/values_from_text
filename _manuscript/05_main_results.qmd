@@ -1,0 +1,63 @@
+### Main Study
+
+#### Initial Validation
+
+We take a first look at the SSVS by examining multidimensional scaling plots from participant self-ratings, and compare these to the canonical Schwartz circumplex illustration:
+
+![](../images/Schwartz_circle.png)
+
+As an initial measure of validity, we examine multi-dimensional scaling plots (MDS) \cite{saeed2018survey}, which has previously been used as method to assess measurements conform to theory\~\cite{ponizovskiy2020development, lindeman2005measuring}. We compute correlations from our sample of annotations, and, from data simulated from the upper triangle of a correlation matrix reported in\~\cite{schwartz2001extending}. To compute the correlations from our sample, we averaged participant ratings per value, per song. To interpret the plots we observe whether there is a similar structure to that in Figure\~\ref{fig:circle}, and whether each value appears next to its appropriate neighbors (note: absolute position is unimportant). MDS plots (Figure\~\ref{fig:mds_plots}), show promising results, although `ACHIEVEMENT' appears closer to`SECURITY', and `HEDONISM' and`STIMULATION' are transposed.
+
+We further compare to an MDS plot from the correlation matrix reported in a landmark study. In general, the aim of the test is to observe whether values appear next to the appropriate neighbor; note that absolute position is not relevant.
+
+Although not identical, and not quite as circular as expected, we do observe most of the expected patterns. As we also see in the landmark study, not every point aligns with the canonical illustration.
+
+![](../images/wave_2_participant_MDS.png)
+
+#### Inter-rater reliability
+
+In contrast to our pilot study, in general we observe sufficient ICC2k scores, with no visible improvement when estimated by ethnicity or political leaning.
+
+ICC2k scores for lyrics ratings appear to be exceptionally high overall, and when estimated separately within Ethnic groups, and do not seem to improve when estimated separately for each Ethnic group.
+
+![](../images/wave_2_lyrics_ICC2k.png)
+
+Ratings of political speeches exceed our threshold overall, though ratings do not always meet the threshold when estimated separately within Ethnic groups. In general, the estimates are visibly worse than for lyrics. Once again, we see issues with `HEDONISM` being poorly estimated for one group, and `STIMULATION` is poorly estimated for another group.
+
+![](../images/wave_2_speeches1_ICC2k.png)
+
+We observe a similar pattern when separating groups by political affiliation.
+
+![](../images/wave_2_speeches2_ICC2k.png)
+
+#### MDS plots of text annotations
+
+When examining the MDS plots for our lyrics annotations, we generally see acceptable patterns with most values appearing next to appropriate neighbors, although `STIMULATION` and `HEDONISM` appear transposed, and `ACHEIVEMENT` shows a shift from the perimeter of the circumplex. These patterns are visibly worse for speeches, where we observe a strong shift for `HEDONISM` from the perimeter of the circumplex.
+
+![](../images/wave_2_lyrics_speeches_MDS.png)
+
+#### Model approach selection
+
+We then determine a general modelling approach in order to estimate the effect of Ethnicity on ratings of lyrics, and Ethnicity and Political spectrum on ratings of political speeches.
+
+To do so we plot the observed vs. predicted values and estimate a pseudo R\^2, for three models:
+
+-   general linear mixed effects model (lmer)
+-   ordinal mixed effects model (clmm)
+-   generalized linear mixed effects logistic model (glmer)
+
+Model fit was slightly worse for Lyrics:
+
+![](../images/wave_2_lyrics_yhat_plots.png)
+
+than for speeches:
+
+![](../images/wave_2_speeches_ethnicity_yhat_plots.png)
+
+or for speeches with spectrum also being estimated in place of Ethnicity:
+
+![](../images/wave_2_speeches_spectrum_yhat_plots.png)
+
+##### Conclusion
+
+Model fit was consistently worse for ordinal mixed effects models, vs. general or generalized linear mixed effects models. We thus proceed to our specification curve analysis using general mixed effects models for ease of interpretation and computation.

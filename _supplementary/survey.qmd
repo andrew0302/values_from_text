@@ -1,0 +1,164 @@
+
+## Survey Flow
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+library(DiagrammeR)
+
+grViz("
+digraph survey_flow {
+  graph [layout = dot, rankdir = TB]
+
+  node [shape = box, style = filled, fontname = Helvetica, fontsize = 20, width=2.5, fixedsize=false]
+
+  # Main vertical flow
+  Consent -> SSVS -> General_Instructions -> Quiz -> Final_Instructions -> Randomizer1 -> AttentionCheck -> Randomizer2 -> Debrief -> Prolific3
+
+  # Exit paths (horizontal, off to the side)
+  Consent -> Prolific1 [label = \"No Consent\", fontsize = 20, constraint=false]
+  Quiz -> Prolific2 [label = \"  < 2 out of 3\", fontsize = 20, constraint=false]
+
+
+  # Align exit nodes horizontally
+  { rank = same; Prolific1 Prolific2 Prolific3}
+
+  # Node colors
+  Consent [fillcolor = gainsboro]
+  SSVS [fillcolor = lightblue]
+  General_Instructions [label = \"General Instructions\", fillcolor = gainsboro]
+  Quiz [label = \"Comprehension Quiz\", fillcolor = gainsboro]
+  Final_Instructions [label = \"Final Instructions\", fillcolor = gainsboro]
+  Randomizer1 [label = \"Randomizer:\\n 7 Items\", fillcolor = thistle1]
+  Randomizer2 [label = \"Randomizer:\\n 7 Items\", fillcolor = thistle1]
+  AttentionCheck [fillcolor = gainsboro]
+  Debrief [fillcolor = gainsboro]
+  Prolific1 [label = \"Prolific:\\n No Consent\", fillcolor = mistyrose]
+  Prolific2 [label = \"Prolific:\\n Failed Quiz\", fillcolor = mistyrose]
+  Prolific3 [label = \"Prolific:\\n End of Survey\", fillcolor = mistyrose]
+}
+")
+```
+
+## Survey Instructions
+
+### SSVS for participants
+
+In this questionnaire you are to ask yourself:
+
+"What values are important to ME as guiding principles in MY life, and what values are less important to me?"
+
+There is a list of values on the following page. These values come from different cultures. In the parentheses following each value is an explanation that may help you to understand its meaning. Your task is to rate how important each value is for you as a guiding principle in your life.
+
+Use the rating scale below:
+
+0 means the value is not at all important, it is not relevant as a guiding principle for you.
+3 means the value is important.
+6 means the value is very important.
+
+The higher the number (0, 1, 2, 3, 4, 5, 6, 7), the more important the value is as a guiding principle in YOUR life.
+
+-1 is for rating any values opposed to the principles that guide you.
+7 is for rating a value of supreme importance as a guiding principle in your life; 
+Ordinarily there are no more than two such values.
+
+On the scale next to each value, indicate the number (-1,0,1,2,3,4,5,6,7) that indicates the importance of that value for you, personally. Try to distinguish as much as possible between the values by using all the numbers.
+
+You may need to use numbers more than once. 
+
+### Task Instructions
+
+#### Lyrics
+
+##### General Instructions:
+
+"In the main part of this survey, you will be shown parts of song lyrics from 15 songs, and asked to complete similar questions about the values you perceive them. 
+ 
+IMPORTANT: Lyrics can be written from different perspectives, some of which are not the same as the writer of the lyrics. In other words, the AUTHOR of the lyrics may choose a SPEAKER for their lyrics that is not themselves. 
+ 
+The SPEAKER of the lyrics could be a fictional character, a real person from history or the present other than the author, or even an imaginary object. And of course it could be the AUTHOR themselves. Please read the lyrics, and answer the questions while thinking about the SPEAKER. 
+
+Do not look up the lyrics elsewhere.
+
+Ask yourself: "What values are important to the SPEAKER as guiding principles in in their life, and what values are less important to them? Use the same rating scale that you used in the questionnaire earlier: 0 means the value is not at all important. 3 means the value is important. 6 means the value is very important. -1 means the value is opposed to the principles that guide the SPEAKER. 7 means the value is of supreme importance as the guiding principle in the SPEAKER's life.
+
+Please start by rating the value you feel is the most important to the SPEAKER with a 6 or 7, and the value that is most opposed to their values with a -1 or 0, (green arrows).Then complete the scales for the remainder of the values. Indicate NA (red arrow) if you feel the SPEAKER doesn't describe how they feel about that value. 
+Try to distinguish as much as possible between the values by using all the numbers. You may need to use numbers more than once, but try not to."
+
+##### Post-Quiz Final Instructions:
+
+"Thanks! We'll now ask you to respond to our questions about 15 song lyrics. Please read only the lyrics between the quotes, do not search them on the internet or look them up elsewhere. Think about the SPEAKER of the lyrics, and answer the questions with them in mind.
+
+Please click on the arrow below when you are ready. 
+
+WARNING: These lyrics are randomly selected from popular music, some of which use offensive language or describe offensive situations." 
+
+##### Question Instructions:
+
+"Between the quotation marks below are some song lyrics. Please take a moment to read them and think about the SPEAKER the lyrics. Please remember that this SPEAKER might be a the AUTHOR themselves, or someone or something else:"
+
+#### Speeches
+
+##### General Instructions:
+
+"You will now be shown 15 pieces of U.S. Presidential Speeches, and asked to complete similar questions about the values you perceive in them. 
+ 
+IMPORTANT: Some speeches were delivered in written form, and some were delivered as speeches. Sometimes, the transcript refers to dialogue from people other than the U.S. President, laughter, or contains other indications. In our questions, we refer to the SPEAKER, which is always the U.S. President delivering the speech. 
+ 
+Please read the piece of the speech, and answer the questions while thinking about the SPEAKER and their words. 
+
+Please do not look up the speeches elsewhere. 
+
+Ask yourself: "What values are important to the SPEAKER as guiding principles in in their life, and what values are less important to them? Use the same rating scale that you used in the questionnaire earlier: 0 means the value is not at all important. 3 means the value is important. 6 means the value is very important. -1 means the value is opposed to the principles that guide the SPEAKER. 7 means the value is of supreme importance as the guiding principle in the SPEAKER's life.
+
+Please start by rating the value you feel is the most important to the SPEAKER with a 6 or 7, and the value that is most opposed to their values with a -1 or 0, (green arrows). Then complete the scales for the remainder of the values. Indicate NA (red arrow) if you feel the SPEAKER doesn't describe how they feel about that value. 
+
+Try to distinguish as much as possible between the values by using all the numbers. You may need to use numbers more than once."
+
+##### Post-Quiz Final Instructions:
+
+"Thanks! We'll now ask you to respond to our questions about 15 parts from U.S. Presidential speeches. Please read only the parts of the speeches between the quotes, do not search them on the internet or look them up elsewhere. Think about the SPEAKER of the speech, the U.S. president, and answer the questions with them in mind.
+
+Please click on the arrow below when you are ready. 
+
+WARNING: These speeches were randomly selected, some of which use language that might have been acceptable at the time, but would be considered offensive today."
+
+##### Question Instructions:
+
+"Between the quotation marks below are parts of a U.S. Presidential Speech. Please take a moment to read them and think about the SPEAKER of the speech."
+
+### Debrief
+
+#### Lyrics
+
+"Thanks for completing the survey! 
+
+Our research group, and other scientists like us, are interested in perceived personal values in song lyrics.
+ 
+By ‘values’, we mean the abstract concepts or beliefs that we feel are important as life-guide principles. They have been shown to be related to our behaviors and goals at the most abstract level, above and beyond any specific situation. According to Shalom Schwartz, there are 10 main values that all people share, and each person has their own ranking of these values. In more recent work, these are broken up further into 19 values, but we used a shorter 10-item version.
+ 
+This study is helping us learn how to gather data from people about the values that they think song lyrics express. Our questionnaire about values is based on one that was a part of the European Social Survey, and later shortened. You responded to it about yourself at the start of the study. Respondents like yourself then also completed it about what they thought of the values of the ‘speaker’ of each song lyric. We will analyze the data to see whether our version of this questionnaire is also useful for gathering information on song lyrics.
+ 
+We expect that different people will interpret the values of lyrics differently. People might have a preference for different genres of music or prioritize different values in their lives. People with different backgrounds (e.g. ethnicity, gender, level of education, age) or who prioritize different values might also interpret song lyrics differently. We used various options on the Prolific platform to screen respondents like yourself, and also asked a number of questions, to explore whether any of these factors make a difference in the way people interpret the values of song lyrics.
+
+Knowing our reasons for the study might have changed the way you would answer the questions in this survey. For this reason, we only explain the reasons for our study at the end.
+
+Some songs have lyrics that are difficult or impossible to interpret. We asked about your confidence in your ratings, to see if some songs are more vague, or ambiguous than others. We also asked about how subjective you thought the task was overall, to help us estimate how many participants we might need for future studies.
+
+De-identified data from this study may be part of published academic work in the future. We will not include personally identifying information (e.g. your Prolific ID), but it will include your responses to questions about the song lyrics, your music preferences, demographics, and values. We’d like to remind you that you can request to withdraw your data at any time by emailing a.m.demetriou@tudelft.nl. Please be aware that as time passess this will become more challenging especially if work from this study has been published. We will make all necessary efforts to remove it, but there is always a risk that we will not recover every instance of it after it has been published.
+
+Thanks again for participating! Please let us know if you have any feedback for us below. 
+NOTE: Please do not enter any identifying or sensitive information in the field."
+
+#### Speeches
+
+"Thanks for completing the survey!
+
+Our research group, and other scientists like us, are interested in perceived personal values in text, like political speeches. By ‘values’, we mean the abstract concepts or beliefs that we feel are important as life-guide principles. They have been shown to be related to our behaviors and goals at the most abstract level, above and beyond any specific situation. According to Shalom Schwartz, there are 10 main values that all people share, and each person has their own ranking of these values. In more recent work, these are broken up further into 19 values, but we used a shorter 10-item version.
+ 
+This study is helping us learn how to gather data from people about the values that they think political speeches express. Our questionnaire about values is based on one that was a part of the European Social Survey, and later shortened. Respondents like yourself completed it about what they thought of the values of the ‘speaker’ in song lyrics in a prior study. In this study, we will analyze the data to see whether our version of this questionnaire is also useful for gathering information on political speeches. We expect that diﬀerent people will interpret the values of speeches diﬀerently. People with diﬀerent backgrounds (e.g. ethnicity, gender, level of education, age), or political aﬃliations might also interpret speeches diﬀerently. We used various options on the Prolific platform to screen respondents like yourself, to explore whether any of these factors make a diﬀerence in the way people interpret the values in speeches.
+ 
+Knowing our reasons for the study might have changed the way you would answer the questions in this survey. For this reason, we only explain the reasons for our study at the end. Some parts of speeches taken out of context are diﬃcult or impossible to interpret. We asked about your confidence in your ratings, to see if some excerpts are more vague, or ambiguous than others. We also asked about how subjective you thought the task was overall, to help us estimate how many participants we might need for future studies.
+ 
+De-identified data from this study may be part of published academic work in the future. We will not include personally identifying information (e.g. your Prolific ID), but it will include your responses to questions about the song lyrics, your music preferences, demographics, and values. We’d like to remind you that you can request to withdraw your data at any time by emailing a.m.demetriou@tudelft.nl. Please be aware that as time passess this will become more challenging especially if work from this study has been published. We will make all necessary eﬀorts to remove it, but there is always a risk that we will not recover every instance of it after it has been published.
+
+Thanks again for participating! Please let us know if you have any feedback for us below. Please do not enter any identifying or sensitive information in the field."
