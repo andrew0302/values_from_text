@@ -1,6 +1,11 @@
 ---
-title: "Grounding Personal Values in Text"
-format: html
+title: "Estimating Personal Values in Text"
+format:
+  html:
+    toc: true
+    number-sections: false
+    code-fold: true
+    
 ---
 
 ```{r child="_manuscript/02_pilot_methods.qmd"}
@@ -10,6 +15,9 @@ format: html
 ```
 
 ```{r child="_manuscript/04_main_methods.qmd"}
+```
+
+```{r child="_manuscript/05_main_results.qmd"}
 ```
 
 # References

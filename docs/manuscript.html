@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Grounding Personal Values in Text – Estimating Personal Values in Text</title>
+<title>Estimating Personal Values in Text</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -184,6 +184,7 @@ window.Quarto = {
   <li><a href="#methods-1" id="toc-methods-1" class="nav-link" data-scroll-target="#methods-1">Methods</a>
   <ul class="collapse">
   <li><a href="#participants-and-survey-software-1" id="toc-participants-and-survey-software-1" class="nav-link" data-scroll-target="#participants-and-survey-software-1">Participants and Survey Software</a></li>
+  <li><a href="#main-study" id="toc-main-study" class="nav-link" data-scroll-target="#main-study">Main Study</a></li>
   </ul></li>
   </ul></li>
   <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
@@ -196,7 +197,7 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Grounding Personal Values in Text</h1>
+<h1 class="title">Estimating Personal Values in Text</h1>
 </div>
 
 
@@ -286,6 +287,53 @@ window.Quarto = {
 <p>Our budget allowed us to compensate approximately 1700 participants for our final sample, 850 each per stimulus type (lyrics / speeches).</p>
 <p>Quiz results: Participants most often mistook “NA” and low-end scale responses in Quiz items 2 and 3. Thus, for Quiz 2 where the correct response was “NA”, 13% of participants indicated “0” and “9”% indicated “-1”, where 56% correctly indicated “NA”. Similarly in Quiz 3, 13% of participants incorrectly indicated “NA” where 50% and 20% of participants correctly indicated “-1”’ and “0” respectively. Thus, in the minds of many annotators, “NA” and the lower-end of the scale bear similar meaning. Participants who answered 2 quiz questions incorrectly were redirected back to Prolific and partially compensated for their time. 723 participants opted to take our survey, 427 of which passed both the attention checks and the quizzes.</p>
 </section>
+<section id="main-study" class="level3">
+<h3 class="anchored" data-anchor-id="main-study">Main Study</h3>
+<section id="initial-validation" class="level4">
+<h4 class="anchored" data-anchor-id="initial-validation">Initial Validation</h4>
+<p>We take a first look at the SSVS by examining multidimensional scaling plots from participant self-ratings, and compare these to the canonical Schwartz circumplex illustration:</p>
+<p><img src="../images/Schwartz_circle.png" class="img-fluid"></p>
+<p>As an initial measure of validity, we examine multi-dimensional scaling plots (MDS) , which has previously been used as method to assess measurements conform to theory~. We compute correlations from our sample of annotations, and, from data simulated from the upper triangle of a correlation matrix reported in~. To compute the correlations from our sample, we averaged participant ratings per value, per song. To interpret the plots we observe whether there is a similar structure to that in Figure~<span class="math inline">\(\ref{fig:circle}\)</span>, and whether each value appears next to its appropriate neighbors (note: absolute position is unimportant). MDS plots (Figure~<span class="math inline">\(\ref{fig:mds_plots}\)</span>), show promising results, although <code>ACHIEVEMENT' appears closer to</code>SECURITY’, and <code>HEDONISM' and</code>STIMULATION’ are transposed.</p>
+<p>We further compare to an MDS plot from the correlation matrix reported in a landmark study. In general, the aim of the test is to observe whether values appear next to the appropriate neighbor; note that absolute position is not relevant.</p>
+<p>Although not identical, and not quite as circular as expected, we do observe most of the expected patterns. As we also see in the landmark study, not every point aligns with the canonical illustration.</p>
+<p><img src="../images/wave_2_participant_MDS.png" class="img-fluid"></p>
+</section>
+<section id="inter-rater-reliability" class="level4">
+<h4 class="anchored" data-anchor-id="inter-rater-reliability">Inter-rater reliability</h4>
+<p>In contrast to our pilot study, in general we observe sufficient ICC2k scores, with no visible improvement when estimated by ethnicity or political leaning.</p>
+<p>ICC2k scores for lyrics ratings appear to be exceptionally high overall, and when estimated separately within Ethnic groups, and do not seem to improve when estimated separately for each Ethnic group.</p>
+<p><img src="../images/wave_2_lyrics_ICC2k.png" class="img-fluid"></p>
+<p>Ratings of political speeches exceed our threshold overall, though ratings do not always meet the threshold when estimated separately within Ethnic groups. In general, the estimates are visibly worse than for lyrics. Once again, we see issues with <code>HEDONISM</code> being poorly estimated for one group, and <code>STIMULATION</code> is poorly estimated for another group.</p>
+<p><img src="../images/wave_2_speeches1_ICC2k.png" class="img-fluid"></p>
+<p>We observe a similar pattern when separating groups by political affiliation.</p>
+<p><img src="../images/wave_2_speeches2_ICC2k.png" class="img-fluid"></p>
+</section>
+<section id="mds-plots-of-text-annotations" class="level4">
+<h4 class="anchored" data-anchor-id="mds-plots-of-text-annotations">MDS plots of text annotations</h4>
+<p>When examining the MDS plots for our lyrics annotations, we generally see acceptable patterns with most values appearing next to appropriate neighbors, although <code>STIMULATION</code> and <code>HEDONISM</code> appear transposed, and <code>ACHEIVEMENT</code> shows a shift from the perimeter of the circumplex. These patterns are visibly worse for speeches, where we observe a strong shift for <code>HEDONISM</code> from the perimeter of the circumplex.</p>
+<p><img src="../images/wave_2_lyrics_speeches_MDS.png" class="img-fluid"></p>
+</section>
+<section id="model-approach-selection" class="level4">
+<h4 class="anchored" data-anchor-id="model-approach-selection">Model approach selection</h4>
+<p>We then determine a general modelling approach in order to estimate the effect of Ethnicity on ratings of lyrics, and Ethnicity and Political spectrum on ratings of political speeches.</p>
+<p>To do so we plot the observed vs.&nbsp;predicted values and estimate a pseudo R^2, for three models:</p>
+<ul>
+<li>general linear mixed effects model (lmer)</li>
+<li>ordinal mixed effects model (clmm)</li>
+<li>generalized linear mixed effects logistic model (glmer)</li>
+</ul>
+<p>Model fit was slightly worse for Lyrics:</p>
+<p><img src="../images/wave_2_lyrics_yhat_plots.png" class="img-fluid"></p>
+<p>than for speeches:</p>
+<p><img src="../images/wave_2_speeches_ethnicity_yhat_plots.png" class="img-fluid"></p>
+<p>or for speeches with spectrum also being estimated in place of Ethnicity:</p>
+<p><img src="../images/wave_2_speeches_spectrum_yhat_plots.png" class="img-fluid"></p>
+<section id="conclusion-2" class="level5">
+<h5 class="anchored" data-anchor-id="conclusion-2">Conclusion</h5>
+<p>Model fit was consistently worse for ordinal mixed effects models, vs.&nbsp;general or generalized linear mixed effects models. We thus proceed to our specification curve analysis using general mixed effects models for ease of interpretation and computation.</p>
+</section>
+</section>
+</section>
 </section>
 </section>
 <section id="references" class="level1">
@@ -315,10 +363,10 @@ Schwartz, S. H. (2005). Schwartz value survey. <em>Journal of Cross-Cultural Psy
 
 <section id="survey-flow" class="level2">
 <h2 class="anchored" data-anchor-id="survey-flow">Survey Flow</h2>
-<div class="cell">
+<div class="cell" data-layout-align="center">
 <div class="cell-output-display">
-<div class="grViz html-widget html-fill-item" id="htmlwidget-8ce45e4a30d216267d40" style="width:100%;height:464px;"></div>
-<script type="application/json" data-for="htmlwidget-8ce45e4a30d216267d40">{"x":{"diagram":"\ndigraph survey_flow {\n  graph [layout = dot, rankdir = TB]\n\n  node [shape = box, style = filled, fontname = Helvetica, fontsize = 20, width=2.5, fixedsize=false]\n\n  # Main vertical flow\n  Consent -> SSVS -> General_Instructions -> Quiz -> Final_Instructions -> Randomizer1 -> AttentionCheck -> Randomizer2 -> Debrief -> Prolific3\n\n  # Exit paths (horizontal, off to the side)\n  Consent -> Prolific1 [label = \"No Consent\", fontsize = 20, constraint=false]\n  Quiz -> Prolific2 [label = \"  < 2 out of 3\", fontsize = 20, constraint=false]\n\n\n  # Align exit nodes horizontally\n  { rank = same; Prolific1 Prolific2 Prolific3}\n\n  # Node colors\n  Consent [fillcolor = gainsboro]\n  SSVS [fillcolor = lightblue]\n  General_Instructions [label = \"General Instructions\", fillcolor = gainsboro]\n  Quiz [label = \"Comprehension Quiz\", fillcolor = gainsboro]\n  Final_Instructions [label = \"Final Instructions\", fillcolor = gainsboro]\n  Randomizer1 [label = \"Randomizer:\\n 7 Items\", fillcolor = thistle1]\n  Randomizer2 [label = \"Randomizer:\\n 7 Items\", fillcolor = thistle1]\n  AttentionCheck [fillcolor = gainsboro]\n  Debrief [fillcolor = gainsboro]\n  Prolific1 [label = \"Prolific:\\n No Consent\", fillcolor = mistyrose]\n  Prolific2 [label = \"Prolific:\\n Failed Quiz\", fillcolor = mistyrose]\n  Prolific3 [label = \"Prolific:\\n End of Survey\", fillcolor = mistyrose]\n}\n","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
+<div class="grViz html-widget html-fill-item" id="htmlwidget-e5acbbf9b61173520104" style="width:80%;height:480px;"></div>
+<script type="application/json" data-for="htmlwidget-e5acbbf9b61173520104">{"x":{"diagram":"\ndigraph survey_flow {\n  graph [layout = dot, rankdir = TB]\n\n  node [shape = box, style = filled, fontname = Helvetica, fontsize = 20, width=2.5, fixedsize=false]\n\n  # Main vertical flow\n  Consent -> SSVS -> General_Instructions -> Quiz -> Final_Instructions -> Randomizer1 -> AttentionCheck -> Randomizer2 -> Debrief -> Prolific3\n\n  # Exit paths (horizontal, off to the side)\n  Consent -> Prolific1 [label = \"No Consent\", fontsize = 20, constraint=false]\n  Quiz -> Prolific2 [label = \"  < 2 out of 3\", fontsize = 20, constraint=false]\n\n\n  # Align exit nodes horizontally\n  { rank = same; Prolific1 Prolific2 Prolific3}\n\n  # Node colors\n  Consent [fillcolor = gainsboro]\n  SSVS [fillcolor = lightblue]\n  General_Instructions [label = \"General Instructions\", fillcolor = gainsboro]\n  Quiz [label = \"Comprehension Quiz\", fillcolor = gainsboro]\n  Final_Instructions [label = \"Final Instructions\", fillcolor = gainsboro]\n  Randomizer1 [label = \"Randomizer:\\n 7 Items\", fillcolor = thistle1]\n  Randomizer2 [label = \"Randomizer:\\n 7 Items\", fillcolor = thistle1]\n  AttentionCheck [fillcolor = gainsboro]\n  Debrief [fillcolor = gainsboro]\n  Prolific1 [label = \"Prolific:\\n No Consent\", fillcolor = mistyrose]\n  Prolific2 [label = \"Prolific:\\n Failed Quiz\", fillcolor = mistyrose]\n  Prolific3 [label = \"Prolific:\\n End of Survey\", fillcolor = mistyrose]\n}\n","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
 </div>
 </div>
 

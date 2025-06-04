@@ -1,6 +1,6 @@
 ## Survey Flow
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r fig.align="center", out.width="80%", echo=FALSE, message=FALSE, warning=FALSE}
 
 library(DiagrammeR)
 
