@@ -5,6 +5,6 @@ format: html
 
 This repository contains all materials for the project _Estimating Personal Values in Text_, including the full manuscript, analysis code, and supplementary materials.
 
-[📄 Manuscript](manuscript.qmd){.button}
+📄 [Manuscript](manuscript.qmd){.button}
 
-[📁 Materials](supplementary.qmd){.button}
+📁 [Supplementary Materials](supplementary.qmd){.button}

@@ -1,9 +1,6 @@
+## Survey
 
-
-
-## Survey Instructions
-
-### SSVS for participants
+### SSVS Instructions for participants
 
 In this questionnaire you are to ask yourself:
 
@@ -58,6 +55,14 @@ WARNING: These lyrics are randomly selected from popular music, some of which us
 
 "Between the quotation marks below are some song lyrics. Please take a moment to read them and think about the SPEAKER the lyrics. Please remember that this SPEAKER might be a the AUTHOR themselves, or someone or something else:"
 
+##### Attention Test
+
+"This song lyric is actually a test to see if you are paying attention
+Please indicate that the Speaker and Author are the same person,
+That you are not familiar with this song,
+indicate that this Speaker values STIMULATION at 7,
+and please set all other values to 0"
+
 #### Speeches
 
 ##### General Instructions:
@@ -87,6 +92,10 @@ WARNING: These speeches were randomly selected, some of which use language that 
 ##### Question Instructions:
 
 "Between the quotation marks below are parts of a U.S. Presidential Speech. Please take a moment to read them and think about the SPEAKER of the speech."
+
+##### Attention Test:
+
+"This speech part is actually a test to see if you are paying attention. Please indicate that you are not familiar with this president, that the president is a Republican. Indicate that this Speaker values STIMULATION at 7, and please set all other values to 0."
 
 ### Debrief
 
