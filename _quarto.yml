@@ -1,7 +1,9 @@
 project:
   title: "values_from_text"
   type: website
-  output-dir: docs
+  output-dir: docs  
+  resources:
+    - _manuscript/images
 
 bibliography: references.bib
 csl: apa.csl
@@ -22,6 +24,7 @@ format:
   html:
     toc: true
     number-sections: false
+    code-fold: true
   docx:
     toc: false
     number-sections: false

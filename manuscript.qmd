@@ -1,12 +1,8 @@
 ---
-title: "Estimating Personal Values in Text"
-format:
-  html:
-    toc: true
-    number-sections: false
-    code-fold: true
-    
+title: "Manuscript"
+format: html
 ---
+
 
 ```{r child="_manuscript/02_pilot_methods.qmd"}
 ```

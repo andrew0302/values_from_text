@@ -8,7 +8,7 @@ All analysis and visualization is conducted using R \[citation\], and rendered v
 
 We estimate ICC2k overall, and for subgroups separately. For our lyrics pilot, we observe overall 'good' ICC2k estimates, with the exception of `SELF-DIRECTION`, which shows a large confidence interval that exceeds our threshold. These ICC2k scores overall do not appear to improve when we estimate them separately for each Ethnicity.
 
-![](../images/pilot_2_lyrics_ICC2k.png)
+![](../_manuscript/images/pilot_2_lyrics_ICC2k.png)
 
 This is not the case for our two pilots which used political speech data. Overall, agreement on the speech data was unusably poor, however it appeared to improve when estimated separately for each ethnicity, with most values showing ICC2k scores over the threshold. Note that estimation for `HEDONISM` is generally poor in subsamples, and that `STIMULATION` is poor in some subsamples.
 
