@@ -1,0 +1,195 @@
+---
+title: "genre, topic, year of release,  and popularity bin labels"
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(here)
+library(data.table)
+
+
+lyrics_df <- readRDS(file = here("_data", "_primary_data", "public_lyrics_df.RDS"))
+lyrics_df <- as.data.table(lyrics_df)
+
+cache <- readRDS(here("_data", "_primary_data", "artist_tags.RDS"))
+```
+
+
+```{r}
+norm_tag <- function(x) {
+  x |>
+    tolower() |>
+    str_replace_all("[^a-z0-9\\+\\-\\s/]", " ") |>
+    str_squish()
+}
+
+artist_tags_raw <- bind_rows(
+  cache %>% transmute(artist, source = "spotify", tag = sp_genres),
+  cache %>% transmute(artist, source = "lastfm",  tag = lf_tags)
+) %>%
+  unnest_longer(tag) %>%             
+  filter(!is.na(tag), tag != "") %>%
+  mutate(tag = norm_tag(tag))
+
+rm(norm_tag, cache)
+```
+
+
+```{r}
+syn_map <- c(
+  "hiphop"     = "hip hop",
+  "hip hop"    = "hip hop",
+  "hip-hop"    = "hip hop",
+  "rnb"        = "r&b",
+  "r b"        = "r&b",
+  "r&b"        = "r&b",
+  "lofi"       = "lo-fi",
+  "electro"    = "electronic",
+  "dnb"        = "drum and bass",
+  "alt rock"   = "indie rock",
+  "afro r b"   = "afro r&b", 
+  "altrock"    = "indie rock",
+  "gospel r b" = "gospel r&b",
+  "d b"        = "drum & bass", 
+  "gospel rnb" = "gospel r&b", 
+  "50 s"       = "50s",
+  "60 s"       = "60s", 
+  "70 s"       = "70s", 
+  "80 s"       = "80s",
+  "90 s"       = "90s",
+  "1920s"      = "20s", 
+  "1960s"      = "60s", 
+  "1970s"      = "70s", 
+  "1990 s"     = "90s",
+  "1990s"      = "90s", 
+  "2010s"      = "10s", 
+  "a capella"  = "a cappella", 
+  "acapella"   = "a cappella", 
+  "acappella"  = "a cappella", 
+  "accordeon"  = "accordion", 
+  "afrobeat"   = "afrobeats", 
+  "alt rock"   = "alternative rock",
+  "alt-rock"   = "alternative rock",
+  "alternativ" = "alternative", 
+  "alt"        = "alternative", 
+  "america"    = "americana", 
+  "american"   = "americana", 
+  "africa"     = "african",
+  "australia"  = "australian", 
+  "avantgard"  = "avant-garde", 
+  "avantgarde" = "avant-garde", 
+  "brazil"     = "brazillian", 
+  "canada"     = "canadian", 
+  "punk"       = "punk rock", 
+  "musical"    = "musicals", 
+  "italiana"   = "italian", 
+  "musical theatre"  =  "musicals", 
+  "childrens"  = "childrens music", 
+  "children s music" = "childrens music", 
+  "alternative r b"  = "alternative r&b", 
+  "alternative rnb"  = "alternative r&b", 
+  "rock and roll"    = "rock n roll"
+)
+
+artist_tags_raw <- artist_tags_raw %>%
+  mutate(tag = ifelse(tag %in% names(syn_map), syn_map[tag], tag))
+
+rm(syn_map)
+```
+
+
+```{r}
+# 1) join tags to bins
+artist_bins <- lyrics_df[, .(artist = artist_name, bin = get("artist_topic"))] |>
+  unique()
+
+tags_in_bins <- artist_tags_raw |>
+  filter(!tag == "all") |>
+  inner_join(artist_bins, by = "artist") |>
+  filter(!is.na(bin), tag != "")
+
+# 2) counts and proportions per bin
+bin_tag_stats <- tags_in_bins |>
+  count(bin, tag, name = "n") |>
+  group_by(bin) |>
+  mutate(
+    total = sum(n),
+    prop  = n / total,
+    rank  = dense_rank(desc(n))
+  ) |>
+  arrange(bin, desc(n)) |>
+  ungroup()
+
+# 3) distinctiveness (tf-idf across bins)
+df_tbl <- bin_tag_stats |>
+  group_by(tag) |>
+  summarise(df = n_distinct(bin[n > 0]), .groups = "drop")
+
+bin_sizes <- tags_in_bins |>
+  distinct(bin, artist) |>
+  count(bin, name = "n_artists")
+
+bin_tfidf <- bin_tag_stats |>
+  left_join(df_tbl, by = "tag") |>
+  left_join(bin_sizes, by = "bin") |>
+  mutate(
+    idf   = log((n_distinct(bin) + 1) / (df + 1)) + 1,
+    tfidf = n * idf)
+
+
+# 4) make overview
+take_top <- function(tags, scores, k = 4) {
+  o <- order(-scores, tags)
+  head(tags[o], min(k, length(o)))}
+
+bin_overview <- bin_tfidf %>%
+  group_by(bin) %>%
+  summarise(
+    top_tags         = list(take_top(tag, n,     k = 4)),  # most frequent
+    distinctive_tags = list(take_top(tag, tfidf, k = 4)),  # most distinctive
+    .groups = "drop") %>%
+  mutate(
+    top_tags_str         = sapply(top_tags,         \(x) paste(x, collapse = " / ")),
+    distinctive_tags_str = sapply(distinctive_tags, \(x) paste(x, collapse = " / "))) %>%
+  select(bin, 
+         #top_tags_str, 
+         distinctive_tags_str) |>
+  rename(artist_topic = bin, 
+         artist_topic_bin_labels = distinctive_tags_str)
+
+rm(artist_bins, bin_sizes, bin_tag_stats, bin_tfidf, df_tbl, tags_in_bins)
+```
+
+```{r}
+lyrics_df <- left_join(lyrics_df, bin_overview, by = "artist_topic")
+```
+
+```{r}
+lyrics_df <- left_join(
+  lyrics_df,
+  
+  lyrics_df |>
+    group_by(release_year_bin) |>
+    summarise(year_bin_range = paste0(
+      min(release_year), "–", 
+      max(release_year)), 
+      .groups = "drop"),  by = "release_year_bin")
+```
+
+```{r}
+lyrics_df <- lyrics_df |> 
+  mutate(artist_playlist_frequency_bin_label = case_when(
+    artist_playlist_frequency_bin == 0 ~ "<= 40 %", 
+    artist_playlist_frequency_bin == 1 ~ "41%-53%", 
+    artist_playlist_frequency_bin == 2 ~ "54%-60%",     
+    artist_playlist_frequency_bin == 3 ~ "61%-70%",     
+    artist_playlist_frequency_bin == 4 ~ "71%-80%",     
+    artist_playlist_frequency_bin == 5 ~ "81%-91%",     
+    artist_playlist_frequency_bin == 6 ~ "91%-100%",     
+  ))
+```
+
+```{r}
+saveRDS(lyrics_df, here("_data", "_primary_data", "lyrics_df.RDS"))
+```
+

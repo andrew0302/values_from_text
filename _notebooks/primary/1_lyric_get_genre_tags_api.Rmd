@@ -1,0 +1,106 @@
+---
+title: "genre and topic labels"
+---
+
+This notebook pulls artist genre tags from both Spotify and Last.fm and uses tf-idf to select the most distinct terms to describe the artists. 
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(here)
+library(data.table)
+library(spotifyr)
+library(httr2)
+
+
+lyrics_df <- readRDS(file = here("_data", "primary_data", "public_lyrics_dt.RDS"))
+lyrics_df <- as.data.table(lyrics_df)
+
+Sys.setenv(SPOTIFY_CLIENT_ID = "ENTER_ID", 
+           SPOTIFY_CLIENT_SECRET = "ENTER_SECRET")
+
+LASTFM_KEY <- "ENTER_KEY"
+```
+
+# pull genre tags from SPOTIFY and Last.fm
+
+```{r}
+access_token <- get_spotify_access_token()  # client credentials, no redirect used
+search_spotify("Radiohead", type = "artist", limit = 1)$genres
+```
+
+```{r}
+req <- request("https://ws.audioscrobbler.com/2.0/") |>
+  req_url_query(method="artist.getTopTags", artist="Radiohead", api_key=LASTFM_KEY, format="json")
+resp <- req_perform(req)
+resp_body_json(resp, simplifyVector = TRUE)$toptags$tag$name[1:10]
+
+rm(req, resp)
+```
+
+
+```{r}
+norm_tags <- function(x) {
+  x |>
+    tolower() |>
+    str_replace_all("[^a-z0-9\\+\\-\\s/]", " ") |>
+    str_squish() |>
+    (\(z) z[z != ""])()}
+
+safe_spotify_artist <- purrr::safely(function(a) {
+  res <- search_spotify(a, type="artist", limit=1)
+  if (nrow(res) == 0) return(list(genres=character(), id=NA_character_))
+  list(genres = res$genres[[1]] %||% character(), id = res$id[[1]] %||% NA_character_)
+})
+
+safe_lastfm_tags <- purrr::safely(function(a) {
+  if (is.null(LASTFM_KEY) || LASTFM_KEY == "") return(character())
+  req <- request("https://ws.audioscrobbler.com/2.0/") |>
+    req_url_query(method="artist.getTopTags", artist=a, api_key=LASTFM_KEY, format="json")
+  dat <- resp_body_json(req_perform(req), simplifyVector = TRUE)
+  head(tryCatch(dat$toptags$tag$name, error=function(e) character()), 10)
+})
+
+cache_path <- here("0_primary_lyric_data", "archive", "artist_genre_cache.csv")
+cache <- if (file.exists(cache_path)) readr::read_csv(cache_path, show_col_types = FALSE) else tibble(artist=character(), sp_genres=list(), sp_id=character(), lf_tags=list())
+
+get_artist_row <- function(artist) {
+  # Spotify
+  s <- safe_spotify_artist(artist)$result
+  sp_gen <- norm_tags(s$genres)
+  sp_id  <- s$id
+
+  # # Last FM
+  lf <- safe_lastfm_tags(artist)$result
+  lf_gen <- norm_tags(lf)
+  tibble(artist=artist, sp_genres=list(sp_gen), sp_id=sp_id, lf_tags=list(lf_gen))
+}
+
+fetch_artists <- function(artists_vec) {
+  todo <- tibble(artist = unique(artists_vec)) |>
+    anti_join(cache |> select(artist), by="artist")
+  if (nrow(todo) > 0) {
+    new_rows <- purrr::map_dfr(todo$artist, get_artist_row)
+    cache <<- bind_rows(cache, new_rows) |> distinct(artist, .keep_all=TRUE)
+    readr::write_csv(cache, cache_path)
+  }
+  cache
+}
+```
+
+```{r}
+# this has a lag
+artists <- lyrics_df[, unique(artist_name)]
+cache <- fetch_artists(artists)
+```
+
+```{r}
+# find cached empties
+missing_artists <- cache %>% filter(sp_genres == "NULL" | lf_tags == "NULL") |> select(artist) |> pull()
+missing_cache <- purrr::map_dfr(missing_artists, get_artist_row)
+cache <- dplyr::rows_update(cache, missing_cache, by = "artist")
+
+saveRDS(cache, here("_data", "primary_data", "artist_tags.RDS"))
+
+rm(missing_cache, req, resp, artists, cache_path, missing_artists, fetch_artists, get_artist_row, norm_tags, safe_lastfm_tags, safe_spotify_artist, access_token, LASTFM_KEY)
+```
+

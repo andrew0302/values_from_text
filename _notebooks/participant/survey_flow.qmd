@@ -45,6 +45,10 @@ digraph survey_flow {
 ")
 ```
 
+```{r}
+diagram
+```
+
 
 ```{r}
 # Export as SVG

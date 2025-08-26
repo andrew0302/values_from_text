@@ -1,0 +1,99 @@
+---
+title: "01_format_data"
+---
+
+```{r}
+library(here)
+library(tidyverse)
+
+data_path <- here("_data", "_machine_scores")
+
+values <- c("POWER", "ACHIEVEMENT", "HEDONISM", 
+            "STIMULATION", "SELF", "UNIVERSALISM", 
+            "BENEVOLENCE", "TRADITION", 
+            "CONFORMITY", "SECURITY")
+```
+
+## Machine Data
+
+```{r}
+# embedding models
+wave_1_m_df <- readRDS(here(data_path, "wave_1_m_df.RDS")) |>   select(-V1)
+wave_2_m_dfs <- readRDS(here(data_path, "wave_2_m_dfs.RDS"))
+
+# llm scores
+wave_1_llm_df <- readRDS(here(data_path, "wave_1_llm_df.RDS"))
+wave_1_llm_df <- wave_1_llm_df |> rename(machine_ID = model) |>
+  mutate(item_ID = as.character(item_ID))
+
+wave_1_llm_df <- wave_1_llm_df |> filter(!grepl("weighted", machine_ID))
+
+wave_2_llm_dfs <- readRDS(here(data_path, "wave_2_llm_dfs.RDS"))
+
+# wave_2_llm_df <- wave_2_llm_dfs[['lyrics']]
+# wave_2_llm_df <- wave_2_llm_df |> mutate(score = (run_10 + run_11 + run_12)/3) |> 
+#   select(-run_10, -run_11, -run_12, -text) |>
+#   pivot_wider(names_from = value, values_from = score) |>
+#   rename(machine_ID = model) |>
+#   mutate(item_ID = as.character(item_ID))
+
+# svm scores
+wave_2_supervised_dfs <- readRDS(here(data_path, "wave_2_supervised_dfs.RDS"))
+
+wave_2_supervised_dfs[['cross_validated']] <- wave_2_supervised_dfs[['cross_validated']] |>
+  mutate(machine_ID = "svm", item_ID = as.character(item_ID))
+
+wave_2_supervised_dfs[['w2v']] <- wave_2_supervised_dfs[['w2v']] |> 
+  mutate(machine_ID = "w2v", item_ID = as.character(item_ID)) 
+```
+
+```{r}
+machine_df <- bind_rows(wave_1_m_df, wave_1_llm_df, wave_2_llm_df, wave_2_supervised_df, wave_2_w2v_df)
+
+saveRDS(machine_df, here(data_path, "machine_df.RDS"))
+```
+
+```{r}
+
+wave_1_df <- readRDS(
+  here("_data", "_participant_scores", "wave_1", "wave_1_df.RDS")) |> 
+  select(participant_ID, item_ID, all_of(values)) |> 
+  pivot_longer(cols = values, names_to = "value", values_to = "score")
+
+wave_2_dfs <- lapply(readRDS(
+  here("_data", "_participant_scores", "wave_2", "wave_2_dfs.RDS")), 
+    function(df){ 
+      df |> select(participant_ID, item_ID, all_of(values)) |> 
+        pivot_longer(cols = values, names_to = "value", values_to = "score")})
+
+wave_2_df <- bind_rows(wave_2_dfs[['lyrics1']], wave_2_dfs[['lyrics2']])
+rm(wave_2_dfs)
+```
+
+
+```{r}
+wave_1_mean_df <- wave_1_df |> group_by(item_ID, value) |> 
+  summarize(wave_1_mean = mean(as.numeric(score), na.rm=T)) |> ungroup()
+
+wave_2_mean_df <- wave_2_df |> group_by(item_ID, value) |> 
+  summarize(wave_2_mean = mean(as.numeric(score), na.rm=T)) |> ungroup()
+
+wave_2_mean_na_df <- wave_2_df |> 
+  mutate(score = case_when(
+    is.na(score) ~ 0, .default = score)) |> 
+  group_by(item_ID, value) |> 
+  summarize(wave_2_0_mean = mean(as.numeric(score))) |> ungroup()
+  
+wave_cor_df <- merge(wave_1_mean_df, wave_2_mean_df, by = c("item_ID", "value"), all.x=T)
+wave_cor_df <- merge(wave_cor_df, wave_2_mean_na_df, by = c("item_ID", "value"), all.x=T)
+
+#correlate(wave_cor_df$wave_1_mean, wave_cor_df$wave_2_mean) |> autoplot()
+
+wave_cor_df |> group_by(value) |> summarize(cor = cor(wave_1_mean, wave_2_mean, use="pairwise.complete.obs"))
+
+wave_cor_df |> group_by(value) |> summarize(cor = cor(wave_1_mean, wave_2_0_mean, use="pairwise.complete.obs"))
+
+correlate(wave_cor_df$wave_1_mean, wave_cor_df$wave_2_mean)
+correlate(wave_cor_df$wave_1_mean, wave_cor_df$wave_2_0_mean)
+```
+

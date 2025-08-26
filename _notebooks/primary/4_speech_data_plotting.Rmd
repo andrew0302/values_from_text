@@ -1,0 +1,52 @@
+---
+title: "plotting speech strata"
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(here)
+library(viridis)
+library(cowplot)
+library(gt)
+library(rlang)
+
+speech_df <- readRDS(here("_data", "_primary_data", "speech_df.RDS"))
+
+wave_2_dfs <- readRDS(here("_data", "_participant_scores", "wave_2", "wave_2_dfs.RDS"))
+pilot_2_dfs <- readRDS(here("_data", "_participant_scores", "wave_2", "pilot_2_dfs.RDS"))
+
+speech_IDs <- bind_rows(
+  wave_2_dfs[["speeches1"]] |> select(item_ID), 
+  wave_2_dfs[["speeches2"]] |> select(item_ID), 
+  pilot_2_dfs[["speeches1"]] |> select(item_ID),
+  pilot_2_dfs[["speeches2"]] |> select(item_ID)) |> 
+  
+  filter(!item_ID == "attention") |> unique() |> pull()
+
+colors <- viridis(10) 
+
+rm(wave_2_dfs)
+```
+
+# bar plots
+
+```{r}
+speech_df |> 
+  
+  filter(id %in% speech_IDs) |>
+  
+  count(president, party, name = "n") |>
+  
+  mutate(president = fct_reorder(president, n, .desc = T)) |>
+  
+  ggplot(aes(x = president, y = n, fill = party)) +
+    geom_col(alpha = .75) +
+    coord_flip() +
+    labs(x = NULL, y = "Count") +
+        scale_fill_manual(values = c(colors[5], colors[9])) + 
+    theme_minimal() +
+  theme(legend.position = "none")
+```
+
+
+

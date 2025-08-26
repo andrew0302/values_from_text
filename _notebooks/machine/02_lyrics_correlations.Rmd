@@ -1,0 +1,269 @@
+---
+title: "01_format_data"
+---
+
+```{r}
+library(here)
+library(tidyverse)
+library(corrr)
+library(cowplot)
+
+values <- c("POWER", "ACHIEVEMENT", "HEDONISM", 
+            "STIMULATION", "SELF", "UNIVERSALISM", 
+            "BENEVOLENCE", "TRADITION", 
+            "CONFORMITY", "SECURITY")
+```
+
+## Participant Data
+
+```{r}
+wave_2_dfs <- lapply(readRDS(
+  here("_data", "_participant_scores", "wave_2", "wave_2_dfs.RDS")), 
+    function(df){ 
+      df |> select(participant_ID, item_ID, all_of(values)) |> 
+        pivot_longer(cols = values, names_to = "value", values_to = "score")})
+
+wave_2_df <- bind_rows(wave_2_dfs[['lyrics1']], wave_2_dfs[['lyrics2']])
+rm(wave_2_dfs)
+
+wave_2_mean_na_df <- wave_2_df |> 
+  group_by(item_ID, value) |> 
+  summarize(wave_2_NA_mean = mean(as.numeric(score), na.rm=T)) |> 
+  ungroup()
+
+wave_2_mean_0_df <- wave_2_df |> 
+  mutate(score = case_when(is.na(score) ~ 0, .default = score)) |> 
+  group_by(item_ID, value) |> 
+  summarize(wave_2_0_mean = mean(as.numeric(score))) |> 
+  ungroup()
+
+wave_2_df <- merge(wave_2_mean_na_df, wave_2_mean_0_df, by = c("item_ID", "value")) |> 
+  filter(!item_ID == "attention")
+
+wave_1_df <- readRDS(here("_data", "_participant_scores", "wave_1", "wave_1_df.RDS")) |>
+  select(participant_ID, item_ID, all_of(values)) |>
+  pivot_longer(cols = values, names_to = "value", values_to = "score") |>
+  group_by(item_ID, value) |>
+  summarize(wave_1_0_mean = mean(as.numeric(score))) |> ungroup()
+```
+
+
+## Machine Data
+
+```{r}
+# create list of machine dfs, and individual machine dfs pivoted long
+
+data_path <- here("_data", "_machine_scores")
+
+# embedding models
+wave_2_m_dfs <- readRDS(here(data_path, "wave_2_m_dfs.RDS"))
+wave_2_m_df <- wave_2_m_dfs[['lyrics']] 
+
+wave_2_m_dfs <- split(wave_2_m_df, f = wave_2_m_df$machine_ID)
+
+wave_2_m_df <- wave_2_m_df |> 
+  pivot_longer(cols = values, names_to = "value", values_to = "score") |> 
+  pivot_wider(names_from = machine_ID, values_from = score)
+
+
+# llm scores
+wave_2_llm_dfs <- readRDS(here(data_path, "wave_2_llm_dfs.RDS"))
+
+wave_2_llm_df <- wave_2_llm_dfs[['lyrics']] |> 
+  mutate(score = (run_10 + run_11 + run_12)/3) |>
+  select(-run_10, -run_11, -run_12, -text) |>
+  pivot_wider(names_from = value, values_from = score) |>
+  rename(machine_ID = model) |>
+  mutate(item_ID = as.character(item_ID))
+
+wave_2_llm_dfs <- split(wave_2_llm_df, f = wave_2_llm_df$machine_ID)
+
+wave_2_llm_df <- wave_2_llm_df  |> 
+  pivot_longer(cols = values, names_to = "value", values_to = "score") |> 
+  pivot_wider(names_from = machine_ID, values_from = score)
+
+
+# svm scores
+wave_2_supervised_dfs <- readRDS(here(data_path, "wave_2_supervised_dfs.RDS"))
+
+wave_2_supervised_dfs[['cross_validated']] <- wave_2_supervised_dfs[['cross_validated']] |>
+  mutate(machine_ID = "svm", item_ID = as.character(item_ID)) 
+
+wave_2_supervised_df <- wave_2_supervised_dfs[['cross_validated']] |> 
+  pivot_longer(cols = values, names_to = "value", values_to = "score") |> 
+  pivot_wider(names_from = machine_ID, values_from = score)
+
+wave_2_supervised_dfs[['w2v']] <- wave_2_supervised_dfs[['w2v']] |> 
+  mutate(machine_ID = "w2v", item_ID = as.character(item_ID)) |> 
+  rename(SELF = `SELF-DIRECTION`) 
+
+wave_2_w2v_df <- wave_2_supervised_dfs[['w2v']] |>
+  pivot_longer(cols = values, names_to = "value", values_to = "score") |> 
+  pivot_wider(names_from = machine_ID, values_from = score)
+
+
+wave_2_supervised_dfs <- list(
+  supervised = wave_2_supervised_dfs[['cross_validated']], 
+  w2v = wave_2_supervised_dfs[['w2v']])
+
+
+wave_2_m_dfs <- c(wave_2_m_dfs, wave_2_llm_dfs, wave_2_supervised_dfs)
+
+rm(wave_2_llm_dfs, wave_2_supervised_dfs)
+```
+
+```{r}
+df <- merge(wave_2_df, wave_2_llm_df, by = c("value", "item_ID"))
+df <- merge(df, wave_2_supervised_df, by = c("value", "item_ID"))
+df <- merge(df, wave_2_w2v_df, by = c("value", "item_ID"))
+df <- merge(df, wave_2_m_df, by = c("value", "item_ID"), all.x = T)
+
+rm(wave_2_w2v_df, wave_2_supervised_df, wave_2_m_df, wave_2_llm_df)
+```
+
+```{r}
+plot_grid(
+
+df |> select(-wave_2_0_mean) |> correlate() |> focus(wave_2_NA_mean) |>
+  ggplot(aes(x = reorder(term, !!sym("wave_2_NA_mean")), y = !!sym("wave_2_NA_mean"))) +
+  geom_col() +
+  coord_flip() +
+  labs(x = "Variable", y = paste("Correlation with", "wave_2_NA_mean")) +
+  theme_minimal(), 
+
+df |> select(-wave_2_NA_mean) |> correlate() |> focus(wave_2_0_mean) |>
+  ggplot(aes(x = reorder(term, !!sym("wave_2_0_mean")), y = !!sym("wave_2_0_mean"))) +
+  geom_col() +
+  coord_flip() +
+  labs(x = "Variable", y = paste("Correlation with", "wave_2_0_mean")) +
+  theme_minimal(), ncol = 1
+)
+```
+
+```{r}
+df |> select(-wave_2_NA_mean, -svm, -w2v) |> correlate() |> focus(wave_2_0_mean) |>
+  rename(model = term, correlation = wave_2_0_mean) |>
+  pivot_longer(cols = -model, names_to = "mean", values_to = "correlation") |>
+  mutate(model = fct_reorder(model, correlation, .desc = F)) |>
+  arrange(desc(correlation)) |>
+  ggplot(aes(y=model, x=mean, fill = correlation)) +
+    geom_tile(color = "white") +
+    geom_text(aes(label = round(correlation, 2)), color = "black") +
+    scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0, limits =c(-1,1)) +
+    theme_minimal() +
+    ylab("") + xlab("")
+```
+
+```{r}
+wave_2_m_dfs <- lapply(wave_2_m_dfs, function(df){
+    df <- merge(wave_2_mean_0_df |> 
+                  pivot_wider(names_from = value, values_from = wave_2_0_mean), 
+                df, by = "item_ID")
+    colnames(df) <- gsub("\\.x", "", colnames(df))
+    return(df)  
+})
+
+wave_2_m_dfs <- wave_2_m_dfs[!(names(wave_2_m_dfs) %in% c("supervised", "w2v"))]
+
+```
+
+```{r}
+# assemble correlation df list
+make_cor_df <- function(df_list){
+  
+  lapply(seq_along(df_list), function(df, n, i) {
+    
+      cor_list <- lapply(values, function(value){
+        result <- df[[i]] %>% select(starts_with(value)) %>%
+          correlate(use = "na.or.complete", quiet = T) %>%
+          focus(!!!value)
+  
+        result$term <- gsub(".y", "", result$term)
+        colnames(result) <- c("value", n[[i]])
+        return(result)
+    })
+  
+    bind_rows(cor_list)
+  
+  }, df=df_list, n=names(df_list))
+}
+```
+
+```{r}
+make_cor_df(wave_2_m_dfs) |> bind_cols(.name_repair = "unique") |>
+  select(-`value...3`, -`value...5`, -`value...7`, -`value...9`,
+         -`value...11`, -`value...13`, -`value...15`, -`value...17`
+         #-`value...19`, -`value...21`
+         ) |>
+  rename(value = value...1)   |>
+  pivot_longer(cols = -c(value), names_to = "model", values_to = "correlation") |>
+  
+  mutate(model = factor(model, levels = c(
+    #"supervised", 
+    "phi4", "gemma2:9b", "qwen2.5:7b", 
+    "paraphrase-mpnet-base-v2", 
+    #"w2v", 
+    "word2vec-google-news-300",	
+    "mxm-far", "mxm-cv", "glove.840B.300d", "wordcount"))) |> 
+  
+  ggplot(aes(x=model, y=value, fill = correlation)) +
+      geom_tile(color = "white") +
+      geom_text(aes(label = round(correlation, 2)), color = "black") +
+      scale_fill_gradient2(
+        low = "blue", mid = "white", high = "red", midpoint = 0,limits =c(-1,1)) +
+      ylab("") + xlab("") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+```
+
+```{r}
+# compare 1st and 2nd wave embedding model scores
+
+wave_1_m_df <- readRDS(here(data_path, "wave_1_m_df.RDS")) |> 
+  filter(normalization == "null") |> 
+  select(-normalization)
+
+wave_2_m_df <- readRDS(here(data_path, "wave_2_m_dfs.RDS"))
+wave_2_m_df <- wave_2_m_df[['lyrics']] 
+
+check_df <- merge(wave_1_m_df, wave_2_m_df, by = c("item_ID", "machine_ID"))
+colnames(check_df) <- gsub("\\.x", "", colnames(check_df))
+
+    lapply(values, function(value){
+        result <- check_df %>% select(starts_with(value)) %>%
+          correlate(use = "na.or.complete", quiet = T) %>%
+          focus(!!!value)
+  
+        result$term <- gsub(".y", "", result$term)
+        colnames(result) <- c("value", "pearson_correlation")
+        return(result)
+    }) |> bind_rows()
+```
+
+```{r}
+check_df <- merge(wave_1_df, wave_2_df, by = c("item_ID", "value"))
+
+cor(check_df$wave_1_0_mean, check_df$wave_2_0_mean)
+cor(check_df$wave_1_0_mean, check_df$wave_2_NA_mean)
+
+wave_1_df <- wave_1_df |> pivot_wider(names_from = value, values_from = wave_1_0_mean)
+wave_2_df <- wave_2_df |> select(-wave_2_NA_mean) |> filter(item_ID%in%wave_1_df$item_ID) |> pivot_wider(names_from = value, values_from = wave_2_0_mean)
+
+check_df <- merge(wave_1_df, wave_2_df, by= "item_ID")
+colnames(check_df) <- gsub("\\.x", "", colnames(check_df))
+
+      cor_list <- lapply(values, function(value){
+        result <- check_df %>% select(starts_with(value)) %>%
+          correlate(use = "na.or.complete", quiet = T) %>%
+          focus(!!!value)
+  
+        result$term <- gsub(".y", "", result$term)
+        colnames(result) <- c("value", "pearson_correlation")
+        return(result)
+    })
+  
+    bind_rows(cor_list)
+```
+

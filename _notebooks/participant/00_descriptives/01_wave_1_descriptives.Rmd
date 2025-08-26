@@ -1,0 +1,60 @@
+---
+title: "wave_1_descriptives"
+---
+
+```{r}
+library("here")
+library("tidyverse")
+
+data_path <- here("_data", "_participant_scores", "wave_1")
+```
+
+```{r}
+pilot_1_demogs_df <- readRDS(here(data_path, "pilot_1_demogs_df.RDS")) |>
+  mutate(Age = as.numeric(Age))
+
+wave_1_demogs_df <- readRDS(here(data_path, "wave_1_demogs_df.RDS")) |>
+  mutate(Age = as.numeric(Age))
+```
+
+```{r}
+summarize_sex <- function(df) {df|> dplyr::count(Sex) |> dplyr::mutate(percent = round(100 * n / sum(n), 1))}
+
+lapply(list(
+  pilot = pilot_1_demogs_df, 
+  wave = wave_1_demogs_df|>filter(!is.na(Sex))), 
+  summarize_sex)
+```
+
+```{r}
+summarize_age <- function(df, age_var = "Age") {
+  df |>
+    dplyr::summarise(
+      n = dplyr::n(),
+      mean_age = round(mean(.data[[age_var]], na.rm = TRUE), 1),
+      sd_age = round(sd(.data[[age_var]], na.rm = TRUE), 1),
+      min_age = min(.data[[age_var]], na.rm = TRUE),
+      max_age = max(.data[[age_var]], na.rm = TRUE)
+    )
+}
+
+lapply(list(pilot = pilot_1_demogs_df, wave = wave_1_demogs_df|>filter(!is.na(Sex))), summarize_age)
+```
+
+```{r}
+summarize_ethnicity <- function(df, ethnicity_var = "Ethnicity simplified") {
+  df |>
+    dplyr::count(.data[[ethnicity_var]]) |>
+    dplyr::mutate(percent = round(100 * n / sum(n), 1))
+}
+
+lapply(list(pilot = pilot_1_demogs_df |>
+              filter(! `Ethnicity simplified` == "DATA EXPIRED"), 
+            
+            wave = wave_1_demogs_df|>
+              filter(!is.na(`Ethnicity simplified`)) |>
+              filter(! `Ethnicity simplified` == "CONSENT_REVOKED") |>
+              filter(! `Ethnicity simplified` == "DATA EXPIRED")
+            ), summarize_ethnicity)
+```
+

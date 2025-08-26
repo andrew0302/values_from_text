@@ -1,3 +1,0 @@
-## Survey Flow
-
-![](../_manuscript/images/survey_flow.png)

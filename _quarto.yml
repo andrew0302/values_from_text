@@ -12,8 +12,6 @@ website:
   title: "Estimating Personal Values in Text"
   navbar:
     left:
-      - href: index.qmd
-        text: Home
       - href: manuscript.qmd
         text: Manuscript
       - href: supplementary.qmd
@@ -25,6 +23,7 @@ format:
     toc: true
     number-sections: false
     code-fold: true
+    css: styles.css
   docx:
     toc: false
     number-sections: false
