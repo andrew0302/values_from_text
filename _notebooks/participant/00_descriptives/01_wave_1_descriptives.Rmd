@@ -11,7 +11,10 @@ data_path <- here("_data", "_participant_scores", "wave_1")
 
 ```{r}
 pilot_1_demogs_df <- readRDS(here(data_path, "pilot_1_demogs_df.RDS")) |>
-  mutate(Age = as.numeric(Age))
+  mutate(Age = as.numeric(Age),
+         `Ethnicity simplified` = case_when(
+           `Ethnicity simplified` == "DATA EXPIRED" ~ NA, 
+           .default = `Ethnicity simplified`))
 
 wave_1_demogs_df <- readRDS(here(data_path, "wave_1_demogs_df.RDS")) |>
   mutate(Age = as.numeric(Age))
@@ -45,16 +48,10 @@ lapply(list(pilot = pilot_1_demogs_df, wave = wave_1_demogs_df|>filter(!is.na(Se
 summarize_ethnicity <- function(df, ethnicity_var = "Ethnicity simplified") {
   df |>
     dplyr::count(.data[[ethnicity_var]]) |>
-    dplyr::mutate(percent = round(100 * n / sum(n), 1))
-}
+    dplyr::mutate(percent = round(100 * n / sum(n), 1))}
 
-lapply(list(pilot = pilot_1_demogs_df |>
-              filter(! `Ethnicity simplified` == "DATA EXPIRED"), 
-            
-            wave = wave_1_demogs_df|>
-              filter(!is.na(`Ethnicity simplified`)) |>
-              filter(! `Ethnicity simplified` == "CONSENT_REVOKED") |>
-              filter(! `Ethnicity simplified` == "DATA EXPIRED")
-            ), summarize_ethnicity)
+lapply(list(pilot = pilot_1_demogs_df, 
+            wave = wave_1_demogs_df), 
+       summarize_ethnicity)
 ```
 

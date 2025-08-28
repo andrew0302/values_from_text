@@ -3,10 +3,22 @@ title: "Manuscript"
 format: html
 ---
 
+```{r child="_manuscript/10_methods.qmd"}
+```
+
 ```{r child="_manuscript/11_stimuli.qmd"}
 ```
 
+```{r child="_manuscript/13_participants.qmd"}
+```
+
 ```{r child="_manuscript/12_survey.qmd"}
+```
+
+```{r child="_manuscript/21_pilot_methods.qmd"}
+```
+
+```{r child="_manuscript/31_main_methods.qmd"}
 ```
 
 # References
@@ -14,8 +26,8 @@ format: html
 ::: {#refs}
 :::
 
-```{r child="_manuscript/07_appendix_A.qmd"}
+```{r child="_manuscript/91_appendix_A.qmd"}
 ```
 
-```{r child="_manuscript/07_appendix_B.qmd"}
+```{r child="_manuscript/92_appendix_B.qmd"}
 ```

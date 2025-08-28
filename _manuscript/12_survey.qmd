@@ -1,10 +1,8 @@
-## Survey
+### Procedure
 
-For complete survey materials, see see Appendix B: Survey. The following procedure was reviewed, determined to have minimal risk to participants, and thus approved by the Human Research Ethics Committee at Delft University of Technology[^12_survey-3] for all surveys described herein. 
+For complete survey materials, see see Appendix B: Survey. 
 
-[^12_survey-3]: Letters of approval #: 4011, 4024, 4152, & 4507
-
-### Adapted Short Schwartz Value Survey
+#### Adapted Short Schwartz Value Survey
 
 The primary instrument in all surveys is the 10-item Short Schwartz Value Survey (SSVS) questionnaire developed by [@lindeman2005measuring], which participants completed on the Qualtrics[^12_survey-2] survey platform. Each of the 10 questionnaire items in the SSVS is the name of a specific value in the Schwartz value inventory, along with a few descriptive words e.g. "POWER (social power, authority, wealth, influence on people and events)". We asked participants to read the instructions from the Schwartz Value Survey[^12_survey-1] in order to introduce the concept of personal values, and to instruct them on how to complete the questionnaire [@schwartz2005schwartz]. The response format is a 9-point Likert scale which ranges from -1 (Opposed to their values) and 0 (Not at all Important), to 6 (Very Important) and 7 (Of Supreme Importance)[@lindeman2005measuring], which corresponds to the original, unbalanced likert scale in the Schwartz Value Survey  [@schwartz2005schwartz]. 
 
@@ -15,7 +13,7 @@ Participants first completed the questionnaire about themselves to familiarize t
 
 For the annotation we make an adjustment to the likert scale of the SSVS: we present participants with a 'Not Applicable' response option, as we expect that excerpts of text give an incomplete picture of the values of the Speaker. Thus, we give participants the option to indicate `NA` to indicate "Not Applicable" if they felt no information on the value is present in the text. We thus gather 10 likert-scale responses per item (`lyric` / `speech` excerpt) being rated, one for each of the 10 Schwartz values, within a range of -1 to 7, and with possible `NA`s.
 
-### Survey Flow
+#### Survey Flow
 
 The set of survey components, in order, is shown in Figure 1. In order to ensure that participants understood the task, the survey (1) asked participants to complete the SSVS about themselves, (2) gave a 3-item comprehension quiz that gave feedback on the correctness of the response after each item, (3) repeated the instructions multiple times, and (4) contained an Attention Check to filter out low effort responses. For details regarding the specific wording of instructions for each component, see Appendix B: Survey. 
 

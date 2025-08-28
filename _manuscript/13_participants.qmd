@@ -1,0 +1,11 @@
+### Participants
+
+We aimed to gather responses that approximate the average perspective of a population, and sub-groups of that population. We chose the United States as the target population, given the prevalence of lyrics in the most popular songs[^13_participants-3], and thus exclusively drew participants who reported residing in the United States, and that were fluent in English. To see if perspectives between sub-groups of the population varied, we recruited a sample of respondents stratified by the most common ethnicities in the US according to the 2024 US Census[^13_participants-1], and additionally by political leaning for `speeches`. 
+
+Across all studies, participants were recruited using Prolific[^13_participants-2], an online survey participant recruitment platform, to draw a sample that was stratified based on information participants report at registration, according to categories determined by Prolific. For ethnicity, these were: White, Black/African American, Hispanic/Latino, and three Asian sub-categories, East Asian, South Asian, South East Asian, which we combined into a single 'Asian' category. For `speeches`, we also recruited participants stratified by political spectrum (Conservative, Moderate, Liberal). 
+
+[^13_participants-1]: https://www.census.gov/quickfacts/fact/table/US
+
+[^13_participants-2]: prolific.com
+
+[^13_participants-3]: https://faroutmagazine.co.uk/how-many-number-one-instrumental/?utm_source=chatgpt.com
