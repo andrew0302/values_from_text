@@ -3,7 +3,7 @@ project:
   type: website
   output-dir: docs  
   resources:
-    - images
+    - images/
 
 bibliography: references.bib
 csl: apa.csl
