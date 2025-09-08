@@ -10,7 +10,7 @@ csl: apa.csl
 
 execute:
   cache: false
-  freeze: auto
+  freeze: false
 
 knitr:
   opts_chunk:
@@ -34,5 +34,5 @@ format:
     documentclass: apa7
     classoption:
       - man
-    keep-tex: true
+    keep-tex: false
 
