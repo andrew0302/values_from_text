@@ -25,3 +25,4 @@ format:
   docx:
     toc: false
     number-sections: false
+    output-file: manuscript.docx

@@ -1,6 +1,7 @@
 ---
-title: "Manuscript"
-format: html
+title: "Estimating Personal Values in Text"
+bibliography: references.bib
+csl: apa.csl
 ---
 
 ```{r child="_manuscript/10_methods.qmd"}
