@@ -14,8 +14,6 @@ website:
     left:
       - href: manuscript.qmd
         text: Manuscript
-      - href: supplementary.qmd
-        text: Supplementary Materials
       
 
 format:

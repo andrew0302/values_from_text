@@ -1,9 +1,0 @@
----
-title: "Supplementary Materials"
-format: html
----
-
-
-```{r child="_supplementary/survey.qmd"}
-```
-
