@@ -8,6 +8,14 @@ project:
 bibliography: references.bib
 csl: apa.csl
 
+execute:
+  cache: false
+  freeze: auto
+
+knitr:
+  opts_chunk:
+    fig.path: "docs/images/"
+
 website:
   title: "Estimating Personal Values in Text"
   navbar:
@@ -15,14 +23,16 @@ website:
       - href: manuscript.qmd
         text: Manuscript
       
-
 format:
   html:
     toc: true
     number-sections: false
     code-fold: true
     css: styles.css
-  docx:
-    toc: false
-    number-sections: false
-    output-file: manuscript.docx
+  pdf:
+    output-file: manuscript.pdf
+    documentclass: apa7
+    classoption:
+      - man
+    keep-tex: true
+

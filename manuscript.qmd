@@ -1,5 +1,8 @@
 ---
 title: "Estimating Personal Values in Text"
+author:
+  - name: "Andrew Demetriou"
+    affiliation: "Delft University of Technology"
 bibliography: references.bib
 csl: apa.csl
 ---
