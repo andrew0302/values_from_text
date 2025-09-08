@@ -5,7 +5,7 @@ The procedure, essentially a set of survey components, in order, is shown in Fig
 <span style="font-size: 90%">**Figure 1**  
 *Survey components*</span>
 
-![](../_manuscript/images/survey_flow.png){width=60%}
+![](_manuscript/images/survey_flow.png){width=60%}
 
 <span style="font-size: 90%">*Note.* Participants that failed the attention check were removed after having completed the entire survey.</span> 
 
