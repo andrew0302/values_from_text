@@ -2,9 +2,6 @@
 title: "pilot: estimate bootstrapped reliabilities"
 ---
 
-AIM: Use bootstrapping procedure to estimate reliability for different subsample sizes. 
-
-
 ```{r}
 library("here")       # file logistics
 library("tidyverse")  # code logistics
@@ -22,7 +19,10 @@ values <- c("POWER", "ACHIEVEMENT", "HEDONISM",
 pilot_2_dfs <- readRDS(here("_data", "_participant_scores", "wave_2", "pilot_2_dfs.RDS"))
 
 # path for output data
-file_path <- here("_data", "_intermediary_data")
+#file_path <- here("_data", "_intermediary_data")
+
+# alternate file path
+file_path <- here("_data", "_intermediary_data", "bootstrapped_ICC")
 ```
 
 ```{r}

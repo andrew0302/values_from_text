@@ -32,6 +32,20 @@ speech_df <- readRDS(here("_data", "_primary_data", "speech_df.RDS"))
 ```{r plot_function, include=FALSE}
 colors <- viridis(10, option="plasma") 
 
+# apa formatting
+theme_apa <- function(base_size = 12, base_family = "sans") {
+  theme_minimal(base_size = base_size, base_family = base_family) +
+    theme(
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      axis.line = element_line(color = "black"),
+      axis.ticks = element_line(color = "black"),
+      axis.title = element_text(size = base_size, face = "plain"),
+      axis.text = element_text(size = base_size * 0.9),
+      #legend.position = "none",
+      legend.title = element_text(face = "plain"))}
+
+
 make_removed_counts <- function(df, col) {
   
   df |>  
@@ -59,7 +73,7 @@ make_removed_counts <- function(df, col) {
     scale_fill_manual(values = c(colors[5], colors[9])) + 
     labs(x = NULL, y = "Count") +
     
-    theme_minimal()
+    theme_apa()
 }
 ```
 
@@ -127,8 +141,12 @@ make_apa_freq_table <- function(df, bin_col,
       pattern = "{1} ({2})") %>%
     cols_hide(columns = c(Removed_pct, Kept_pct)) %>%
     
+    
     # set which lines show
     tab_options(
+      table.font.size = 12,
+      heading.align = "left",    
+      
       table.border.top.width = px(0),
       table.border.bottom.width = px(0),
       
@@ -137,6 +155,7 @@ make_apa_freq_table <- function(df, bin_col,
       
       # remove body row lines
       table_body.hlines.width = px(0),
+      table_body.vlines.width = px(0),
       table_body.border.top.width = px(0),
       table_body.border.bottom.width = px(0),
       
@@ -168,7 +187,9 @@ make_genre_comparison_table <- function(df,
       artist_topic_bin_labels = "Top tf-ifd terms of sample"
     ) %>%
     tab_options(
-      table.font.names = c("Times New Roman", "Times", "serif"),
+      #table.font.names = c("Times New Roman", "Times", "serif"),
+      table.font.size = 12,
+      heading.align = "left",    
       # remove all body lines
       table_body.hlines.width = px(0),
       table_body.border.top.width = px(0),
@@ -203,7 +224,7 @@ Note: neither the raw lyric data nor the unanonymized repository can be made ava
 
 Release date was determined via Musixmatch metadata, some of which may contain errors. Metadata included a wide range of release years, beginning in 1890 (which appeared to include traditional songs e.g. Little Drummer Boy). There were a total of 14 bins in 10 equally spaced year intervals (1890, 1900) ~ (2020, 2030). Number and percentage of songs that were kept after the manual screening procedure, by the meta-data year range per year bin are shown in Figure 1 and Table 1. 
 
-<span style="font-size: 90%">**Figure 1**  
+<span style="font-size: 90%">**Figure s-1**  
 *Manual screening outcome by year bin range*</span>
 
 ```{r}
@@ -215,8 +236,8 @@ make_removed_counts(lyrics_df, year_bin_range)
 make_apa_freq_table(
   lyrics_df|>rename(`Year Range`= year_bin_range),
   `Year Range`,
-  title = "Table 1",
-  subtitle = "Frequencies by release year bin"
+  title = md("**Table s-1**"),
+  subtitle = md("*Frequencies by release year bin*")
 )
 ```
 <span style="font-size: 80%"><em>Note.</em> “Removed” indicates songs excluded due to manual screening criteria. Bins presented in reverse order of number of songs removed. Each row indicates a decade-range year bin, with column Year Range showing the observed metadata range per year bin.</span>
@@ -233,7 +254,7 @@ Popularity was extremely exponentially distributed, with an extreme left skew. W
 - **Bin 6:** 15–60 appearances (81–91%)
 - **Bin 7:** 61–203,345 appearances (top 9% of artists; 91–100%)
 
-<span style="font-size: 90%">**Figure 2**  
+<span style="font-size: 90%">**Figure s-2**  
 *Manual screening outcome by popularity bin percentile range*</span>
 
 ```{r}
@@ -245,8 +266,8 @@ make_removed_counts(lyrics_df, artist_playlist_frequency_bin_label)
 make_apa_freq_table(
   lyrics_df|>rename(`Artist Popularity`=artist_playlist_frequency_bin_label),
   `Artist Popularity`,
-  title = "Table 2",
-  subtitle = "Frequencies by artist playlist frequency"
+  title = md("**Table s-2**"),
+  subtitle = md("*Frequencies by artist playlist frequency*")
 )
 ```
 
@@ -260,8 +281,8 @@ From this pool, 2,200 songs were selected, and manually screened. As there is no
 
 ```{r}
 make_genre_comparison_table(lyrics_df,
-  title = "Table 3a",
-  subtitle = "Comparison of terms of topic tags of initial pool of 15.4k artists, to secondary pool of 2200 songs"
+  title = md("**Table s-4**"),
+  subtitle = md("*Comparison of terms of topic tags of initial pool of 15.4k artists, to secondary pool of 2200 songs*")
 )  %>%
   cols_width(lda_genre_terms ~ px(350), artist_topic_bin_labels ~ px(300))
 ```
@@ -269,7 +290,7 @@ make_genre_comparison_table(lyrics_df,
 @demetriou2024towards  excluded songs if they contained more than >= ~20% non-English words, consisted only of onomatopoeia or nonsense, repeated a single word or phrase, or had too few words. This process yielded 380 songs. We extended screening with the same criteria, resulting in 1,200 songs. We used 800 in the main study and 14 for a pilot. Songs were primarily removed for containing too many non-English words, or having too few or single repeated words. Distribution of included songs by genre bin, as well as results from manual screening procedure are shown in Figure 3. 
 
 
-<span style="font-size: 90%">**Figure 3**  
+<span style="font-size: 90%">**Figure s-3**  
 *Manual screening outcome by genre*</span>
 
 ```{r screening_by_genre}
@@ -284,8 +305,8 @@ make_removed_counts(lyrics_df, artist_topic_bin_labels)
 make_apa_freq_table(
   lyrics_df|>rename(`Artist Topic Tags`=artist_topic_bin_labels),
   `Artist Topic Tags`,
-  title = "Table 3",
-  subtitle = "Frequencies by artist topic"
+  title = md("**Table s-5**"),
+  subtitle = md("*Frequencies by artist topic*")
 )
 ```
 
@@ -294,7 +315,7 @@ make_apa_freq_table(
 
 Topic modelling resulted in imprecise lyrical topics, which @demetriou2024towards included as a further means to diversify the sample of lyrics. Although no precise definition of each topic could be derived, the team agreed on the following approximations of $8$ included lyric topics. Songs overwhelmingly fell categories relating to sadness and romance, a topic the original team felt was split into two groupings `sad/romantic1` and `sad/romantic2`.  
 
-<span style="font-size: 90%">**Figure 4**  
+<span style="font-size: 90%">**Figure s-4**  
 *Manual screening outcome by lyric topic*</span>
 
 ```{r}
@@ -317,7 +338,7 @@ We sampled U.S. State of the Union addresses (post-1900) from the UVA Miller Cen
 Repository of sampling procedure can be found here: https://github.com/Gargant0373/PresidentialSpeechSampling/blob/master/sample.py
 
 
-<span style="font-size: 90%">**Figure 5**  
+<span style="font-size: 90%">**Figure s-5**  
 *Number of speech excerpts per President*</span>
 
 ```{r}
@@ -336,7 +357,7 @@ speech_df |>
     coord_flip() +
     labs(x = NULL, y = "Count") +
     scale_fill_manual(values = c(colors[5], colors[9])) + 
-    theme_minimal()
+    theme_apa()
 
 ```
 
@@ -375,8 +396,8 @@ combined_summary <- bind_rows(full_summary, sub_summary) %>%
 combined_summary %>%
   gt(groupname_col = "sample") %>%   
     tab_header(
-    title = md("Table 5"),   
-    subtitle = "Descriptive statistics of speech excerpts by party") |>
+    title = md("**Table s-6**"),   
+    subtitle = md("*Descriptive statistics of speech excerpts by party*")) |>
   cols_label(
     party = "Party",
     n_excerpts = "Total excerpts",
@@ -390,7 +411,8 @@ combined_summary %>%
   fmt_percent(columns = pct_excerpts, decimals = 1) %>%
   
   tab_options(
-    table.font.names = c("Times New Roman", "Times", "serif"),
+    table.font.size = 12,
+    heading.align = "left",    
     table_body.hlines.width = px(0),
     table.border.top.width = px(0),
     table.border.bottom.width = px(1),
@@ -446,6 +468,6 @@ df |>
     labs(
     x = "Word count",
     y = "Density") +
-  theme_minimal()
+  theme_apa()
 ```
 

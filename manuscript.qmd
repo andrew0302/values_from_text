@@ -18,8 +18,9 @@ format: html
 ```{r child="_manuscript/21_pilot_methods.qmd"}
 ```
 
-```{r child="_manuscript/31_main_methods.qmd"}
+```{r child="_manuscript/22_pilot_results.qmd"}
 ```
+
 
 # References
 

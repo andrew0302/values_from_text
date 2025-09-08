@@ -1,9 +1,6 @@
 ---
-title: "summary reliabilities"
-author: "andrew demetriou"
+title: "pilot: estimate summary reliabilities"
 ---
-
-AIM: Estimate reliability (ICC) per dataset, overall, and by ethnicity (lyrics & speeches1), or by political leaning (speeches2)
 
 ```{r setup, include=FALSE}
 library('here')                 # file logistics
@@ -20,7 +17,10 @@ values <- c("POWER", "ACHIEVEMENT", "HEDONISM",
 
 ```{r}
 # output file path
-file_path <- here("_data", "_intermediary_data")
+#file_path <- here("_data", "_intermediary_data")
+
+# alternate file path
+file_path <- here("_data", "_intermediary_data", "bootstrapped_ICC")
 
 # load datasets
 pilot_2_dfs <- readRDS(here("_data", "_participant_scores", "wave_2", "pilot_2_dfs.RDS"))
@@ -134,5 +134,5 @@ pilot_2_likert_summary_dfs <- list(lyrics = pilot_2_lyrics_icc_df,
                                    speeches1 = pilot_2_speeches1_icc_df, 
                                    speeches2 = pilot_2_speeches2_icc_df)
 
-saveRDS(pilot_2_likert_summary_dfs, here("_data", "_intermediary_data", "pilot_2_likert_summary_dfs.RDS"))
+saveRDS(pilot_2_likert_summary_dfs, here(file_path, "pilot_2_likert_summary_dfs.RDS"))
 ```
