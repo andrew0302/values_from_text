@@ -4,7 +4,6 @@ author:
   - name: "Andrew Demetriou"
     affiliation: "Delft University of Technology"
 bibliography: references.bib
-csl: apa.csl
 ---
 
 ```{r child="_manuscript/10_methods.qmd"}
@@ -24,7 +23,7 @@ csl: apa.csl
 
 ```{r child="_manuscript/22_pilot_results.qmd"}
 ```
-
+\printbibliography
 
 # References
 
