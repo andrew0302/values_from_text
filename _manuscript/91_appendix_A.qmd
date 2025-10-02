@@ -64,13 +64,13 @@ make_removed_counts <- function(df, col) {
     mutate(
       selected = factor(selected, levels = c("remove","keep")),
       # coerce to character so fct_reorder works for numeric columns too
-      {{ col }} := fct_reorder(as.character({{ col }}), removed_n, .desc = TRUE)) |>
+      {{ col }} := fct_reorder(as.character({{ col }}), removed_n, .desc = FALSE)) |>
     
     # stacked column plot
     ggplot(aes(x = {{ col }}, y = n, fill = selected)) +
     geom_col(alpha = .75) +
     coord_flip() +
-    scale_fill_manual(values = c(colors[5], colors[9])) + 
+    #scale_fill_manual(values = c(colors[5], colors[9])) + 
     labs(x = NULL, y = "Count") +
     
     theme_apa()
@@ -211,34 +211,34 @@ make_genre_comparison_table <- function(df,
 
 ```
 
-## Lyrics Stimuli
-
-Songs were sampled across four “fuzzy” strata: (1) Year of release, based on Musixmatch metadata; (2) Popularity, defined as the frequency with which an artist appeared on playlists in the Million Playlist Dataset (MPD); (3) Genre, estimated by topic modeling user-generated artist tags, which were originally drawn from Last.fm and merged into the MPD; and (4) Lyric topic, derived from topic modeling a bag-of-words representation of the lyrics. After selecting the final sample of 2,200 songs, Musixmatch provided the first 30% of the lyrics for each track via their API.
-
-The code @demetriou2024towards used to sample lyrics can be found here: 
-https://anonymous.4open.science/r/lyrics-value-estimators-CE33/1_stimulus_sampling/stratified_sampling.py.
-
-Note: neither the raw lyric data nor the unanonymized repository can be made available due to limitations in licensing.
-
 ### Release Date
 
-Release date was determined via Musixmatch metadata, some of which may contain errors. Metadata included a wide range of release years, beginning in 1890 (which appeared to include traditional songs e.g. Little Drummer Boy). There were a total of 14 bins in 10 equally spaced year intervals (1890, 1900) ~ (2020, 2030). Number and percentage of songs that were kept after the manual screening procedure, by the meta-data year range per year bin are shown in Figure 1 and Table 1. 
-
-<span style="font-size: 90%">**Figure s-1**  
+<span style="font-size: 90%">**Figure A1**  
 *Manual screening outcome by year bin range*</span>
 
-```{r}
-make_removed_counts(lyrics_df, year_bin_range)
+```{r, warning=FALSE, echo=FALSE}
+colors <- viridis(10, option="plasma") 
+make_removed_counts(lyrics_df, year_bin_range) + 
+  scale_fill_manual(
+  name = "Screening outcome",  # legend title
+  values = c("remove" = colors[5], "keep" = colors[9]),
+  labels = c("remove" = "Removed", "keep" = "Kept")) +
+  theme(legend.position = "top")
+
+ggsave(here("images", "figure_A1.pdf"))
 ```
-<span style="font-size: 80%"><em>Note.</em> “remove” indicates songs excluded due to manual screening criteria. Bins presented in reverse order of number of songs labelled "keep". Each row indicates a decade-range year bin, with x axis labels showing the observed metadata range per year bin.</span>
+<span style="font-size: 80%"><em>Note.</em> “remove” indicates songs excluded due to manual screening criteria. Bins presented in order of number of songs labelled "Kept". Each row indicates a decade-range year bin, with x axis labels showing the observed metadata range per year bin.</span>
 
 ```{r}
-make_apa_freq_table(
+table_A1 <- make_apa_freq_table(
   lyrics_df|>rename(`Year Range`= year_bin_range),
   `Year Range`,
-  title = md("**Table s-1**"),
-  subtitle = md("*Frequencies by release year bin*")
-)
+  title = md("**Table A1**"),
+  subtitle = md("*Frequencies by release year bin*"))
+
+table_A1
+
+gtsave(table_A1, here("tables", "table_A1.tex"))
 ```
 <span style="font-size: 80%"><em>Note.</em> “Removed” indicates songs excluded due to manual screening criteria. Bins presented in reverse order of number of songs removed. Each row indicates a decade-range year bin, with column Year Range showing the observed metadata range per year bin.</span>
 
@@ -254,91 +254,109 @@ Popularity was extremely exponentially distributed, with an extreme left skew. W
 - **Bin 6:** 15–60 appearances (81–91%)
 - **Bin 7:** 61–203,345 appearances (top 9% of artists; 91–100%)
 
-<span style="font-size: 90%">**Figure s-2**  
+<span style="font-size: 90%">**Figure A2**  
 *Manual screening outcome by popularity bin percentile range*</span>
 
 ```{r}
-make_removed_counts(lyrics_df, artist_playlist_frequency_bin_label)
+colors <- viridis(10, option="plasma") 
+make_removed_counts(lyrics_df, artist_playlist_frequency_bin_label) + 
+  scale_fill_manual(
+  name = "Screening outcome",  # legend title
+  values = c("remove" = colors[5], "keep" = colors[9]),
+  labels = c("remove" = "Removed", "keep" = "Kept")) +
+  theme(legend.position = "top")
+
+ggsave(here("images", "figure_A2.pdf"))
 ```
 <span style="font-size: 80%"><em>Note.</em> “remove” indicates songs excluded due to manual screening criteria. Bins presented in reverse order of number of songs labelled "keep".</span>
 
 ```{r}
-make_apa_freq_table(
+table_A2 <- make_apa_freq_table(
   lyrics_df|>rename(`Artist Popularity`=artist_playlist_frequency_bin_label),
   `Artist Popularity`,
-  title = md("**Table s-2**"),
-  subtitle = md("*Frequencies by artist playlist frequency*")
-)
+  title = md("**Table A2**"),
+  subtitle = md("*Frequencies by artist playlist frequency*"))
+
+
+table_A2
+
+gtsave(table_A2, here("tables", "table_A2.tex"))
 ```
 
 <span style="font-size: 80%"><em>Note.</em> “Removed” indicates songs excluded due to manual screening criteria. Bins presented in reverse order of number of songs removed. Each row indicates a popularity percentile range bin, with column Artist Popularity showing the observed percentile range per popularity bin.</span>
 
 ### Genre
 
-@demetriou2024towards used topic modelling applied to a bag-of-words representation of artist-tag data to estimate one of $25$ estimated genres for each included artist, which were then applied to songs. To get the initial pool, @demetriou2024towards first uniformly sampled 60k artists from the Spotify Million Playlist Dataset (MPD)[@chen2018recsys], which contains metadata on ~2 million tracks by ~300k artists. They then retrieved the full discographies of these artists via the Spotify API and cross-checked availability in Musixmatch, yielding a pool of ~510k songs from ~15.4k' artists. We used Latent Dirichlet allocation to create a topic model of the artist tags in order to derive estimated genres, shown in the "Top LDA terms of initial pool" column of Table 3a. 
-
-From this pool, 2,200 songs were selected, and manually screened. As there is no definitive label for each estimated genre, we derived a second set of labels aimed at describing the 1,425 artists in the sample pool, as opposed to the initial 15.4k artist pool. Specifically, we gathered each unique artist in the 2,200 song sample, and drew the genre label tags for those artists from using the Spotify and Last.fm APIs. We then pooled all the artist genre tags for each artist, and estimated the tf-idf for each tag per genre bin. The top tf-idf terms are shown in the "Top tf-df terms of sample" column of table 3a. 
-
 ```{r}
-make_genre_comparison_table(lyrics_df,
-  title = md("**Table s-4**"),
+table_A3 <- make_genre_comparison_table(lyrics_df,
+  title = md("**Table A3**"),
   subtitle = md("*Comparison of terms of topic tags of initial pool of 15.4k artists, to secondary pool of 2200 songs*")
 )  %>%
   cols_width(lda_genre_terms ~ px(350), artist_topic_bin_labels ~ px(300))
+
+
+table_A3
+
+gtsave(table_A3, here("tables", "table_A3.tex"))
 ```
 
 @demetriou2024towards  excluded songs if they contained more than >= ~20% non-English words, consisted only of onomatopoeia or nonsense, repeated a single word or phrase, or had too few words. This process yielded 380 songs. We extended screening with the same criteria, resulting in 1,200 songs. We used 800 in the main study and 14 for a pilot. Songs were primarily removed for containing too many non-English words, or having too few or single repeated words. Distribution of included songs by genre bin, as well as results from manual screening procedure are shown in Figure 3. 
 
 
-<span style="font-size: 90%">**Figure s-3**  
+<span style="font-size: 90%">**Figure A3**  
 *Manual screening outcome by genre*</span>
 
 ```{r screening_by_genre}
-#| echo: false
 
-make_removed_counts(lyrics_df, artist_topic_bin_labels)
+make_removed_counts(lyrics_df, artist_topic_bin_labels) + 
+  scale_fill_manual(
+  name = "Screening outcome",  # legend title
+  values = c("remove" = colors[5], "keep" = colors[9]),
+  labels = c("remove" = "Removed", "keep" = "Kept")) +
+  theme(legend.position = "top")
+
+ggsave(here("images", "figure_A3.pdf"))
 ```
 
 <span style="font-size: 80%"><em>Note.</em> “Remove” indicates songs excluded due to screening criteria.</span>
 
 ```{r}
-make_apa_freq_table(
+table_A4 <- make_apa_freq_table(
   lyrics_df|>rename(`Artist Topic Tags`=artist_topic_bin_labels),
   `Artist Topic Tags`,
-  title = md("**Table s-5**"),
+  title = md("**Table A4**"),
   subtitle = md("*Frequencies by artist topic*")
 )
+
+table_A4
+
+gtsave(table_A4, here("tables", "table_A4.tex"))
 ```
 
 
 #### Topic
 
-Topic modelling resulted in imprecise lyrical topics, which @demetriou2024towards included as a further means to diversify the sample of lyrics. Although no precise definition of each topic could be derived, the team agreed on the following approximations of $8$ included lyric topics. Songs overwhelmingly fell categories relating to sadness and romance, a topic the original team felt was split into two groupings `sad/romantic1` and `sad/romantic2`.  
-
-<span style="font-size: 90%">**Figure s-4**  
+<span style="font-size: 90%">**Figure A4**  
 *Manual screening outcome by lyric topic*</span>
 
 ```{r}
-make_removed_counts(lyrics_df, topic_label)
+make_removed_counts(lyrics_df, topic_label) + 
+  scale_fill_manual(
+  name = "Screening outcome",  # legend title
+  values = c("remove" = colors[5], "keep" = colors[9]),
+  labels = c("remove" = "Removed", "keep" = "Kept")) +
+  theme(legend.position = "top")
+
+ggsave(here("images", "figure_A4.pdf"))
 ```
 
-### Skew Correction
-
-@demetriou2024towards observed a skew in data concentration such that songs that were recent and artists that appeared very frequently in playlists were most likely be sampled. To compensate, @demetriou2024towards oversampled less populated bins by increasing the probability that songs in underpopulated bins are selected, using a maximum-a-posteriori (MAP) estimate of the categorical distribution of each stratum [@bassett2019maximum]. Oversampling is controlled via a concentration parameter $a$ of the symmetric Dirichlet distribution which was heuristically set to 40,000, with the aim of between 5% and 10% of the overall pool of 2200 songs being drawn from underpopulated bins.
-
-### Mislabelled 'Kept' Songs
-
-We observe 19 songs in the 380 songs used by @demetriou2024towards, whereby 19 songs are labelled "remove" but also "wave_1", which suggests that those 19 songs were either included erroneously, or mislabeled "remove" erroneously. We elected not to use those 19 songs. 
-
 ## Political Speech Stimuli
-
-We sampled U.S. State of the Union addresses (post-1900) from the UVA Miller Center archive. Speeches were sampled across two strata: (1) President and (2) speech, both of which were labelled by the Miller center. Speeches were stratified by president and by individual address so that each president contributed a comparable number of excerpts. Presidents with fewer addresses contributed more chunks per speech, while those with many addresses contributed fewer. Each chunk yielded the first ~200 words (ending at a sentence boundary), producing an approximately balanced set of excerpts across presidents and speeches. The final pool comprised 300 excerpts for the main study and 13 each for two pilot studies. Details of the average number of excerpts by party for both the initial pool and sample are shown in Table 5. Visualization of number of speeches per president are shown in Figure 5. 
 
 
 Repository of sampling procedure can be found here: https://github.com/Gargant0373/PresidentialSpeechSampling/blob/master/sample.py
 
 
-<span style="font-size: 90%">**Figure s-5**  
+<span style="font-size: 90%">**Figure A5**  
 *Number of speech excerpts per President*</span>
 
 ```{r}
@@ -350,15 +368,20 @@ speech_df |>
   
   count(president, party, name = "n") |>
   
-  mutate(president = fct_reorder(president, n, .desc = T)) |>
+  mutate(president = fct_reorder(president, n, .desc = F)) |>
   
   ggplot(aes(x = president, y = n, fill = party)) +
     geom_col(alpha = .75) +
     coord_flip() +
     labs(x = NULL, y = "Count") +
-    scale_fill_manual(values = c(colors[5], colors[9])) + 
-    theme_apa()
+    theme_apa() + 
+  scale_fill_manual(
+  name = "Party",  
+  values = c("Democratic" = colors[5], "Republican" = colors[9]),
+  labels = c("remove" = "Removed", "keep" = "Kept")) +
+  theme(legend.position = "top")
 
+ggsave(here("images", "figure_A5.pdf"))
 ```
 
 
@@ -393,10 +416,10 @@ combined_summary <- bind_rows(full_summary, sub_summary) %>%
   relocate(sample, .before = party)
 
 # 4) Render as gt table
-combined_summary %>%
+table_A5 <- combined_summary %>%
   gt(groupname_col = "sample") %>%   
     tab_header(
-    title = md("**Table s-6**"),   
+    title = md("**Table A5**"),   
     subtitle = md("*Descriptive statistics of speech excerpts by party*")) |>
   cols_label(
     party = "Party",
@@ -436,6 +459,11 @@ combined_summary %>%
     locations = cells_row_groups()) %>%
   
   cols_align(align = "center", columns = everything())
+
+
+table_A5
+
+gtsave(table_A5, here("tables", "table_A5.tex"))
 ``` 
 
 ## Word Counts
@@ -448,8 +476,6 @@ speech_summary <- speech_df |> filter(id %in% speech_IDs) |>
   summarize(mean = mean(word_count), sd = sd(word_count))
 ```
 
-Distributions of word counts differ substantially between song lyrics and speeches. All lyrics were truncated to the first 30% as estimated by Musixmatch, the word counts vary substantially more than the speech excerpts, where our process for determining an excerpt truncated to the nearest complete sentence after 200 words. On average, speech excerpts were longer (*M* = `r round(speech_summary$mean, 1)`, *SD* = `r round(speech_summary$sd, 1)` words) than lyric excerpts (*M* = `r round(lyrics_summary$mean, 1)`, *SD* = `r round(lyrics_summary$sd, 1)` words).
-  
 <span style="font-size: 90%">**Figure 6**  
 *Density plot of word counts in speech and lyric excerpts*</span>
 ```{r}
@@ -458,16 +484,18 @@ df <- bind_rows(
     select(item_ID, word_count) |> mutate(source = "Lyrics", item_ID = as.character(item_ID)), 
   speech_df |> filter(id %in% speech_IDs) |> 
     select(id, word_count) |> rename(item_ID = id) |>
-    mutate(source = "Speeches")) 
+    mutate(source = "Speeches")) |> rename(Source = source)
 
 df |>
   
-  ggplot(aes(x = word_count, fill = source)) +
+  ggplot(aes(x = word_count, fill = Source)) +
     geom_density(alpha = 0.7) +
   scale_fill_manual(values = c("Speeches" = "#21908C", "Lyrics" = "#440154")) +
     labs(
     x = "Word count",
     y = "Density") +
   theme_apa()
+
+ggsave(here("images", "figure_A6.pdf"))
 ```
 

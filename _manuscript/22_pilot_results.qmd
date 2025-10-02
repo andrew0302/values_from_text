@@ -6,7 +6,9 @@ library("tidyverse")  # code logistics
 library("patchwork")  # merge plots
 library("gt")         # markdown
 library("ggtext")     # text plots
+```
 
+```{r include=FALSE} 
 # read in data
 file_path <- here("_data", "_intermediary_data", "bootstrapped_ICC")
 
@@ -19,7 +21,9 @@ pilot_2_speeches1_by_row_dfs <- readRDS(here(file_path, "pilot_2_speeches1_by_ro
 pilot_2_speeches2_by_row_dfs <- readRDS(here(file_path, "pilot_2_speeches2_by_row_dfs.RDS"))
 
 rm(file_path)
+```
 
+```{r include=FALSE}
 # apa formatting
 theme_apa <- function(base_size = 12, base_family = "sans") {
   theme_minimal(base_size = base_size, base_family = base_family) +
@@ -32,7 +36,9 @@ theme_apa <- function(base_size = 12, base_family = "sans") {
       axis.text = element_text(size = base_size * 0.9),
       legend.position = "none",
       legend.title = element_text(face = "plain"))}
+```
 
+```{r}
 # plot ICC2k and 95% CI by value
 plot_summary_by_metric <- function(df, metric, metric_lower, metric_upper, option) {
   
@@ -40,7 +46,7 @@ plot_summary_by_metric <- function(df, metric, metric_lower, metric_upper, optio
   
   lapply(subsets, function(sub){
     df %>%
-      filter(subset == sub) %>%
+      filter(subset == str_wrap(sub)) %>%
       ggplot(aes(y=value, x={{metric}}, color = value)) +
       geom_point() +
       geom_errorbar(aes(xmin = {{metric_lower}}, xmax = {{metric_upper}})) +
@@ -65,9 +71,9 @@ plot_raters <- function(df, metric, name, option){
     ylab("Density") +
     xlab({{name}}) +
     theme_apa() +
-    theme(legend.position = "right")
-}
+    theme(legend.position = "right")}
 ```
+
 
 ### Estimating the number of raters
 
@@ -84,9 +90,9 @@ p2 <- plot_raters(
 
 (p1 /p2) +
     plot_annotation(
-    title = "**Figure 2**",
-    subtitle = "*Reliability by Rater n: Lyrics Pilot*", 
-    caption = "*Note.* Probability Density for Pearson's r and ICC(2,k).", 
+    # title = "**Figure 2**",
+    # subtitle = "*Reliability by Rater n: Lyrics Pilot*", 
+    # caption = "*Note.* Probability Density for Pearson's r and ICC(2,k).", 
     tag_levels = 'A') +
   
   plot_layout(guides = "collect") &
@@ -95,10 +101,32 @@ p2 <- plot_raters(
         plot.title = element_markdown(hjust = 0), 
         plot.subtitle = element_markdown(hjust = 0), 
         plot.caption = element_markdown(hjust = 0))
+
+ggsave(here("images", "figure_2.pdf"))
 ```
 
-The results from our bootstrapping procedure for our lyrics pilot are shown in Figure 2. Results generally exceed our thresholds on average for both correlations between subsample means and the overall mean, as well as ICC(2,k), at 15 raters. 
+```{r warning=FALSE}
+p1 <- plot_raters(
+  pilot_2_lyrics_by_row_dfs[[1]] %>% filter(n <= 25), 
+  metric = r, "Pearson's r", option = "plasma") + 
+  geom_vline(xintercept = 0.9, color = "red", size = .4, linetype = "dashed") 
 
+p2 <- plot_raters(
+  pilot_2_lyrics_by_row_dfs[[1]] %>% filter(n <= 25), 
+  metric = ICC2k, "ICC(2,k)", option = "plasma") +
+  geom_vline(xintercept = 0.75, color = "red", size = .4, linetype = "dashed") 
+
+figure_2a <- (p1 /p2) + 
+  plot_annotation(tag_levels = 'A') +
+  plot_layout(guides = "collect") &
+  
+  theme(legend.position = "bottom",
+        plot.title = element_markdown(hjust = 0), 
+        plot.subtitle = element_markdown(hjust = 0), 
+        plot.caption = element_markdown(hjust = 0))
+
+figure_2a
+```
 
 ```{r warning=FALSE, echo=FALSE}
 p1 <- plot_raters(
@@ -113,9 +141,9 @@ p2 <- plot_raters(
 
 (p1 /p2) +
     plot_annotation(
-    title = "**Figure 3**",
-    subtitle = "*Reliability by Rater n: Speeches 1 Pilot*", 
-    caption = "*Note.* Probability Density for Pearson's r and ICC(2,k).", 
+    # title = "**Figure 3**",
+    # subtitle = "*Reliability by Rater n: Speeches 1 Pilot*", 
+    # caption = "*Note.* Probability Density for Pearson's r and ICC(2,k).", 
     tag_levels = 'A') +
   
   plot_layout(guides = "collect") &
@@ -124,9 +152,32 @@ p2 <- plot_raters(
         plot.title = element_markdown(hjust = 0), 
         plot.subtitle = element_markdown(hjust = 0), 
         plot.caption = element_markdown(hjust = 0))
+
+ggsave(here("images", "figure_3.pdf"))
 ```
 
-Our sample of annotators in our first speeches pilot were stratified by Ethncitiy. Our bootstrapping analysis shows sufficiently high correlations between subsample means and the overall mean at around 40 ratings on average, however, ICC2k scores do not reach sufficiently high ICC2k scores even with 50 ratings (see Figure 3).
+```{r warning=FALSE, echo=FALSE}
+p1 <- plot_raters(
+  pilot_2_speeches1_by_row_dfs[[1]] %>% filter(n >= 25), 
+  metric = r, "Pearson's r", option = "viridis") + 
+  geom_vline(xintercept = 0.9, color = "red", size = .4, linetype = "dashed")
+
+p2 <- plot_raters(
+  pilot_2_speeches1_by_row_dfs[[1]] %>% filter(n >= 25), 
+  metric = ICC2k, "ICC(2,k)", option = "viridis") +
+  geom_vline(xintercept = 0.75, color = "red", size = .4, linetype = "dashed")
+
+figure_2b <- (p1 /p2) +
+  plot_annotation(tag_levels = 'A') +
+  plot_layout(guides = "collect") &
+  
+  theme(legend.position = "bottom",
+        plot.title = element_markdown(hjust = 0), 
+        plot.subtitle = element_markdown(hjust = 0), 
+        plot.caption = element_markdown(hjust = 0))
+
+figure_2b
+```
 
 ```{r warning=FALSE, echo=FALSE}
 p1 <- plot_raters(
@@ -141,9 +192,9 @@ p2 <- plot_raters(
 
 (p1 /p2) +
     plot_annotation(
-    title = "**Figure 4**",
-    subtitle = "*Reliability by Rater n: Speeches 2 Pilot*", 
-    caption = "*Note.* Probability Density for Pearson's r and ICC(2,k).", 
+    # title = "**Figure 4**",
+    # subtitle = "*Reliability by Rater n: Speeches 2 Pilot*", 
+    # caption = "*Note.* Probability Density for Pearson's r and ICC(2,k).", 
     tag_levels = 'A') +
   
   plot_layout(guides = "collect") &
@@ -152,9 +203,36 @@ p2 <- plot_raters(
         plot.title = element_markdown(hjust = 0), 
         plot.subtitle = element_markdown(hjust = 0), 
         plot.caption = element_markdown(hjust = 0))
+
+ggsave(here("images", "figure_4.pdf"))
 ```
 
-Our sample of annotators in our second speeches pilot were stratified by political affiliation. We observe a similar pattern, where the correlations between subsample means and the overall mean reach our threshold 35 ratings, but ICC2k scores are not sufficiently high even with 50 ratings (see Figure 4).
+```{r warning=FALSE, echo=FALSE}
+p1 <- plot_raters(
+  pilot_2_speeches2_by_row_dfs[[1]] %>% filter(n >= 25), 
+  metric = r, "Pearson's r", option = "viridis") + 
+  geom_vline(xintercept = 0.9, color = "red", size = .4, linetype = "dashed")
+
+p2 <- plot_raters(
+  pilot_2_speeches2_by_row_dfs[[1]] %>% filter(n >= 25), 
+  metric = ICC2k, "ICC(2,k)", option = "viridis") +
+  geom_vline(xintercept = 0.75, color = "red", size = .4, linetype = "dashed")
+
+figure_2c <- (p1 /p2) +
+  plot_annotation(tag_levels = 'A') +
+  plot_layout(guides = "collect") &
+  
+  theme(legend.position = "bottom",
+        plot.title = element_markdown(hjust = 0), 
+        plot.subtitle = element_markdown(hjust = 0), 
+        plot.caption = element_markdown(hjust = 0))
+
+figure_2c
+```
+
+```{r}
+(figure_2a | figure_2b | figure_2c)
+```
 
 
 ### Exploring annotator sample strata
@@ -178,16 +256,18 @@ pilot_2_speeches2_agreement_plots <- plot_summary_by_metric(
 
 p1 <- pilot_2_lyrics_agreement_plots[[1]] 
 
-p1 + ggtitle("**Figure 5**", subtitle = "*ICC(2,k) estimates by Schwartz value*") + 
-  labs(caption = 
-       "*Note.* Error bars are 95% confidence intervals. 
-       'Self' indicates reliability for the value 'self direction'.") +
+p1 + ggtitle("") +
+  #ggtitle("**Figure 5**", subtitle = "*ICC(2,k) estimates by Schwartz value*") + 
+  # labs(caption = 
+  #      "*Note.* Error bars are 95% confidence intervals. 
+  #      'Self' indicates reliability for the value 'self direction'.") +
   theme(plot.title = element_markdown(hjust = 0), 
         plot.subtitle = element_markdown(hjust = 0), 
         plot.caption = element_markdown(hjust = 0))
+
+ggsave(here("images", "figure_5.pdf"))
 ```
 
-To probe a potential reason for the low ICC(2,k) values in our speeches samples, we examine overall ICC(2,k) scores, and for ethnicity and political leaning subgroups separately. For our lyrics pilot, we observe overall 'good' ICC(2,k) estimates, with the exception of `SELF-DIRECTION`, which shows a large confidence interval that exceeds our threshold (see Figure 5). These ICC(2,k) scores overall do not appear to improve when we estimate them separately for each Ethnicity (see Figure 6).
 
 ```{r}
 p1_1 <- pilot_2_lyrics_agreement_plots[[2]]
@@ -198,19 +278,20 @@ p1_4 <- pilot_2_lyrics_agreement_plots[[5]]
 
 (p1_1 | p1_2) / (p1_3 | p1_4) +
   
-  plot_annotation(
-    title = "**Figure 6**",
-    subtitle = "*ICC(2,k) by Schwartz value, by Ethnicity: Lyrics Pilot*", 
-    caption = 
-         "*Note.* Error bars are 95% confidence intervals. 
-         'Self' indicates reliability for the value 'self direction'.") &
+  # plot_annotation(
+  #   title = "**Figure 6**",
+  #   subtitle = "*ICC(2,k) by Schwartz value, by Ethnicity: Lyrics Pilot*", 
+  #   caption = 
+  #        "*Note.* Error bars are 95% confidence intervals. 
+  #        'Self' indicates reliability for the value 'self direction'.") &
   
   theme(plot.title = element_markdown(hjust = 0), 
         plot.subtitle = element_markdown(hjust = 0), 
         plot.caption = element_markdown(hjust = 0))
+
+ggsave(here("images", "figure_6.pdf"))
 ```
 
-Overall, agreement on our two pilots which used political speech data was poor (see Figure 7). 
 
 ```{r}
 p2 <- pilot_2_speeches1_agreement_plots[[1]]+ggtitle("")
@@ -218,19 +299,20 @@ p3 <- pilot_2_speeches2_agreement_plots[[1]]+ggtitle("")
 
 (p2/p3) + 
   plot_annotation(
-    title = "**Figure 7**",
-    subtitle = "*ICC(2,k) by Schwartz value, by Ethnicity: Speeches Pilots 1 and 2*", 
-    caption = 
-    "*Note.* Error bars are 95% confidence intervals. 
-         'Self' indicates reliability for the value 'self direction'.", 
-    tag_levels = '1') &
+    # title = "**Figure 7**",
+    # subtitle = "*ICC(2,k) by Schwartz value, by Ethnicity: Speeches Pilots 1 and 2*", 
+    # caption = 
+    # "*Note.* Error bars are 95% confidence intervals. 
+    #      'Self' indicates reliability for the value 'self direction'.", 
+    tag_levels = 'A') &
   
   theme(plot.title = element_markdown(hjust = 0), 
         plot.subtitle = element_markdown(hjust = 0), 
         plot.caption = element_markdown(hjust = 0))
+
+ggsave(here("images", "figure_7.pdf"))
 ```
 
-However ICC(2,k) appeared to improve when estimated separately for each ethnicity, with most values showing ICC(2,k) scores over the threshold. Note that estimation for `HEDONISM` is generally poor in subsamples, and that `STIMULATION` is poor in some subsamples (see Figure 8).
 
 ```{r}
 p1_1 <- pilot_2_speeches1_agreement_plots[[2]]
@@ -240,19 +322,19 @@ p1_4 <- pilot_2_speeches1_agreement_plots[[5]]
 
 (p1_1 | p1_2) / (p1_3 | p1_4) +
   
-  plot_annotation(
-    title = "**Figure 8**",
-    subtitle = "*ICC(2,k) by Schwartz value, by Ethnicity: Speeches 1 Pilot*", 
-    caption = 
-         "*Note.* Error bars are 95% confidence intervals. 
-         'Self' indicates reliability for the value 'self direction'.") &
+  # plot_annotation(
+  #   title = "**Figure 8**",
+  #   subtitle = "*ICC(2,k) by Schwartz value, by Ethnicity: Speeches 1 Pilot*", 
+  #   caption = 
+  #        "*Note.* Error bars are 95% confidence intervals. 
+  #        'Self' indicates reliability for the value 'self direction'.") &
   
   theme(plot.title = element_markdown(hjust = 0), 
         plot.subtitle = element_markdown(hjust = 0), 
         plot.caption = element_markdown(hjust = 0))
-```
 
-However ICC(2,k) also appeared to improve when estimated separately for each political leaning (see Figure 9). We note that `HEDONISM` shows poor agreement in both `speeches` pilots.  
+ggsave(here("images", "figure_8.pdf"))
+```
 
 ```{r}
 p1_1 <- pilot_2_speeches2_agreement_plots[[2]]
@@ -261,16 +343,18 @@ p1_3 <- pilot_2_speeches2_agreement_plots[[4]]
 p1_4 <- patchwork::plot_spacer()
 
 ((p1_1 / p1_2) | (p1_3 / p1_4)) +
-  plot_annotation(
-    title = "**Figure 9**",
-    subtitle = "*ICC(2,k) by Schwartz value, by Political Leaning: Speeches 2 Pilot*", 
-    caption = 
-         "*Note.* Error bars are 95% confidence intervals. 
-         'Self' indicates reliability for the value 'self direction'.") &
+  # plot_annotation(
+  #   title = "**Figure 9**",
+  #   subtitle = "*ICC(2,k) by Schwartz value, by Political Leaning: Speeches 2 Pilot*", 
+  #   caption = 
+  #        "*Note.* Error bars are 95% confidence intervals. 
+  #        'Self' indicates reliability for the value 'self direction'.") &
   
   theme(plot.title = element_markdown(hjust = 0), 
         plot.subtitle = element_markdown(hjust = 0), 
         plot.caption = element_markdown(hjust = 0))
+
+ggsave(here("images", "figure_9.pdf"))
 ```
 
 ### Exploring Quiz Results
@@ -356,7 +440,7 @@ summarize_study <- function(df) {
     pivot_longer(everything(), names_to = "Question", values_to = "N_percent")
 }
 
-lapply(quiz_dfs, summarize_study) %>%
+table_4 <- lapply(quiz_dfs, summarize_study) %>%
   
   bind_rows(.id = "Study") %>%
   
@@ -390,10 +474,16 @@ lapply(quiz_dfs, summarize_study) %>%
   tab_source_note(
     
     md("*Note.* Entries are number and percentage of participants who answered correctly. Quiz responses were not used to exclude participants in pilot studies."))
+
+table_4
+
+gtsave(table_4, here("tables", "table_4.tex"))
 ```
 
+```{r}
 
-We observed that participants most often answered Question 2 incorrectly. The item explains that the SPEAKER gives no indication of how important the value is to them. Of those that responded incorrectly, the most common incorrect response was on the low end of the scale (-1 or 0). Thus, for Quiz 2 where the correct response was "NA", 13% of participants indicated "0" and "9"% indicated "-1", where 56% correctly indicated "NA". Similarly in Quiz 3, 13% of participants incorrectly indicated "NA" where 50% and 20% of participants correctly indicated "-1"' and "0" respectively. Thus, in the minds of some annotators, "NA" and the lower-end of the scale bear similar meaning.
+```
+
 
 ```{r echo=FALSE}
 p1 <- plot_stacked_bars(df, Quiz1_1, option = "C") +
@@ -420,7 +510,3 @@ p3 <- plot_stacked_bars(df, Quiz3_1, option = "C") +
           plot.caption = element_markdown(hjust = 0))
 ```
 
-
-### Conclusion
-
-We tentatively conclude that Ethnicity will have a substantially smaller effect on ratings of song lyrics than either Ethnicity or Political Spectrum will have on ratings of speeches. Thus, the sample for our main study data collection will be stratified by Ethnicity, and for political speeches, it will also be stratified by political affiliation. We thus proceed with a target median 15 ratings per song lyric excerpt. Based on bootstrapped correlations between subsamples and the overall sample, as well as budgetary constraints, we aim for median 40 ratings per political speech excerpt. We also observe that some percentage of participants appear to confuse `NA` with the low end of the unbalanced likert scale (-1 or 0). 

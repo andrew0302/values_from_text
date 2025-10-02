@@ -1,11 +1,14 @@
 ## Pilot Methods
 
-```{r pilot_participants_setup, include=FALSE}
-library("here")
-library("tidyverse")
-library("rlang")
-library("gt")
+```{r, include=FALSE}
+library("here")       # file logistics
+library("tidyverse")  # code logistics
+#library("rlang")
+library("gt")         # rendering tables
+```
 
+```{r, include=FALSE}
+# read in pilot data
 data_path <- here("_data", "_participant_scores", "wave_2")
 
 # read in data
@@ -14,10 +17,17 @@ pilot_2_dfs <- readRDS(here(data_path, "pilot_2_dfs.RDS"))
 # rename ethnicity column 
 pilot_2_dfs[['speeches2']] <- pilot_2_dfs[['speeches2']] |> 
   rename(Ethnicity = `Ethnicity simplified`)
+```
+
+```{r, include=FALSE}
+# format pilot data
 
 # subset each df
 pilot_2_demog_dfs <- lapply(pilot_2_dfs, function(df){
-  df <- df |> select(participant_ID, Age, Sex, `Ethnicity`) |> unique()})
+  df <- df |> 
+    select(participant_ID, Age, Sex, `Ethnicity`) |> 
+    unique()
+  })
 
 #re-add spectrum to speeches2 df
 pilot_2_demog_dfs[['speeches2']] <- merge(
@@ -34,7 +44,9 @@ rm(pilot_2_dfs)
 
 
 # convert age to numeric
-pilot_2_demog_dfs <- lapply(pilot_2_demog_dfs, function(df){df|>mutate(Age = as.numeric(Age))})
+pilot_2_demog_dfs <- lapply(
+  pilot_2_demog_dfs, 
+  function(df){df|>mutate(Age = as.numeric(Age))})
 
 # recode Asian ethnicity
 pilot_2_demog_dfs[["lyrics"]] <- pilot_2_demog_dfs[["lyrics"]] |> 
@@ -59,7 +71,20 @@ pilot_labels <- c(
   speeches2  = "Pilot 3 (Speeches: Political)")
 ```
 
-```{r pilot_participants_table_functions, include=FALSE}
+```{r, include=FALSE}
+# details for all studies
+pilot_2_demog_df <- pilot_2_demog_dfs |> bind_rows(.id = "study")
+```
+
+Thus, the total participant pool consisted of `r nrow(pilot_2_demog_df)` participants 
+(`r round(mean(pilot_2_demog_df$Sex == "Female", na.rm = TRUE) * 100, 1)`% female, 
+$M_{\text{age}} = `r round(mean(pilot_2_demog_df$Age, na.rm = TRUE), 1)`$ years, 
+$SD_{\text{age}} = `r round(sd(pilot_2_demog_df$Age, na.rm = TRUE), 1)`$) 
+(see Table 1).
+
+
+```{r, include=FALSE}
+# general apa-style formatting
 format_apa_table <- function(gt_tbl, title, subtitle = NULL) {
   gt_tbl %>%
     tab_header(
@@ -67,7 +92,6 @@ format_apa_table <- function(gt_tbl, title, subtitle = NULL) {
       subtitle = subtitle
     ) %>%
     tab_options(
-      #table.font.names = c("Times New Roman", "Times", "serif"),
       table.font.size = 12,
       heading.align = "left",      
       column_labels.border.bottom.width = px(1),  # header line
@@ -123,41 +147,36 @@ summarize_spectrum <- function(df, study_name) {
 }
 ```
 
-### Ratings per stimulus
-
-The primary aim of our pilot studies was to estimate the number of ratings needed per stimulus, to estimate an average perception of a given value in a given text. We made a determination using boostrapped estimates of inter-rater reliability for a range of incremental subsample sizes, as well as correlations between overall sample means and incremental subsample means. To do so, we followed a procedure similar to @DeBruine_Jones_2018. This process essentially involves gathering data comprised of a) a relatively large number of ratings (e.g. ratings from 100 raters), on b) a relatively small sub-sample of the items to be rated (e.g. 15). Inter-rater reliability is repeatedly estimated on a range of different possible numbers of ratings. Doing so shows a sampling distribution of inter-rater reliability estimates for e.g. 5 vs. 10 vs. 15 etc. ratings per stimulus. This essentially allows for an estimate of a target number of ratings, in order to achieve a target inter-rater reliability, on average. We estimated the target number of ratings separately per text type (`lyrics` / `speeches`) as we expected that each form of text could vary in terms of degree of ambiguity, and separately per value, as we expected that this degree of ambiguity may vary by value and by text. 
-
-As we aim to represent the mean of a population of raters, we estimate inter-rater reliability as 'general consensus' (as opposed to 'absolute agreement') via intraclass correlation coefficient ICC(2,k)[@koo2016guideline]. The '2' indicates two-way random effects, in that both the targets of the ratings and the raters are treated as random samples from a larger population, and the 'k' indicates the reliabiliity of the average of *k* raters. In essence, ICC(2,k) estimates how consistently a group mean rating of k raters reflects the "true" score of each item, i.e. *inter-rater agreement*. We estimate the inter-rater agreement separately for each value (i.e. power, achievement etc.), for the overall sample of ratings, and for each of the subsample increments (i.e. 5, 10, or 15 ratings) during bootstrapping. We used a value of 0.75 as a threshold to indicate sufficent, or "good", agreement [@koo2016guideline]. To examine the general stability of mean ratings of a given value in a given text (value / item), we first estimate a canonical mean per value / item, and then estimate the correlation between the canonical mean, and the subsample mean per value / item. Although we did not see a recommended threshold for pearson correlations in [@DeBruine_Jones_2018], we set a threshold of 0.9 to indicate sufficient, or "high" correlation between sub-sample and overall sample means. 
-
-We thus aimed to bootstrap estimates of inter-rater reliability by incrementally sub-sampling numbers of raters, 50 times per increment, and then estimating a) inter-rater reliability in the form of consensus by estimating ICC(2,k), and b) the Pearson correlation between the sub-sample increment mean and the overall sample mean [@DeBruine_Jones_2018]. We set the sub-sample increments to 5, ranging from 5 to 50, with replacement, 50 times for each increment: i.e. we sampled 5 raters 50 times, 10 raters 50 times, 15 raters 50 times etc. up to 50 raters 50 times, all with replacement. We then aim to determine a target number of ratings based on the distributions of ICC(2,k) and pearson's r, relative to the thresholds we set. A secondary aim was to pilot our quiz, and to observe which question(s) participants found to be the most challenging. 
-
-### Participants
-
-We recruited a total of 300 participants: 100 each stratified by ethnicity completed the `lyrics` and the first `speeches` pilot, and 100 participants stratified by political orientation completed the second `speeches` pilot. Data were removed for 1 participant each in the pilot study using lyrics and the first pilot study using speeches as they erroneously completed the survey twice. 2 participants chose to withdraw their data prior to the time this manuscript was written in the second pilot using speeches (see Table 1). 
-
 ```{r pilot_demogs}
 # demographics table
 
-pilot_demog_tbl <- imap_dfr(
+table_1 <- imap_dfr(
   pilot_2_demog_dfs,
   ~ summarize_demographics(.x, pilot_labels[[.y]] %||% .y))
 
-pilot_demog_tbl %>%
+table_1 <- table_1 %>%
   gt() %>%
   cols_align(align = "left",  columns = c(Study)) %>%
   cols_align(align = "center", columns = c(N, `% Female`, `Age range`, `Age M (SD)`)) %>%
   fmt_number(columns = `% Female`, decimals = 1) %>%
   format_apa_table(md("**Table 1**"), md("*Participant demographics — Pilot studies*"))
+
+table_1
 ```
 
-The pilot study using lyrics and the first using speeches were stratified by Ethnicity (see Table 2). The second pilot using speeches was stratified by Political Spectrum. This resulted in a sample of mostly 'Black' and 'White' identifying participants, although the default Ethnicity settings on Prolific do not include 'Hispanic/Latino' (see Tables 3a and Table 3b).
+```{r, include=FALSE}
+gtsave(table_1, here("tables", "table_1.tex"))
+
+rm(table_1)
+```
+
 
 ```{r}
-pilot_ethnicity_tbl <- imap_dfr(
+table_2 <- imap_dfr(
   pilot_2_demog_dfs[1:2], 
   ~ summarize_ethnicity(.x, pilot_labels[[.y]] %||% .y)) 
 
-pilot_ethnicity_tbl |>
+table_2 <- table_2 |>
   gt() %>%
   cols_label(
     `Black/African American` = html("Black/<br>African American"),
@@ -171,31 +190,21 @@ pilot_ethnicity_tbl |>
              columns = c(Asian, `Black/African American`, 
                          `Latino/Hispanic`, White)) %>%
   
-  format_apa_table(md("**Table 2**"), md("*Participant ethnicity — Pilot studies*"))
-```
+format_apa_table(md("**Table 2**"), md("*Participant ethnicity — Pilot studies*"))
 
+table_2
 
-```{r}
-pilot_2_demog_dfs[[3]] |> 
-    count(Ethnicity) %>%
-    mutate(
-      pct = 100 * n / sum(n),
-      value = paste0(n, " (", round(pct, 1), "%)")) |> 
-  select(Ethnicity, value) |>
-  
-  gt() |>
-  
-  cols_label(Ethnicity = "Ethnicity (Simplified)", value = "N (%)") |>
-  cols_align(align = "center", columns = c(Ethnicity, value)) %>%
-  format_apa_table(md("**Table 3a**"), md("*Participant ethnicity, Pilot 3 Speeches: Political Spectrum*"))
+gtsave(table_2, here("tables", "table_2.tex"))
+
+rm(table_2)
 ```
 
 ```{r}
-pilot_spectrum_tbl <- imap_dfr(
+table_3 <- pilot_spectrum_tbl <- imap_dfr(
   pilot_2_demog_dfs["speeches2"],
   ~ summarize_spectrum(.x, pilot_labels[[.y]] %||% .y))
 
-pilot_spectrum_tbl |>
+table_3 <- pilot_spectrum_tbl |>
   gt() %>%
   
   fmt_number(
@@ -205,8 +214,11 @@ pilot_spectrum_tbl |>
   
   cols_align(align = "center", columns = c(Conservative, Liberal, Moderate)) %>%
   
-  format_apa_table(md("**Table 3b**"), md("*Participants by political leaning — Main studies*"))
+  format_apa_table(md("**Table 3**"), md("*Participants by political leaning — Main studies*"))
+
+table_3
+
+gtsave(table_3, here("tables", "table_3.tex"))
+
+rm(table_3)
 ```
-
-
-

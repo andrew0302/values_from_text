@@ -1,0 +1,97 @@
+## Pilot Methods
+
+```{r, include=FALSE}
+library("here")       # file logistics
+library("tidyverse")  # code logistics
+library("gt")         # rendering tables
+```
+
+```{r, include=FALSE}
+# read in pilot data
+data_path <- here("_data", "_participant_scores", "wave_2")
+
+# read in data
+pilot_2_dfs <- readRDS(here(data_path, "pilot_2_dfs.RDS"))
+
+# rename ethnicity column 
+pilot_2_dfs[['speeches2']] <- pilot_2_dfs[['speeches2']] |> 
+  rename(Ethnicity = `Ethnicity simplified`)
+```
+
+```{r, include=FALSE}
+# format pilot data
+
+# subset each df
+pilot_2_demog_dfs <- lapply(pilot_2_dfs, function(df){
+  df <- df |> 
+    select(participant_ID, Age, Sex, `Ethnicity`) |> 
+    unique()
+  })
+
+#re-add spectrum to speeches2 df
+pilot_2_demog_dfs[['speeches2']] <- merge(
+  
+  pilot_2_demog_dfs[['speeches2']],
+  
+  pilot_2_dfs[['speeches2']] |> 
+    select(participant_ID, `Political spectrum (us)`) |> 
+    unique(), 
+  
+  by = "participant_ID", all.x=T)
+
+rm(pilot_2_dfs)
+
+
+# convert age to numeric
+pilot_2_demog_dfs <- lapply(
+  pilot_2_demog_dfs, 
+  function(df){df|>mutate(Age = as.numeric(Age))})
+
+# recode Asian ethnicity
+pilot_2_demog_dfs[["lyrics"]] <- pilot_2_demog_dfs[["lyrics"]] |> 
+  mutate(Ethnicity = case_when(
+    Ethnicity == "East Asian" | Ethnicity == "South East Asian" | Ethnicity == "South Asian" ~ "Asian", 
+    .default = Ethnicity))
+
+pilot_2_demog_dfs[["speeches1"]]<- pilot_2_demog_dfs[["speeches1"]] |> 
+  mutate(Ethnicity = case_when(
+    Ethnicity == "East Asian" | Ethnicity == "South East Asian" | Ethnicity == "South Asian" ~ "Asian", 
+    .default = Ethnicity))
+
+pilot_2_demog_dfs[["speeches2"]] <- pilot_2_demog_dfs[["speeches2"]] |> mutate(Ethnicity = case_when(
+  Ethnicity == "DATA_EXPIRED" ~ NA, 
+  .default = Ethnicity
+))
+
+# study labels
+pilot_labels <- c(
+  lyrics     = "Pilot 1 (Lyrics)",
+  speeches1  = "Pilot 2 (Speeches: Ethnicity)",
+  speeches2  = "Pilot 3 (Speeches: Political)")
+```
+
+
+
+```{r}
+table_C1 <- pilot_2_demog_dfs[[3]] |> 
+    count(Ethnicity) %>%
+    mutate(
+      pct = 100 * n / sum(n),
+      value = paste0(n, " (", round(pct, 1), "%)")) |> 
+  select(Ethnicity, value) |>
+  
+  gt() |>
+  
+  cols_label(Ethnicity = "Ethnicity (Simplified)", value = "N (%)") |>
+  cols_align(align = "center", columns = c(Ethnicity, value)) %>%
+  format_apa_table(md("**Table C1**"), md("*Participant ethnicity, Pilot 3 Speeches: Political Spectrum*"))
+
+table_C1
+
+gtsave(table_C1, here("tables", "table_C1.tex"))
+
+rm(table_C1)
+```
+
+
+

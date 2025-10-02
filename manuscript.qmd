@@ -6,17 +6,7 @@ author:
 bibliography: references.bib
 ---
 
-```{r child="_manuscript/10_methods.qmd"}
-```
 
-```{r child="_manuscript/11_stimuli.qmd"}
-```
-
-```{r child="_manuscript/13_participants.qmd"}
-```
-
-```{r child="_manuscript/12_survey.qmd"}
-```
 
 ```{r child="_manuscript/21_pilot_methods.qmd"}
 ```
