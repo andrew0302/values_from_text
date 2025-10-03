@@ -5,6 +5,7 @@ library('here')       # file logistics
 library("tidyverse")  # code logistics
 library("patchwork")  # merge plots
 library("gt")         # markdown
+library("rlang")
 library("ggtext")     # text plots
 ```
 
@@ -56,7 +57,7 @@ plot_summary_by_metric <- function(df, metric, metric_lower, metric_upper, optio
       theme(legend.position="none",
             plot.title = element_text(size = 10, hjust = 0.0)) +
       labs(x = "ICC[2,k]",y = "Value") +
-      ggtitle(label = sub) +
+      ggtitle(label = stringr::str_wrap(sub, width = 15)) +
       theme_apa()
     })}
 
@@ -77,7 +78,7 @@ plot_raters <- function(df, metric, name, option){
 
 ### Estimating the number of raters
 
-```{r warning=FALSE}
+```{r warning=FALSE, fig.width=6.5}
 p1 <- plot_raters(
   pilot_2_lyrics_by_row_dfs[[1]] %>% filter(n <= 25), 
   metric = r, "Pearson's r", option = "plasma") + 
@@ -88,35 +89,7 @@ p2 <- plot_raters(
   metric = ICC2k, "ICC(2,k)", option = "plasma") +
   geom_vline(xintercept = 0.75, color = "red", size = .4, linetype = "dashed") 
 
-(p1 /p2) +
-    plot_annotation(
-    # title = "**Figure 2**",
-    # subtitle = "*Reliability by Rater n: Lyrics Pilot*", 
-    # caption = "*Note.* Probability Density for Pearson's r and ICC(2,k).", 
-    tag_levels = 'A') +
-  
-  plot_layout(guides = "collect") &
-  
-  theme(legend.position = "right",
-        plot.title = element_markdown(hjust = 0), 
-        plot.subtitle = element_markdown(hjust = 0), 
-        plot.caption = element_markdown(hjust = 0))
-
-ggsave(here("images", "figure_2.pdf"))
-```
-
-```{r warning=FALSE}
-p1 <- plot_raters(
-  pilot_2_lyrics_by_row_dfs[[1]] %>% filter(n <= 25), 
-  metric = r, "Pearson's r", option = "plasma") + 
-  geom_vline(xintercept = 0.9, color = "red", size = .4, linetype = "dashed") 
-
-p2 <- plot_raters(
-  pilot_2_lyrics_by_row_dfs[[1]] %>% filter(n <= 25), 
-  metric = ICC2k, "ICC(2,k)", option = "plasma") +
-  geom_vline(xintercept = 0.75, color = "red", size = .4, linetype = "dashed") 
-
-figure_2a <- (p1 /p2) + 
+figure_2 <- (p1 /p2) + 
   plot_annotation(tag_levels = 'A') +
   plot_layout(guides = "collect") &
   
@@ -125,7 +98,9 @@ figure_2a <- (p1 /p2) +
         plot.subtitle = element_markdown(hjust = 0), 
         plot.caption = element_markdown(hjust = 0))
 
-figure_2a
+figure_2
+
+ggsave(here("images", "figure_2.pdf"), figure_2)
 ```
 
 ```{r warning=FALSE, echo=FALSE}
@@ -139,44 +114,15 @@ p2 <- plot_raters(
   metric = ICC2k, "ICC(2,k)", option = "viridis") +
   geom_vline(xintercept = 0.75, color = "red", size = .4, linetype = "dashed")
 
-(p1 /p2) +
-    plot_annotation(
-    # title = "**Figure 3**",
-    # subtitle = "*Reliability by Rater n: Speeches 1 Pilot*", 
-    # caption = "*Note.* Probability Density for Pearson's r and ICC(2,k).", 
-    tag_levels = 'A') +
-  
-  plot_layout(guides = "collect") &
-  
-  theme(legend.position = "right",
-        plot.title = element_markdown(hjust = 0), 
-        plot.subtitle = element_markdown(hjust = 0), 
-        plot.caption = element_markdown(hjust = 0))
-
-ggsave(here("images", "figure_3.pdf"))
-```
-
-```{r warning=FALSE, echo=FALSE}
-p1 <- plot_raters(
-  pilot_2_speeches1_by_row_dfs[[1]] %>% filter(n >= 25), 
-  metric = r, "Pearson's r", option = "viridis") + 
-  geom_vline(xintercept = 0.9, color = "red", size = .4, linetype = "dashed")
-
-p2 <- plot_raters(
-  pilot_2_speeches1_by_row_dfs[[1]] %>% filter(n >= 25), 
-  metric = ICC2k, "ICC(2,k)", option = "viridis") +
-  geom_vline(xintercept = 0.75, color = "red", size = .4, linetype = "dashed")
-
-figure_2b <- (p1 /p2) +
-  plot_annotation(tag_levels = 'A') +
-  plot_layout(guides = "collect") &
+figure_3a <- (p1 /p2) +
+  plot_annotation(tag_levels = 'A') &
   
   theme(legend.position = "bottom",
         plot.title = element_markdown(hjust = 0), 
         plot.subtitle = element_markdown(hjust = 0), 
         plot.caption = element_markdown(hjust = 0))
 
-figure_2b
+figure_3a
 ```
 
 ```{r warning=FALSE, echo=FALSE}
@@ -190,48 +136,24 @@ p2 <- plot_raters(
   metric = ICC2k, "ICC(2,k)", option = "viridis") +
   geom_vline(xintercept = 0.75, color = "red", size = .4, linetype = "dashed")
 
-(p1 /p2) +
-    plot_annotation(
-    # title = "**Figure 4**",
-    # subtitle = "*Reliability by Rater n: Speeches 2 Pilot*", 
-    # caption = "*Note.* Probability Density for Pearson's r and ICC(2,k).", 
-    tag_levels = 'A') +
-  
-  plot_layout(guides = "collect") &
-  
-  theme(legend.position = "right",
-        plot.title = element_markdown(hjust = 0), 
-        plot.subtitle = element_markdown(hjust = 0), 
-        plot.caption = element_markdown(hjust = 0))
-
-ggsave(here("images", "figure_4.pdf"))
-```
-
-```{r warning=FALSE, echo=FALSE}
-p1 <- plot_raters(
-  pilot_2_speeches2_by_row_dfs[[1]] %>% filter(n >= 25), 
-  metric = r, "Pearson's r", option = "viridis") + 
-  geom_vline(xintercept = 0.9, color = "red", size = .4, linetype = "dashed")
-
-p2 <- plot_raters(
-  pilot_2_speeches2_by_row_dfs[[1]] %>% filter(n >= 25), 
-  metric = ICC2k, "ICC(2,k)", option = "viridis") +
-  geom_vline(xintercept = 0.75, color = "red", size = .4, linetype = "dashed")
-
-figure_2c <- (p1 /p2) +
-  plot_annotation(tag_levels = 'A') +
-  plot_layout(guides = "collect") &
+figure_3b <- (p1 /p2) +
+  plot_annotation(tag_levels = 'A') &
   
   theme(legend.position = "bottom",
         plot.title = element_markdown(hjust = 0), 
         plot.subtitle = element_markdown(hjust = 0), 
         plot.caption = element_markdown(hjust = 0))
 
-figure_2c
+figure_3b
 ```
 
-```{r}
-(figure_2a | figure_2b | figure_2c)
+```{r warning=FALSE, fig.width=6.5}
+figure_3 <- (figure_3a  | figure_3b) +  
+  plot_layout(guides = "collect") +
+  plot_annotation(tag_levels = 'A') &
+  theme(legend.position = "bottom")
+
+ggsave(here("images", "figure_3.pdf"),figure_3)
 ```
 
 
@@ -253,21 +175,19 @@ pilot_2_speeches2_agreement_plots <- plot_summary_by_metric(
   pilot_2_likert_summary_dfs[[3]], 
   ICC2k, ICC2k_lower, ICC2k_upper, 
   option = "viridis")
+```
 
+```{r}
 p1 <- pilot_2_lyrics_agreement_plots[[1]] 
 
-p1 + ggtitle("") +
-  #ggtitle("**Figure 5**", subtitle = "*ICC(2,k) estimates by Schwartz value*") + 
-  # labs(caption = 
-  #      "*Note.* Error bars are 95% confidence intervals. 
-  #      'Self' indicates reliability for the value 'self direction'.") +
+p1 <- p1 + 
+  ggtitle("Overall") +
   theme(plot.title = element_markdown(hjust = 0), 
         plot.subtitle = element_markdown(hjust = 0), 
         plot.caption = element_markdown(hjust = 0))
 
-ggsave(here("images", "figure_5.pdf"))
+p1
 ```
-
 
 ```{r}
 p1_1 <- pilot_2_lyrics_agreement_plots[[2]]
@@ -276,43 +196,31 @@ p1_3 <- pilot_2_lyrics_agreement_plots[[4]]
 p1_4 <- pilot_2_lyrics_agreement_plots[[5]]
 
 
-(p1_1 | p1_2) / (p1_3 | p1_4) +
-  
-  # plot_annotation(
-  #   title = "**Figure 6**",
-  #   subtitle = "*ICC(2,k) by Schwartz value, by Ethnicity: Lyrics Pilot*", 
-  #   caption = 
-  #        "*Note.* Error bars are 95% confidence intervals. 
-  #        'Self' indicates reliability for the value 'self direction'.") &
+p2 <- (p1_1 | p1_2) / (p1_3 | p1_4) +
   
   theme(plot.title = element_markdown(hjust = 0), 
         plot.subtitle = element_markdown(hjust = 0), 
         plot.caption = element_markdown(hjust = 0))
 
-ggsave(here("images", "figure_6.pdf"))
+p2 
 ```
+```{r}
+figure_4 <- p1 / p2
 
+ggsave(here("images", "figure_4.pdf"), height=8.5)
+```
 
 ```{r}
-p2 <- pilot_2_speeches1_agreement_plots[[1]]+ggtitle("")
-p3 <- pilot_2_speeches2_agreement_plots[[1]]+ggtitle("")
+p1 <- pilot_2_speeches1_agreement_plots[[1]]+ggtitle("")
 
-(p2/p3) + 
-  plot_annotation(
-    # title = "**Figure 7**",
-    # subtitle = "*ICC(2,k) by Schwartz value, by Ethnicity: Speeches Pilots 1 and 2*", 
-    # caption = 
-    # "*Note.* Error bars are 95% confidence intervals. 
-    #      'Self' indicates reliability for the value 'self direction'.", 
-    tag_levels = 'A') &
-  
+p1 <- p1 + 
+  ggtitle("Overall") +
   theme(plot.title = element_markdown(hjust = 0), 
         plot.subtitle = element_markdown(hjust = 0), 
         plot.caption = element_markdown(hjust = 0))
 
-ggsave(here("images", "figure_7.pdf"))
+p1
 ```
-
 
 ```{r}
 p1_1 <- pilot_2_speeches1_agreement_plots[[2]]
@@ -320,20 +228,32 @@ p1_2 <- pilot_2_speeches1_agreement_plots[[3]]
 p1_3 <- pilot_2_speeches1_agreement_plots[[4]]
 p1_4 <- pilot_2_speeches1_agreement_plots[[5]]
 
-(p1_1 | p1_2) / (p1_3 | p1_4) +
-  
-  # plot_annotation(
-  #   title = "**Figure 8**",
-  #   subtitle = "*ICC(2,k) by Schwartz value, by Ethnicity: Speeches 1 Pilot*", 
-  #   caption = 
-  #        "*Note.* Error bars are 95% confidence intervals. 
-  #        'Self' indicates reliability for the value 'self direction'.") &
+
+p2 <- (p1_1 | p1_2) / (p1_3 | p1_4) +
   
   theme(plot.title = element_markdown(hjust = 0), 
         plot.subtitle = element_markdown(hjust = 0), 
         plot.caption = element_markdown(hjust = 0))
 
-ggsave(here("images", "figure_8.pdf"))
+p2 
+```
+
+```{r}
+figure_5 <- p1 / p2
+
+ggsave(here("images", "figure_5.pdf"), height=8.5)
+```
+
+```{r}
+p1 <- pilot_2_speeches2_agreement_plots[[1]]+ggtitle("")
+
+p1 <- p1 + 
+  ggtitle("Overall") +
+  theme(plot.title = element_markdown(hjust = 0), 
+        plot.subtitle = element_markdown(hjust = 0), 
+        plot.caption = element_markdown(hjust = 0))
+
+p1
 ```
 
 ```{r}
@@ -342,26 +262,28 @@ p1_2 <- pilot_2_speeches2_agreement_plots[[3]]
 p1_3 <- pilot_2_speeches2_agreement_plots[[4]]
 p1_4 <- patchwork::plot_spacer()
 
-((p1_1 / p1_2) | (p1_3 / p1_4)) +
-  # plot_annotation(
-  #   title = "**Figure 9**",
-  #   subtitle = "*ICC(2,k) by Schwartz value, by Political Leaning: Speeches 2 Pilot*", 
-  #   caption = 
-  #        "*Note.* Error bars are 95% confidence intervals. 
-  #        'Self' indicates reliability for the value 'self direction'.") &
+p2 <- ((p1_1 / p1_2) | (p1_3 / p1_4)) +
   
   theme(plot.title = element_markdown(hjust = 0), 
         plot.subtitle = element_markdown(hjust = 0), 
         plot.caption = element_markdown(hjust = 0))
 
-ggsave(here("images", "figure_9.pdf"))
+p2
 ```
+
+```{r}
+figure_6 <- p1 / p2
+
+ggsave(here("images", "figure_6.pdf"), height=8.5)
+```
+
 
 ### Exploring Quiz Results
 
 ```{r include=FALSE, warning=FALSE, echo=FALSE}
 pilot_2_dfs <- readRDS(file = here("_data", "_participant_scores", "wave_2", "pilot_2_dfs.RDS"))
-  
+df <- bind_rows(quiz_dfs, .id = "Pilot")
+
 # subset pilot dfs
 quiz_dfs <- lapply(pilot_2_dfs, function(df){
  
@@ -389,26 +311,6 @@ quiz_dfs <- lapply(pilot_2_dfs, function(df){
       Quiz3_1 = ifelse(is.na(Quiz3_1), "NA", as.character(Quiz3_1)),
       Quiz3_1 = factor(Quiz3_1, levels = c("NA","-1","0","1","2","3","4","5","6","7"), ordered = TRUE)
 )})
-
-
-
-
-df <- bind_rows(quiz_dfs, .id = "Pilot")
-
-plot_stacked_bars <- function(df, column, option) {
-  
-  df |>
-    ggplot(aes({{column}}, fill = as.factor(Pilot))) + 
-    geom_bar() +
-    scale_fill_viridis_d(
-      option = option,
-      name = "Pilot Study: ",
-      labels = c("lyrics" = "Lyrics", 
-                 "speeches1"  = "Speeches #1", 
-                 "speeches2"  = "Speeches #2")) +
-    scale_y_continuous(limits = c(0, 225)) +
-    scale_x_discrete(drop = FALSE)
-}
 
 apa_theme <- 
   theme_classic(base_size = 12, base_family = "sans") +
@@ -480,8 +382,61 @@ table_4
 gtsave(table_4, here("tables", "table_4.tex"))
 ```
 
-```{r}
 
+```{r}
+plot_bars <- function(df, column1, column2, option) {
+  
+  df |> 
+    mutate({{column2}} := fct_recode(as.factor({{column2}}), 
+                                     "Correct"   = "1","Incorrect" = "0")) |>
+        
+    ggplot(aes({{column1}}, fill = as.factor({{column2}}))) + 
+    geom_bar() +
+    scale_fill_viridis_d(option = option,
+                         name = "Response:") +
+    
+    scale_x_discrete(drop = FALSE)}
+```
+
+```{r}
+p1 <- plot_bars(df, Quiz1_1, Quiz1, option = "D") +
+  xlab("Q1 Responses") + ylab("Count") +
+  apa_theme
+
+p2 <- plot_bars(df, Quiz2_1, Quiz2, option = "D") +
+  xlab("Q2 Responses") + ylab("Count") +
+  apa_theme
+
+p3 <- plot_bars(df, Quiz3_1, Quiz3, option = "D") +
+  xlab("Q3 Responses") + ylab("") +
+  apa_theme
+
+(p1 | p2 | p3) +
+  plot_layout(guides = "collect") &     
+  theme(legend.position = "bottom", 
+        plot.title = element_markdown(hjust = 0), 
+        plot.subtitle = element_markdown(hjust = 0), 
+        plot.caption = element_markdown(hjust = 0))
+
+ggsave(here("images", "figure_7.pdf"))
+```
+
+
+```{r}
+plot_stacked_bars <- function(df, column, option) {
+  
+  df |>
+    ggplot(aes({{column}}, fill = as.factor(Pilot))) + 
+    geom_bar() +
+    scale_fill_viridis_d(
+      option = option,
+      name = "Pilot Study: ",
+      labels = c("lyrics" = "Lyrics", 
+                 "speeches1"  = "Speeches #1", 
+                 "speeches2"  = "Speeches #2")) +
+    scale_y_continuous(limits = c(0, 225)) +
+    scale_x_discrete(drop = FALSE)
+}
 ```
 
 
@@ -499,14 +454,16 @@ p3 <- plot_stacked_bars(df, Quiz3_1, option = "C") +
   apa_theme
 
 (p1 | p2 | p3) +
-    plot_layout(guides = "collect") +
-    plot_annotation(
-      title = "**Figure 10**",
-      subtitle = "*Participant Quiz Responses*", 
-      caption = md("*Note*. Bars represent raw counts of responses, including NA as a category, for all participants that answered incorrectly.<br> Colors represent specific pilot study. Correct response for Q1 was 5, 6,or 7. Correct response for Q2 was NA. <br> Correct response for Q3 was -1, 0, or 1.")) &
+    plot_layout(guides = "collect") &
+    # plot_annotation(
+    #   title = "**Figure 10**",
+    #   subtitle = "*Participant Quiz Responses*", 
+    #   caption = md("*Note*. Bars represent raw counts of responses, including NA as a category, for all participants that answered incorrectly.<br> Colors represent specific pilot study. Correct response for Q1 was 5, 6,or 7. Correct response for Q2 was NA. <br> Correct response for Q3 was -1, 0, or 1.")) &
     theme(legend.position = "bottom", 
           plot.title = element_markdown(hjust = 0), 
           plot.subtitle = element_markdown(hjust = 0), 
           plot.caption = element_markdown(hjust = 0))
+
+ggsave(here("images", "figure_C1.pdf"))
 ```
 
