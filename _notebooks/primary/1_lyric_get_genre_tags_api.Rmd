@@ -12,7 +12,7 @@ library(spotifyr)
 library(httr2)
 
 
-lyrics_df <- readRDS(file = here("_data", "primary_data", "public_lyrics_dt.RDS"))
+lyrics_df <- readRDS(file = here("_data", "_primary_data", "public_lyrics_df.RDS"))
 lyrics_df <- as.data.table(lyrics_df)
 
 Sys.setenv(SPOTIFY_CLIENT_ID = "ENTER_ID", 
@@ -99,7 +99,7 @@ missing_artists <- cache %>% filter(sp_genres == "NULL" | lf_tags == "NULL") |> 
 missing_cache <- purrr::map_dfr(missing_artists, get_artist_row)
 cache <- dplyr::rows_update(cache, missing_cache, by = "artist")
 
-saveRDS(cache, here("_data", "primary_data", "artist_tags.RDS"))
+saveRDS(cache, here("_data", "_primary_data", "artist_tags.RDS"))
 
 rm(missing_cache, req, resp, artists, cache_path, missing_artists, fetch_artists, get_artist_row, norm_tags, safe_lastfm_tags, safe_spotify_artist, access_token, LASTFM_KEY)
 ```

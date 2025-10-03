@@ -13,39 +13,54 @@ library(rlang)
 lyrics_df <- readRDS(file = here("_data", "_primary_data", "lyrics_df.RDS"))
 ```
 
+```{r}
+wave_2_dfs <- readRDS(here("_data", "_participant_scores", "wave_2", "wave_2_dfs.RDS"))
+pilot_2_dfs <- readRDS(here("_data", "_participant_scores", "wave_2", "pilot_2_dfs.RDS"))
+
+# ID songs that were used in studies
+lyrics_IDs <- bind_rows(
+    wave_2_dfs[["lyrics1"]] |> select(item_ID), 
+    wave_2_dfs[["lyrics2"]] |> select(item_ID), 
+    pilot_2_dfs[["lyrics"]] |> select(item_ID)) |> 
+  filter(!item_ID == "attention") |> unique() |> pull()
+
+lyrics_df <- lyrics_df |> 
+  mutate(selected = case_when(
+    item_ID %in% lyrics_IDs ~ "used",
+    .default = selected))
+
+rm(wave_2_dfs, pilot_2_dfs, lyrics_IDs)
+```
+
 # stacked bar plots
-
-
-
 
 ```{r}
 colors <- viridis(10, option="plasma") 
 
 make_removed_counts <- function(df, col) {
-  
   df |>  
     # remove songs that were not evaluated
-    filter(selected %in% c("keep","remove")) |>
+    filter(selected %in% c("keep","remove", "used")) |>
     
     # count the number of rows by `selected`
     count({{ col }}, selected, name = "n") |>
     
     # create a new column to order the factor
     group_by({{ col }}) |>
-    mutate(removed_n = sum(n * (selected == "keep"))) |>
+    mutate(removed_n = sum(n * (selected == "used"))) |>
     ungroup() |>
     
     # order the factor by the number of rows in the given subgroup
     mutate(
-      selected = factor(selected, levels = c("remove","keep")),
+      selected = factor(selected, levels = c("remove","keep", "used")),
       # coerce to character so fct_reorder works for numeric columns too
-      {{ col }} := fct_reorder(as.character({{ col }}), removed_n, .desc = TRUE)) |>
+      {{ col }} := fct_reorder(as.character({{ col }}), removed_n, .desc = F)) |>
     
     # stacked column plot
     ggplot(aes(x = {{ col }}, y = n, fill = selected)) +
     geom_col(alpha = .75) +
     coord_flip() +
-    scale_fill_manual(values = c(colors[5], colors[9])) + 
+    scale_fill_manual(values = c(colors[1], colors[5], colors[9])) + 
     labs(x = NULL, y = "Count") +
     
     theme_minimal()

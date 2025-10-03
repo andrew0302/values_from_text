@@ -8,6 +8,7 @@ library(cowplot)
 library(gt)
 library(rlang)
 
+lyrics_df <- readRDS(file = here("_data", "_primary_data", "lyrics_df.RDS"))
 speech_df <- readRDS(here("_data", "_primary_data", "speech_df.RDS"))
 wave_2_dfs <- readRDS(here("_data", "_participant_scores", "wave_2", "wave_2_dfs.RDS"))
 pilot_2_dfs <- readRDS(here("_data", "_participant_scores", "wave_2", "pilot_2_dfs.RDS"))
@@ -19,19 +20,25 @@ speech_IDs <- bind_rows(
     pilot_2_dfs[["speeches2"]] |> select(item_ID)) |> 
   filter(!item_ID == "attention") |> unique() |> pull()
 
+speech_df <- speech_df |> 
+  rename(item_ID = id) |>
+  mutate(selected = case_when(
+    item_ID %in% speech_IDs ~ "used",
+    .default = "sampled"))
+
 lyrics_IDs <- bind_rows(
     wave_2_dfs[["lyrics1"]] |> select(item_ID), 
     wave_2_dfs[["lyrics2"]] |> select(item_ID), 
     pilot_2_dfs[["lyrics"]] |> select(item_ID)) |> 
   filter(!item_ID == "attention") |> unique() |> pull()
 
-lyrics_df <- readRDS(file = here("_data", "_primary_data", "lyrics_df.RDS"))
-speech_df <- readRDS(here("_data", "_primary_data", "speech_df.RDS"))
+lyrics_df <- lyrics_df |> 
+  mutate(selected = case_when(
+    item_ID %in% lyrics_IDs ~ "used",
+    .default = selected))
 ```
 
-```{r plot_function, include=FALSE}
-colors <- viridis(10, option="plasma") 
-
+```{r, include=FALSE}
 # apa formatting
 theme_apa <- function(base_size = 12, base_family = "sans") {
   theme_minimal(base_size = base_size, base_family = base_family) +
@@ -44,25 +51,27 @@ theme_apa <- function(base_size = 12, base_family = "sans") {
       axis.text = element_text(size = base_size * 0.9),
       #legend.position = "none",
       legend.title = element_text(face = "plain"))}
+```
 
 
+```{r plot_function, include=FALSE}
 make_removed_counts <- function(df, col) {
   
   df |>  
     # remove songs that were not evaluated
-    filter(selected %in% c("keep","remove")) |>
+    filter(selected %in% c("keep","remove", "used")) |>
     
     # count the number of rows by `selected`
     count({{ col }}, selected, name = "n") |>
     
     # create a new column to order the factor
     group_by({{ col }}) |>
-    mutate(removed_n = sum(n * (selected == "keep"))) |>
+    mutate(removed_n = sum(n * (selected == "used"))) |>
     ungroup() |>
     
     # order the factor by the number of rows in the given subgroup
     mutate(
-      selected = factor(selected, levels = c("remove","keep")),
+      selected = factor(selected, levels = c("remove","keep","used")),
       # coerce to character so fct_reorder works for numeric columns too
       {{ col }} := fct_reorder(as.character({{ col }}), removed_n, .desc = FALSE)) |>
     
@@ -70,10 +79,14 @@ make_removed_counts <- function(df, col) {
     ggplot(aes(x = {{ col }}, y = n, fill = selected)) +
     geom_col(alpha = .75) +
     coord_flip() +
-    #scale_fill_manual(values = c(colors[5], colors[9])) + 
-    labs(x = NULL, y = "Count") +
     
-    theme_apa()
+    scale_fill_manual(
+      name = "Screening outcome",  
+      values = c("used" = colors[9], "remove" = colors[5], "keep" = colors[1]), 
+      labels = c("remove" = "Removed", "keep" = "Kept", "used" = "Annotated")) +
+    labs(x = NULL, y = "Count") +
+    theme_apa() + 
+    theme(legend.position = "top")
 }
 ```
 
@@ -218,16 +231,11 @@ make_genre_comparison_table <- function(df,
 
 ```{r, warning=FALSE, echo=FALSE}
 colors <- viridis(10, option="plasma") 
-make_removed_counts(lyrics_df, year_bin_range) + 
-  scale_fill_manual(
-  name = "Screening outcome",  # legend title
-  values = c("remove" = colors[5], "keep" = colors[9]),
-  labels = c("remove" = "Removed", "keep" = "Kept")) +
-  theme(legend.position = "top")
+make_removed_counts(lyrics_df, year_bin_range) 
 
 ggsave(here("images", "figure_A1.pdf"))
 ```
-<span style="font-size: 80%"><em>Note.</em> “remove” indicates songs excluded due to manual screening criteria. Bins presented in order of number of songs labelled "Kept". Each row indicates a decade-range year bin, with x axis labels showing the observed metadata range per year bin.</span>
+<span style="font-size: 80%"><em>Note.</em> “Removed”, "Kept", indicate songs excluded  and included respectively, from the manual screening process. "Annotated" indicate the subset of "Kept" that were reviewed by participants. Bins presented in order of number of songs labelled "Annotated". Each row indicates a decade-range year bin, with x axis labels showing the observed metadata range per year bin.</span>
 
 ```{r}
 table_A1 <- make_apa_freq_table(
@@ -259,16 +267,10 @@ Popularity was extremely exponentially distributed, with an extreme left skew. W
 
 ```{r}
 colors <- viridis(10, option="plasma") 
-make_removed_counts(lyrics_df, artist_playlist_frequency_bin_label) + 
-  scale_fill_manual(
-  name = "Screening outcome",  # legend title
-  values = c("remove" = colors[5], "keep" = colors[9]),
-  labels = c("remove" = "Removed", "keep" = "Kept")) +
-  theme(legend.position = "top")
-
+make_removed_counts(lyrics_df, artist_playlist_frequency_bin_label) 
 ggsave(here("images", "figure_A2.pdf"))
 ```
-<span style="font-size: 80%"><em>Note.</em> “remove” indicates songs excluded due to manual screening criteria. Bins presented in reverse order of number of songs labelled "keep".</span>
+<span style="font-size: 80%"><em>Note.</em> “Removed”, "Kept", indicate songs excluded  and included respectively, from the manual screening process. "Annotated" indicate the subset of "Kept" that were reviewed by participants. Bins presented in order of number of songs labelled "Annotated".</span>
 
 ```{r}
 table_A2 <- make_apa_freq_table(
@@ -300,25 +302,16 @@ table_A3
 gtsave(table_A3, here("tables", "table_A3.tex"))
 ```
 
-@demetriou2024towards  excluded songs if they contained more than >= ~20% non-English words, consisted only of onomatopoeia or nonsense, repeated a single word or phrase, or had too few words. This process yielded 380 songs. We extended screening with the same criteria, resulting in 1,200 songs. We used 800 in the main study and 14 for a pilot. Songs were primarily removed for containing too many non-English words, or having too few or single repeated words. Distribution of included songs by genre bin, as well as results from manual screening procedure are shown in Figure 3. 
-
-
 <span style="font-size: 90%">**Figure A3**  
 *Manual screening outcome by genre*</span>
 
 ```{r screening_by_genre}
 
-make_removed_counts(lyrics_df, artist_topic_bin_labels) + 
-  scale_fill_manual(
-  name = "Screening outcome",  # legend title
-  values = c("remove" = colors[5], "keep" = colors[9]),
-  labels = c("remove" = "Removed", "keep" = "Kept")) +
-  theme(legend.position = "top")
-
+make_removed_counts(lyrics_df, artist_topic_bin_labels) 
 ggsave(here("images", "figure_A3.pdf"))
 ```
 
-<span style="font-size: 80%"><em>Note.</em> “Remove” indicates songs excluded due to screening criteria.</span>
+<span style="font-size: 80%"><em>Note.</em> “Removed”, "Kept", indicate songs excluded  and included respectively, from the manual screening process. "Annotated" indicate the subset of "Kept" that were reviewed by participants. Bins presented in order of number of songs labelled "Annotated". </span>
 
 ```{r}
 table_A4 <- make_apa_freq_table(
@@ -340,15 +333,11 @@ gtsave(table_A4, here("tables", "table_A4.tex"))
 *Manual screening outcome by lyric topic*</span>
 
 ```{r}
-make_removed_counts(lyrics_df, topic_label) + 
-  scale_fill_manual(
-  name = "Screening outcome",  # legend title
-  values = c("remove" = colors[5], "keep" = colors[9]),
-  labels = c("remove" = "Removed", "keep" = "Kept")) +
-  theme(legend.position = "top")
-
+make_removed_counts(lyrics_df, topic_label) 
 ggsave(here("images", "figure_A4.pdf"))
 ```
+
+<span style="font-size: 80%"><em>Note.</em> “Removed”, "Kept", indicate songs excluded  and included respectively, from the manual screening process. "Annotated" indicate the subset of "Kept" that were reviewed by participants. Bins presented in order of number of songs labelled "Annotated". </span>
 
 ## Political Speech Stimuli
 
@@ -364,7 +353,7 @@ colors <- viridis(10)
 
 speech_df |> 
   
-  filter(id %in% speech_IDs) |>
+  filter(item_ID %in% speech_IDs) |>
   
   count(president, party, name = "n") |>
   

@@ -16,6 +16,7 @@ cache <- readRDS(here("_data", "_primary_data", "artist_tags.RDS"))
 
 
 ```{r}
+# ad-hoc normalization of characters
 norm_tag <- function(x) {
   x |>
     tolower() |>
@@ -23,6 +24,7 @@ norm_tag <- function(x) {
     str_squish()
 }
 
+# create a long format dataframe with tags from spotify and lastfm
 artist_tags_raw <- bind_rows(
   cache %>% transmute(artist, source = "spotify", tag = sp_genres),
   cache %>% transmute(artist, source = "lastfm",  tag = lf_tags)
@@ -36,6 +38,7 @@ rm(norm_tag, cache)
 
 
 ```{r}
+# rename synonymous phrases
 syn_map <- c(
   "hiphop"     = "hip hop",
   "hip hop"    = "hip hop",
@@ -99,16 +102,22 @@ rm(syn_map)
 
 
 ```{r}
+# map to genre bins in lyric stimuli dataset
+
 # 1) join tags to bins
+
+# create df of artists with genre bin
 artist_bins <- lyrics_df[, .(artist = artist_name, bin = get("artist_topic"))] |>
   unique()
 
+#add each tag to each artist / genre bin
 tags_in_bins <- artist_tags_raw |>
+  # remove this non-descriptive tag
   filter(!tag == "all") |>
   inner_join(artist_bins, by = "artist") |>
   filter(!is.na(bin), tag != "")
 
-# 2) counts and proportions per bin
+# 2) compute counts, proportions, and rank per tag within bin
 bin_tag_stats <- tags_in_bins |>
   count(bin, tag, name = "n") |>
   group_by(bin) |>
@@ -120,15 +129,19 @@ bin_tag_stats <- tags_in_bins |>
   arrange(bin, desc(n)) |>
   ungroup()
 
-# 3) distinctiveness (tf-idf across bins)
+# 3) estimate distinctiveness of each tag (tf-idf across bins)
+
+# degrees of freedom per tag
 df_tbl <- bin_tag_stats |>
   group_by(tag) |>
   summarise(df = n_distinct(bin[n > 0]), .groups = "drop")
 
+# df with number of artists per bin
 bin_sizes <- tags_in_bins |>
   distinct(bin, artist) |>
   count(bin, name = "n_artists")
 
+# compute tf-idf per tag within bin
 bin_tfidf <- bin_tag_stats |>
   left_join(df_tbl, by = "tag") |>
   left_join(bin_sizes, by = "bin") |>
@@ -138,38 +151,52 @@ bin_tfidf <- bin_tag_stats |>
 
 
 # 4) make overview
+
+# take the top tags according to a score: either n, or tf-idf
+# where n is the number of artists in that bin with that tag
+# and tf-idf is an estimate of distinctiveness
+
+# take the top 4 tags accoeding to scores
 take_top <- function(tags, scores, k = 4) {
   o <- order(-scores, tags)
   head(tags[o], min(k, length(o)))}
 
 bin_overview <- bin_tfidf %>%
+  # for each bin
   group_by(bin) %>%
+  # take top tags according to scores
   summarise(
+    # where scores is either n, or tf-idf:
     top_tags         = list(take_top(tag, n,     k = 4)),  # most frequent
     distinctive_tags = list(take_top(tag, tfidf, k = 4)),  # most distinctive
     .groups = "drop") %>%
+  # paste the tags together into a single cell
   mutate(
     top_tags_str         = sapply(top_tags,         \(x) paste(x, collapse = " / ")),
     distinctive_tags_str = sapply(distinctive_tags, \(x) paste(x, collapse = " / "))) %>%
+  # select only the relevant colums
   select(bin, 
          #top_tags_str, 
          distinctive_tags_str) |>
   rename(artist_topic = bin, 
          artist_topic_bin_labels = distinctive_tags_str)
 
+# merge into lyrics df
+lyrics_df <- left_join(lyrics_df, bin_overview, by = "artist_topic")
+
 rm(artist_bins, bin_sizes, bin_tag_stats, bin_tfidf, df_tbl, tags_in_bins)
 ```
 
 ```{r}
-lyrics_df <- left_join(lyrics_df, bin_overview, by = "artist_topic")
-```
+# create bin-range column for year release bin
 
-```{r}
 lyrics_df <- left_join(
   lyrics_df,
   
   lyrics_df |>
+    # within each decade bin
     group_by(release_year_bin) |>
+    # compute the observed range of values
     summarise(year_bin_range = paste0(
       min(release_year), "–", 
       max(release_year)), 
@@ -177,6 +204,8 @@ lyrics_df <- left_join(
 ```
 
 ```{r}
+# add percentile labels to popularity bins
+
 lyrics_df <- lyrics_df |> 
   mutate(artist_playlist_frequency_bin_label = case_when(
     artist_playlist_frequency_bin == 0 ~ "<= 40 %", 
