@@ -49,7 +49,6 @@ theme_apa <- function(base_size = 12, base_family = "sans") {
       axis.ticks = element_line(color = "black"),
       axis.title = element_text(size = base_size, face = "plain"),
       axis.text = element_text(size = base_size * 0.9),
-      #legend.position = "none",
       legend.title = element_text(face = "plain"))}
 ```
 
@@ -83,7 +82,7 @@ make_removed_counts <- function(df, col) {
     scale_fill_manual(
       name = "Screening outcome",  
       values = c("used" = colors[9], "remove" = colors[5], "keep" = colors[1]), 
-      labels = c("remove" = "Removed", "keep" = "Kept", "used" = "Annotated")) +
+      labels = c( "used" = "Annotated", "keep" = "Kept","remove" = "Removed")) +
     labs(x = NULL, y = "Count") +
     theme_apa() + 
     theme(legend.position = "top")
@@ -180,6 +179,99 @@ make_apa_freq_table <- function(df, bin_col,
 }
 
 ```
+
+```{r}
+make_apa_freq_table <- function(df, bin_col,
+                                title = "Table",
+                                subtitle = "Frequencies by bin") {
+
+  bin_sym   <- enquo(bin_col)
+  bin_label <- as_label(bin_sym)   # for column header
+
+  # 1) counts within levels of factor
+  sum_df <- df %>%
+    filter(selected %in% c("keep","remove", "used")) %>%
+    mutate(selected = factor(selected, levels = c("remove","keep", "used"))) %>%
+    count(!!bin_sym, selected, name = "n") %>%
+    # ensure both levels exist for every bin
+    tidyr::complete(!!bin_sym, selected, fill = list(n = 0)) %>%
+    group_by(!!bin_sym) %>%
+    summarise(
+      Total        = sum(n),
+      Removed_n    = sum(n[selected == "remove"]),
+      Kept_n       = sum(n[selected == "keep"]),
+      Annotated_n  = sum(n[selected == "used"]),
+      Removed_pct  = Removed_n / Total,
+      Kept_pct     = Kept_n / Total,
+      Annotated_pct = Annotated_n / Total, 
+      .groups = "drop"
+    ) %>%
+    arrange(desc(Removed_n)) %>%
+    relocate(Total, .after = last_col())
+
+  # 2) build gt table
+  # Note: cols_merge() will merge the *_n and *_pct columns into a single display column.
+  gt_tab <- sum_df %>%
+    gt() %>%
+    
+    # define title and subtitle
+    tab_header(title = title, subtitle = subtitle) %>%
+    
+    # center column headers
+    tab_style(
+      style = cell_text(align = "center"),
+      locations = cells_column_labels(columns = everything())) |>
+    
+    # headers of each column
+    cols_label(
+      !!bin_sym   := bin_label,
+      Total       = html("Total n"),
+      Removed_n   = "Removed",
+      Removed_pct = "Removed %",
+      Kept_n      = "Kept",
+      Kept_pct    = "Kept %", 
+      Annotated_n = "Annotated", 
+      Annotated_pct = "Annotated %"
+    ) %>%
+    
+    # set number of decimal places
+    fmt_number(columns = Total, decimals = 0) %>%
+    fmt_number(columns = c(Removed_n, Kept_n, Annotated_n), decimals = 0) %>%
+    fmt_percent(columns = c(Removed_pct, Kept_pct, Annotated_pct), decimals = 1) %>%
+    
+    # merge n and % into "n (xx.x%)"
+    cols_merge(
+      columns = c(Removed_n, Removed_pct),
+      pattern = "{1} ({2})") %>%
+    cols_merge(
+      columns = c(Kept_n, Kept_pct),
+      pattern = "{1} ({2})") %>%
+    cols_merge(
+      columns = c(Annotated_n, Annotated_pct),
+      pattern = "{1} ({2})") %>%
+    cols_hide(columns = c(Removed_pct, Kept_pct, Annotated_pct)) %>%
+    
+    # set which lines show
+    tab_options(
+      table.border.top.width = px(0),
+      table.border.bottom.width = px(0),
+      
+      # bold under the heading (title/subtitle)
+      heading.border.bottom.width = px(2),
+      
+      # remove body row lines
+      table_body.hlines.width = px(0),
+      table_body.border.top.width = px(0),
+      table_body.border.bottom.width = px(0),
+      
+      column_labels.border.top.width = px(0),
+      column_labels.border.bottom.width = px(1)
+    )
+
+  gt_tab
+}
+```
+
 
 ```{r genre_function, include=FALSE}
 make_genre_comparison_table <- function(df,
@@ -307,7 +399,9 @@ gtsave(table_A3, here("tables", "table_A3.tex"))
 
 ```{r screening_by_genre}
 
-make_removed_counts(lyrics_df, artist_topic_bin_labels) 
+make_removed_counts(lyrics_df, artist_topic_bin_labels) +
+  theme(legend.position = "top",   legend.box.margin = margin(l = -65) )
+
 ggsave(here("images", "figure_A3.pdf"))
 ```
 
