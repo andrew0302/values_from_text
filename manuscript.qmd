@@ -23,5 +23,5 @@ bibliography: references.bib
 ```{r child="_manuscript/91_appendix_A.qmd"}
 ```
 
-```{r child="_manuscript/92_appendix_B.qmd"}
+```{r child="_manuscript/93_appendix_C.qmd"}
 ```

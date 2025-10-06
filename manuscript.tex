@@ -217,28 +217,140 @@
 
 \subsection{Pilot Methods}\label{pilot-methods}
 
+Thus, the total participant pool consisted of 296 participants (48.6\%
+female, \(M_{\text{age}} = 36.1\) years, \(SD_{\text{age}} = 11.8\))
+(see Table 1).
+
 \begin{Shaded}
 \begin{Highlighting}[]
-\CommentTok{\# details for all studies}
-\NormalTok{pilot\_2\_demog\_df }\OtherTok{\textless{}{-}}\NormalTok{ pilot\_2\_demog\_dfs }\SpecialCharTok{|\textgreater{}} \FunctionTok{bind\_rows}\NormalTok{(}\AttributeTok{.id =} \StringTok{"study"}\NormalTok{)}
+\CommentTok{\# demographics table}
 
-\CommentTok{\# mean age:}
-\NormalTok{pilot\_2\_demog\_df }\SpecialCharTok{|\textgreater{}}
-  \FunctionTok{summarize}\NormalTok{(}
-    \AttributeTok{N =} \FunctionTok{n}\NormalTok{(), }
-    \AttributeTok{mean\_age =} \FunctionTok{mean}\NormalTok{(Age), }
-    \AttributeTok{sd\_age =} \FunctionTok{sd}\NormalTok{(Age), }
-    \AttributeTok{percent\_female =} \FunctionTok{round}\NormalTok{(}\FunctionTok{mean}\NormalTok{(Sex }\SpecialCharTok{==} \StringTok{"Female"}\NormalTok{, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{) }\SpecialCharTok{*} \DecValTok{100}\NormalTok{, }\DecValTok{2}\NormalTok{))}
+\NormalTok{table\_1 }\OtherTok{\textless{}{-}} \FunctionTok{imap\_dfr}\NormalTok{(}
+\NormalTok{  pilot\_2\_demog\_dfs,}
+  \SpecialCharTok{\textasciitilde{}} \FunctionTok{summarize\_demographics}\NormalTok{(.x, pilot\_labels[[.y]] }\SpecialCharTok{\%||\%}\NormalTok{ .y))}
+
+\NormalTok{table\_1 }\OtherTok{\textless{}{-}}\NormalTok{ table\_1 }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{gt}\NormalTok{() }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{cols\_align}\NormalTok{(}\AttributeTok{align =} \StringTok{"left"}\NormalTok{,  }\AttributeTok{columns =} \FunctionTok{c}\NormalTok{(Study)) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{cols\_align}\NormalTok{(}\AttributeTok{align =} \StringTok{"center"}\NormalTok{, }\AttributeTok{columns =} \FunctionTok{c}\NormalTok{(N, }\StringTok{\textasciigrave{}}\AttributeTok{\% Female}\StringTok{\textasciigrave{}}\NormalTok{, }\StringTok{\textasciigrave{}}\AttributeTok{Age range}\StringTok{\textasciigrave{}}\NormalTok{, }\StringTok{\textasciigrave{}}\AttributeTok{Age M (SD)}\StringTok{\textasciigrave{}}\NormalTok{)) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{fmt\_number}\NormalTok{(}\AttributeTok{columns =} \StringTok{\textasciigrave{}}\AttributeTok{\% Female}\StringTok{\textasciigrave{}}\NormalTok{, }\AttributeTok{decimals =} \DecValTok{1}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{format\_apa\_table}\NormalTok{(}\FunctionTok{md}\NormalTok{(}\StringTok{"**Table 1**"}\NormalTok{), }\FunctionTok{md}\NormalTok{(}\StringTok{"*Participant demographics — Pilot studies*"}\NormalTok{))}
+
+\NormalTok{table\_1}
 \end{Highlighting}
 \end{Shaded}
 
-\begin{verbatim}
-    N mean_age   sd_age percent_female
-1 296 36.05068 11.81011          48.65
-\end{verbatim}
+\begin{table}
+\caption*{
+{\large \textbf{Table 1}} \\ 
+{\small \emph{Participant demographics --- Pilot studies}}
+} 
+\fontsize{9.0pt}{10.8pt}\selectfont
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lcccc}
+\toprule
+Study & N & Age M (SD) & Age range & \% Female \\ 
+\midrule\addlinespace[2.5pt]
+Pilot 1 (Lyrics) & 99 & 36.1 (12.4) & 18–82 & 48.5 \\ 
+Pilot 2 (Speeches: Ethnicity) & 99 & 35.2 (11.2) & 18–64 & 48.5 \\ 
+Pilot 3 (Speeches: Political) & 98 & 36.8 (11.9) & 21–74 & 49.0 \\ 
+\bottomrule
+\end{tabular*}
+\end{table}
 
-The average age of participants was 36.1 years (SD = 11.8).\\
-The proportion of female participants was 48.6\%.
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{table\_2 }\OtherTok{\textless{}{-}} \FunctionTok{imap\_dfr}\NormalTok{(}
+\NormalTok{  pilot\_2\_demog\_dfs[}\DecValTok{1}\SpecialCharTok{:}\DecValTok{2}\NormalTok{], }
+  \SpecialCharTok{\textasciitilde{}} \FunctionTok{summarize\_ethnicity}\NormalTok{(.x, pilot\_labels[[.y]] }\SpecialCharTok{\%||\%}\NormalTok{ .y)) }
+
+\NormalTok{table\_2 }\OtherTok{\textless{}{-}}\NormalTok{ table\_2 }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{gt}\NormalTok{() }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{cols\_label}\NormalTok{(}
+    \StringTok{\textasciigrave{}}\AttributeTok{Black/African American}\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{html}\NormalTok{(}\StringTok{"Black/\textless{}br\textgreater{}African American"}\NormalTok{),}
+    \StringTok{\textasciigrave{}}\AttributeTok{Latino/Hispanic}\StringTok{\textasciigrave{}}        \OtherTok{=} \FunctionTok{html}\NormalTok{(}\StringTok{"Latino/\textless{}br\textgreater{}Hispanic"}\NormalTok{),}
+    \AttributeTok{Asian                    =} \StringTok{"Asian"}\NormalTok{,}
+    \AttributeTok{White                    =} \StringTok{"White"}\NormalTok{) }\SpecialCharTok{|\textgreater{}}
+  
+  \FunctionTok{fmt\_number}\NormalTok{(}\AttributeTok{columns =} \SpecialCharTok{{-}}\NormalTok{Study, }\AttributeTok{decimals =} \DecValTok{1}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  
+  \FunctionTok{cols\_align}\NormalTok{(}\AttributeTok{align =} \StringTok{"center"}\NormalTok{, }
+             \AttributeTok{columns =} \FunctionTok{c}\NormalTok{(Asian, }\StringTok{\textasciigrave{}}\AttributeTok{Black/African American}\StringTok{\textasciigrave{}}\NormalTok{, }
+                         \StringTok{\textasciigrave{}}\AttributeTok{Latino/Hispanic}\StringTok{\textasciigrave{}}\NormalTok{, White)) }\SpecialCharTok{\%\textgreater{}\%}
+  
+\FunctionTok{format\_apa\_table}\NormalTok{(}\FunctionTok{md}\NormalTok{(}\StringTok{"**Table 2**"}\NormalTok{), }\FunctionTok{md}\NormalTok{(}\StringTok{"*Participant ethnicity — Pilot studies*"}\NormalTok{))}
+
+\NormalTok{table\_2}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{table}
+\caption*{
+{\large \textbf{Table 2}} \\ 
+{\small \emph{Participant ethnicity --- Pilot studies}}
+} 
+\fontsize{9.0pt}{10.8pt}\selectfont
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lcccc}
+\toprule
+Study & Asian & Black/<br>African American & Latino/<br>Hispanic & White \\ 
+\midrule\addlinespace[2.5pt]
+Pilot 1 (Lyrics) & 23 (23.2\%) & 26 (26.3\%) & 25 (25.3\%) & 25 (25.3\%) \\ 
+Pilot 2 (Speeches: Ethnicity) & 24 (24.2\%) & 25 (25.3\%) & 25 (25.3\%) & 25 (25.3\%) \\ 
+\bottomrule
+\end{tabular*}
+\end{table}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#gtsave(table\_2, here("tables", "table\_2.tex"))}
+
+\FunctionTok{rm}\NormalTok{(table\_2)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{table\_3 }\OtherTok{\textless{}{-}}\NormalTok{ pilot\_spectrum\_tbl }\OtherTok{\textless{}{-}} \FunctionTok{imap\_dfr}\NormalTok{(}
+\NormalTok{  pilot\_2\_demog\_dfs[}\StringTok{"speeches2"}\NormalTok{],}
+  \SpecialCharTok{\textasciitilde{}} \FunctionTok{summarize\_spectrum}\NormalTok{(.x, pilot\_labels[[.y]] }\SpecialCharTok{\%||\%}\NormalTok{ .y))}
+
+\NormalTok{table\_3 }\OtherTok{\textless{}{-}}\NormalTok{ pilot\_spectrum\_tbl }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{gt}\NormalTok{() }\SpecialCharTok{\%\textgreater{}\%}
+  
+  \FunctionTok{fmt\_number}\NormalTok{(}
+    \AttributeTok{columns =} \SpecialCharTok{{-}}\NormalTok{Study, }
+    \AttributeTok{decimals =} \DecValTok{1}
+\NormalTok{  ) }\SpecialCharTok{\%\textgreater{}\%}
+  
+  \FunctionTok{cols\_align}\NormalTok{(}\AttributeTok{align =} \StringTok{"center"}\NormalTok{, }\AttributeTok{columns =} \FunctionTok{c}\NormalTok{(Conservative, Liberal, Moderate)) }\SpecialCharTok{\%\textgreater{}\%}
+  
+  \FunctionTok{format\_apa\_table}\NormalTok{(}\FunctionTok{md}\NormalTok{(}\StringTok{"**Table 3**"}\NormalTok{), }\FunctionTok{md}\NormalTok{(}\StringTok{"*Participants by political leaning — Main studies*"}\NormalTok{))}
+
+\NormalTok{table\_3}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{table}
+\caption*{
+{\large \textbf{Table 3}} \\ 
+{\small \emph{Participants by political leaning --- Main studies}}
+} 
+\fontsize{9.0pt}{10.8pt}\selectfont
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lccc}
+\toprule
+Study & Conservative & Liberal & Moderate \\ 
+\midrule\addlinespace[2.5pt]
+Pilot 3 (Speeches: Political) & 33 (33.7\%) & 32 (32.7\%) & 33 (33.7\%) \\ 
+\bottomrule
+\end{tabular*}
+\end{table}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#gtsave(table\_3, here("tables", "table\_3.tex"))}
+
+\FunctionTok{rm}\NormalTok{(table\_3)}
+\end{Highlighting}
+\end{Shaded}
 
 \subsection{Pilot Results}\label{pilot-results}
 
@@ -257,30 +369,64 @@ raters}\label{estimating-the-number-of-raters}
   \AttributeTok{metric =}\NormalTok{ ICC2k, }\StringTok{"ICC(2,k)"}\NormalTok{, }\AttributeTok{option =} \StringTok{"plasma"}\NormalTok{) }\SpecialCharTok{+}
   \FunctionTok{geom\_vline}\NormalTok{(}\AttributeTok{xintercept =} \FloatTok{0.75}\NormalTok{, }\AttributeTok{color =} \StringTok{"red"}\NormalTok{, }\AttributeTok{size =}\NormalTok{ .}\DecValTok{4}\NormalTok{, }\AttributeTok{linetype =} \StringTok{"dashed"}\NormalTok{) }
 
-\NormalTok{(p1 }\SpecialCharTok{/}\NormalTok{p2) }\SpecialCharTok{+}
-    \FunctionTok{plot\_annotation}\NormalTok{(}
-    \AttributeTok{title =} \StringTok{"**Figure 2**"}\NormalTok{,}
-    \AttributeTok{subtitle =} \StringTok{"*Reliability by Rater n: Lyrics Pilot*"}\NormalTok{, }
-    \AttributeTok{caption =} \StringTok{"*Note.* Probability Density for Pearson\textquotesingle{}s r and ICC(2,k)."}\NormalTok{, }
-    \AttributeTok{tag\_levels =} \StringTok{\textquotesingle{}A\textquotesingle{}}\NormalTok{) }\SpecialCharTok{+}
-  
+\NormalTok{figure\_2 }\OtherTok{\textless{}{-}}\NormalTok{ (p1 }\SpecialCharTok{/}\NormalTok{p2) }\SpecialCharTok{+} 
+  \FunctionTok{plot\_annotation}\NormalTok{(}\AttributeTok{tag\_levels =} \StringTok{\textquotesingle{}A\textquotesingle{}}\NormalTok{) }\SpecialCharTok{+}
   \FunctionTok{plot\_layout}\NormalTok{(}\AttributeTok{guides =} \StringTok{"collect"}\NormalTok{) }\SpecialCharTok{\&}
   
-  \FunctionTok{theme}\NormalTok{(}\AttributeTok{legend.position =} \StringTok{"right"}\NormalTok{,}
+  \FunctionTok{theme}\NormalTok{(}\AttributeTok{legend.position =} \StringTok{"bottom"}\NormalTok{,}
         \AttributeTok{plot.title =} \FunctionTok{element\_markdown}\NormalTok{(}\AttributeTok{hjust =} \DecValTok{0}\NormalTok{), }
         \AttributeTok{plot.subtitle =} \FunctionTok{element\_markdown}\NormalTok{(}\AttributeTok{hjust =} \DecValTok{0}\NormalTok{), }
         \AttributeTok{plot.caption =} \FunctionTok{element\_markdown}\NormalTok{(}\AttributeTok{hjust =} \DecValTok{0}\NormalTok{))}
+
+\NormalTok{figure\_2}
 \end{Highlighting}
 \end{Shaded}
 
-\pandocbounded{\includegraphics[keepaspectratio]{manuscript_files/figure-pdf/unnamed-chunk-17-1.pdf}}
+\pandocbounded{\includegraphics[keepaspectratio]{manuscript_files/figure-pdf/unnamed-chunk-28-1.pdf}}
 
-\pandocbounded{\includegraphics[keepaspectratio]{manuscript_files/figure-pdf/unnamed-chunk-18-1.pdf}}
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{ggsave}\NormalTok{(}\FunctionTok{here}\NormalTok{(}\StringTok{"images"}\NormalTok{, }\StringTok{"figure\_2.pdf"}\NormalTok{), figure\_2)}
+\end{Highlighting}
+\end{Shaded}
 
-\pandocbounded{\includegraphics[keepaspectratio]{manuscript_files/figure-pdf/unnamed-chunk-19-1.pdf}}
+\begin{verbatim}
+Saving 6.5 x 3.5 in image
+\end{verbatim}
+
+\pandocbounded{\includegraphics[keepaspectratio]{manuscript_files/figure-pdf/unnamed-chunk-29-1.pdf}}
+
+\pandocbounded{\includegraphics[keepaspectratio]{manuscript_files/figure-pdf/unnamed-chunk-30-1.pdf}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{figure\_3 }\OtherTok{\textless{}{-}}\NormalTok{ (figure\_3a  }\SpecialCharTok{|}\NormalTok{ figure\_3b) }\SpecialCharTok{+}  
+  \FunctionTok{plot\_layout}\NormalTok{(}\AttributeTok{guides =} \StringTok{"collect"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{plot\_annotation}\NormalTok{(}\AttributeTok{tag\_levels =} \StringTok{\textquotesingle{}A\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\&}
+  \FunctionTok{theme}\NormalTok{(}\AttributeTok{legend.position =} \StringTok{"bottom"}\NormalTok{)}
+
+\CommentTok{\#ggsave(here("images", "figure\_3.pdf"),figure\_3)}
+\end{Highlighting}
+\end{Shaded}
 
 \subsubsection{Exploring annotator sample
 strata}\label{exploring-annotator-sample-strata}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{p1 }\OtherTok{\textless{}{-}}\NormalTok{ pilot\_2\_lyrics\_agreement\_plots[[}\DecValTok{1}\NormalTok{]] }
+
+\NormalTok{p1 }\OtherTok{\textless{}{-}}\NormalTok{ p1 }\SpecialCharTok{+} 
+  \FunctionTok{ggtitle}\NormalTok{(}\StringTok{"Overall"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{theme}\NormalTok{(}\AttributeTok{plot.title =} \FunctionTok{element\_markdown}\NormalTok{(}\AttributeTok{hjust =} \DecValTok{0}\NormalTok{), }
+        \AttributeTok{plot.subtitle =} \FunctionTok{element\_markdown}\NormalTok{(}\AttributeTok{hjust =} \DecValTok{0}\NormalTok{), }
+        \AttributeTok{plot.caption =} \FunctionTok{element\_markdown}\NormalTok{(}\AttributeTok{hjust =} \DecValTok{0}\NormalTok{))}
+
+\NormalTok{p1}
+\end{Highlighting}
+\end{Shaded}
+
+\pandocbounded{\includegraphics[keepaspectratio]{manuscript_files/figure-pdf/unnamed-chunk-33-1.pdf}}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -290,44 +436,41 @@ strata}\label{exploring-annotator-sample-strata}
 \NormalTok{p1\_4 }\OtherTok{\textless{}{-}}\NormalTok{ pilot\_2\_lyrics\_agreement\_plots[[}\DecValTok{5}\NormalTok{]]}
 
 
-\NormalTok{(p1\_1 }\SpecialCharTok{|}\NormalTok{ p1\_2) }\SpecialCharTok{/}\NormalTok{ (p1\_3 }\SpecialCharTok{|}\NormalTok{ p1\_4) }\SpecialCharTok{+}
-  
-  \FunctionTok{plot\_annotation}\NormalTok{(}
-    \AttributeTok{title =} \StringTok{"**Figure 6**"}\NormalTok{,}
-    \AttributeTok{subtitle =} \StringTok{"*ICC(2,k) by Schwartz value, by Ethnicity: Lyrics Pilot*"}\NormalTok{, }
-    \AttributeTok{caption =} 
-         \StringTok{"*Note.* Error bars are 95\% confidence intervals. }
-\StringTok{         \textquotesingle{}Self\textquotesingle{} indicates reliability for the value \textquotesingle{}self direction\textquotesingle{}."}\NormalTok{) }\SpecialCharTok{\&}
+\NormalTok{p2 }\OtherTok{\textless{}{-}}\NormalTok{ (p1\_1 }\SpecialCharTok{|}\NormalTok{ p1\_2) }\SpecialCharTok{/}\NormalTok{ (p1\_3 }\SpecialCharTok{|}\NormalTok{ p1\_4) }\SpecialCharTok{+}
   
   \FunctionTok{theme}\NormalTok{(}\AttributeTok{plot.title =} \FunctionTok{element\_markdown}\NormalTok{(}\AttributeTok{hjust =} \DecValTok{0}\NormalTok{), }
         \AttributeTok{plot.subtitle =} \FunctionTok{element\_markdown}\NormalTok{(}\AttributeTok{hjust =} \DecValTok{0}\NormalTok{), }
         \AttributeTok{plot.caption =} \FunctionTok{element\_markdown}\NormalTok{(}\AttributeTok{hjust =} \DecValTok{0}\NormalTok{))}
+
+\NormalTok{p2 }
 \end{Highlighting}
 \end{Shaded}
 
-\pandocbounded{\includegraphics[keepaspectratio]{manuscript_files/figure-pdf/unnamed-chunk-21-1.pdf}}
+\pandocbounded{\includegraphics[keepaspectratio]{manuscript_files/figure-pdf/unnamed-chunk-34-1.pdf}}
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{p2 }\OtherTok{\textless{}{-}}\NormalTok{ pilot\_2\_speeches1\_agreement\_plots[[}\DecValTok{1}\NormalTok{]]}\SpecialCharTok{+}\FunctionTok{ggtitle}\NormalTok{(}\StringTok{""}\NormalTok{)}
-\NormalTok{p3 }\OtherTok{\textless{}{-}}\NormalTok{ pilot\_2\_speeches2\_agreement\_plots[[}\DecValTok{1}\NormalTok{]]}\SpecialCharTok{+}\FunctionTok{ggtitle}\NormalTok{(}\StringTok{""}\NormalTok{)}
+\NormalTok{figure\_4 }\OtherTok{\textless{}{-}}\NormalTok{ p1 }\SpecialCharTok{/}\NormalTok{ p2}
 
-\NormalTok{(p2}\SpecialCharTok{/}\NormalTok{p3) }\SpecialCharTok{+} 
-  \FunctionTok{plot\_annotation}\NormalTok{(}
-    \AttributeTok{title =} \StringTok{"**Figure 7**"}\NormalTok{,}
-    \AttributeTok{subtitle =} \StringTok{"*ICC(2,k) by Schwartz value, by Ethnicity: Speeches Pilots 1 and 2*"}\NormalTok{, }
-    \AttributeTok{caption =} 
-    \StringTok{"*Note.* Error bars are 95\% confidence intervals. }
-\StringTok{         \textquotesingle{}Self\textquotesingle{} indicates reliability for the value \textquotesingle{}self direction\textquotesingle{}."}\NormalTok{, }
-    \AttributeTok{tag\_levels =} \StringTok{\textquotesingle{}1\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\&}
-  
-  \FunctionTok{theme}\NormalTok{(}\AttributeTok{plot.title =} \FunctionTok{element\_markdown}\NormalTok{(}\AttributeTok{hjust =} \DecValTok{0}\NormalTok{), }
-        \AttributeTok{plot.subtitle =} \FunctionTok{element\_markdown}\NormalTok{(}\AttributeTok{hjust =} \DecValTok{0}\NormalTok{), }
-        \AttributeTok{plot.caption =} \FunctionTok{element\_markdown}\NormalTok{(}\AttributeTok{hjust =} \DecValTok{0}\NormalTok{))}
+\CommentTok{\#ggsave(here("images", "figure\_4.pdf"), height=8.5)}
 \end{Highlighting}
 \end{Shaded}
 
-\pandocbounded{\includegraphics[keepaspectratio]{manuscript_files/figure-pdf/unnamed-chunk-22-1.pdf}}
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{p1 }\OtherTok{\textless{}{-}}\NormalTok{ pilot\_2\_speeches1\_agreement\_plots[[}\DecValTok{1}\NormalTok{]]}\SpecialCharTok{+}\FunctionTok{ggtitle}\NormalTok{(}\StringTok{""}\NormalTok{)}
+
+\NormalTok{p1 }\OtherTok{\textless{}{-}}\NormalTok{ p1 }\SpecialCharTok{+} 
+  \FunctionTok{ggtitle}\NormalTok{(}\StringTok{"Overall"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{theme}\NormalTok{(}\AttributeTok{plot.title =} \FunctionTok{element\_markdown}\NormalTok{(}\AttributeTok{hjust =} \DecValTok{0}\NormalTok{), }
+        \AttributeTok{plot.subtitle =} \FunctionTok{element\_markdown}\NormalTok{(}\AttributeTok{hjust =} \DecValTok{0}\NormalTok{), }
+        \AttributeTok{plot.caption =} \FunctionTok{element\_markdown}\NormalTok{(}\AttributeTok{hjust =} \DecValTok{0}\NormalTok{))}
+
+\NormalTok{p1}
+\end{Highlighting}
+\end{Shaded}
+
+\pandocbounded{\includegraphics[keepaspectratio]{manuscript_files/figure-pdf/unnamed-chunk-36-1.pdf}}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -336,22 +479,42 @@ strata}\label{exploring-annotator-sample-strata}
 \NormalTok{p1\_3 }\OtherTok{\textless{}{-}}\NormalTok{ pilot\_2\_speeches1\_agreement\_plots[[}\DecValTok{4}\NormalTok{]]}
 \NormalTok{p1\_4 }\OtherTok{\textless{}{-}}\NormalTok{ pilot\_2\_speeches1\_agreement\_plots[[}\DecValTok{5}\NormalTok{]]}
 
-\NormalTok{(p1\_1 }\SpecialCharTok{|}\NormalTok{ p1\_2) }\SpecialCharTok{/}\NormalTok{ (p1\_3 }\SpecialCharTok{|}\NormalTok{ p1\_4) }\SpecialCharTok{+}
-  
-  \FunctionTok{plot\_annotation}\NormalTok{(}
-    \AttributeTok{title =} \StringTok{"**Figure 8**"}\NormalTok{,}
-    \AttributeTok{subtitle =} \StringTok{"*ICC(2,k) by Schwartz value, by Ethnicity: Speeches 1 Pilot*"}\NormalTok{, }
-    \AttributeTok{caption =} 
-         \StringTok{"*Note.* Error bars are 95\% confidence intervals. }
-\StringTok{         \textquotesingle{}Self\textquotesingle{} indicates reliability for the value \textquotesingle{}self direction\textquotesingle{}."}\NormalTok{) }\SpecialCharTok{\&}
+
+\NormalTok{p2 }\OtherTok{\textless{}{-}}\NormalTok{ (p1\_1 }\SpecialCharTok{|}\NormalTok{ p1\_2) }\SpecialCharTok{/}\NormalTok{ (p1\_3 }\SpecialCharTok{|}\NormalTok{ p1\_4) }\SpecialCharTok{+}
   
   \FunctionTok{theme}\NormalTok{(}\AttributeTok{plot.title =} \FunctionTok{element\_markdown}\NormalTok{(}\AttributeTok{hjust =} \DecValTok{0}\NormalTok{), }
         \AttributeTok{plot.subtitle =} \FunctionTok{element\_markdown}\NormalTok{(}\AttributeTok{hjust =} \DecValTok{0}\NormalTok{), }
         \AttributeTok{plot.caption =} \FunctionTok{element\_markdown}\NormalTok{(}\AttributeTok{hjust =} \DecValTok{0}\NormalTok{))}
+
+\NormalTok{p2 }
 \end{Highlighting}
 \end{Shaded}
 
-\pandocbounded{\includegraphics[keepaspectratio]{manuscript_files/figure-pdf/unnamed-chunk-23-1.pdf}}
+\pandocbounded{\includegraphics[keepaspectratio]{manuscript_files/figure-pdf/unnamed-chunk-37-1.pdf}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{figure\_5 }\OtherTok{\textless{}{-}}\NormalTok{ p1 }\SpecialCharTok{/}\NormalTok{ p2}
+
+\CommentTok{\#ggsave(here("images", "figure\_5.pdf"), height=8.5)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{p1 }\OtherTok{\textless{}{-}}\NormalTok{ pilot\_2\_speeches2\_agreement\_plots[[}\DecValTok{1}\NormalTok{]]}\SpecialCharTok{+}\FunctionTok{ggtitle}\NormalTok{(}\StringTok{""}\NormalTok{)}
+
+\NormalTok{p1 }\OtherTok{\textless{}{-}}\NormalTok{ p1 }\SpecialCharTok{+} 
+  \FunctionTok{ggtitle}\NormalTok{(}\StringTok{"Overall"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{theme}\NormalTok{(}\AttributeTok{plot.title =} \FunctionTok{element\_markdown}\NormalTok{(}\AttributeTok{hjust =} \DecValTok{0}\NormalTok{), }
+        \AttributeTok{plot.subtitle =} \FunctionTok{element\_markdown}\NormalTok{(}\AttributeTok{hjust =} \DecValTok{0}\NormalTok{), }
+        \AttributeTok{plot.caption =} \FunctionTok{element\_markdown}\NormalTok{(}\AttributeTok{hjust =} \DecValTok{0}\NormalTok{))}
+
+\NormalTok{p1}
+\end{Highlighting}
+\end{Shaded}
+
+\pandocbounded{\includegraphics[keepaspectratio]{manuscript_files/figure-pdf/unnamed-chunk-39-1.pdf}}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -360,21 +523,25 @@ strata}\label{exploring-annotator-sample-strata}
 \NormalTok{p1\_3 }\OtherTok{\textless{}{-}}\NormalTok{ pilot\_2\_speeches2\_agreement\_plots[[}\DecValTok{4}\NormalTok{]]}
 \NormalTok{p1\_4 }\OtherTok{\textless{}{-}}\NormalTok{ patchwork}\SpecialCharTok{::}\FunctionTok{plot\_spacer}\NormalTok{()}
 
-\NormalTok{((p1\_1 }\SpecialCharTok{/}\NormalTok{ p1\_2) }\SpecialCharTok{|}\NormalTok{ (p1\_3 }\SpecialCharTok{/}\NormalTok{ p1\_4)) }\SpecialCharTok{+}
-  \FunctionTok{plot\_annotation}\NormalTok{(}
-    \AttributeTok{title =} \StringTok{"**Figure 9**"}\NormalTok{,}
-    \AttributeTok{subtitle =} \StringTok{"*ICC(2,k) by Schwartz value, by Political Leaning: Speeches 2 Pilot*"}\NormalTok{, }
-    \AttributeTok{caption =} 
-         \StringTok{"*Note.* Error bars are 95\% confidence intervals. }
-\StringTok{         \textquotesingle{}Self\textquotesingle{} indicates reliability for the value \textquotesingle{}self direction\textquotesingle{}."}\NormalTok{) }\SpecialCharTok{\&}
+\NormalTok{p2 }\OtherTok{\textless{}{-}}\NormalTok{ ((p1\_1 }\SpecialCharTok{/}\NormalTok{ p1\_2) }\SpecialCharTok{|}\NormalTok{ (p1\_3 }\SpecialCharTok{/}\NormalTok{ p1\_4)) }\SpecialCharTok{+}
   
   \FunctionTok{theme}\NormalTok{(}\AttributeTok{plot.title =} \FunctionTok{element\_markdown}\NormalTok{(}\AttributeTok{hjust =} \DecValTok{0}\NormalTok{), }
         \AttributeTok{plot.subtitle =} \FunctionTok{element\_markdown}\NormalTok{(}\AttributeTok{hjust =} \DecValTok{0}\NormalTok{), }
         \AttributeTok{plot.caption =} \FunctionTok{element\_markdown}\NormalTok{(}\AttributeTok{hjust =} \DecValTok{0}\NormalTok{))}
+
+\NormalTok{p2}
 \end{Highlighting}
 \end{Shaded}
 
-\pandocbounded{\includegraphics[keepaspectratio]{manuscript_files/figure-pdf/unnamed-chunk-24-1.pdf}}
+\pandocbounded{\includegraphics[keepaspectratio]{manuscript_files/figure-pdf/unnamed-chunk-40-1.pdf}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{figure\_6 }\OtherTok{\textless{}{-}}\NormalTok{ p1 }\SpecialCharTok{/}\NormalTok{ p2}
+
+\CommentTok{\#ggsave(here("images", "figure\_6.pdf"), height=8.5)}
+\end{Highlighting}
+\end{Shaded}
 
 \subsubsection{Exploring Quiz Results}\label{exploring-quiz-results}
 
@@ -394,7 +561,7 @@ strata}\label{exploring-annotator-sample-strata}
     \FunctionTok{pivot\_longer}\NormalTok{(}\FunctionTok{everything}\NormalTok{(), }\AttributeTok{names\_to =} \StringTok{"Question"}\NormalTok{, }\AttributeTok{values\_to =} \StringTok{"N\_percent"}\NormalTok{)}
 \NormalTok{\}}
 
-\FunctionTok{lapply}\NormalTok{(quiz\_dfs, summarize\_study) }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{table\_4 }\OtherTok{\textless{}{-}} \FunctionTok{lapply}\NormalTok{(quiz\_dfs, summarize\_study) }\SpecialCharTok{\%\textgreater{}\%}
   
   \FunctionTok{bind\_rows}\NormalTok{(}\AttributeTok{.id =} \StringTok{"Study"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   
@@ -428,6 +595,8 @@ strata}\label{exploring-annotator-sample-strata}
   \FunctionTok{tab\_source\_note}\NormalTok{(}
     
     \FunctionTok{md}\NormalTok{(}\StringTok{"*Note.* Entries are number and percentage of participants who answered correctly. Quiz responses were not used to exclude participants in pilot studies."}\NormalTok{))}
+
+\NormalTok{table\_4}
 \end{Highlighting}
 \end{Shaded}
 
@@ -451,7 +620,71 @@ Q3 & 69 (69.7\%) & 65 (65.7\%) & 69 (70.4\%) \\
 \end{minipage}
 \end{table}
 
-\pandocbounded{\includegraphics[keepaspectratio]{manuscript_files/figure-pdf/unnamed-chunk-27-1.pdf}}
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#gtsave(table\_4, here("tables", "table\_4.tex"))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{p1 }\OtherTok{\textless{}{-}} \FunctionTok{plot\_bars}\NormalTok{(df, Quiz1\_1, Quiz1, }\AttributeTok{option =} \StringTok{"D"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{xlab}\NormalTok{(}\StringTok{"Q1 Responses"}\NormalTok{) }\SpecialCharTok{+} \FunctionTok{ylab}\NormalTok{(}\StringTok{"Count"}\NormalTok{) }\SpecialCharTok{+}
+\NormalTok{  apa\_theme}
+
+\NormalTok{p2 }\OtherTok{\textless{}{-}} \FunctionTok{plot\_bars}\NormalTok{(df, Quiz2\_1, Quiz2, }\AttributeTok{option =} \StringTok{"D"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{xlab}\NormalTok{(}\StringTok{"Q2 Responses"}\NormalTok{) }\SpecialCharTok{+} \FunctionTok{ylab}\NormalTok{(}\StringTok{"Count"}\NormalTok{) }\SpecialCharTok{+}
+\NormalTok{  apa\_theme}
+
+\NormalTok{p3 }\OtherTok{\textless{}{-}} \FunctionTok{plot\_bars}\NormalTok{(df, Quiz3\_1, Quiz3, }\AttributeTok{option =} \StringTok{"D"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{xlab}\NormalTok{(}\StringTok{"Q3 Responses"}\NormalTok{) }\SpecialCharTok{+} \FunctionTok{ylab}\NormalTok{(}\StringTok{""}\NormalTok{) }\SpecialCharTok{+}
+\NormalTok{  apa\_theme}
+
+\NormalTok{(p1 }\SpecialCharTok{|}\NormalTok{ p2 }\SpecialCharTok{|}\NormalTok{ p3) }\SpecialCharTok{+}
+  \FunctionTok{plot\_layout}\NormalTok{(}\AttributeTok{guides =} \StringTok{"collect"}\NormalTok{) }\SpecialCharTok{\&}     
+  \FunctionTok{theme}\NormalTok{(}\AttributeTok{legend.position =} \StringTok{"bottom"}\NormalTok{, }
+        \AttributeTok{plot.title =} \FunctionTok{element\_markdown}\NormalTok{(}\AttributeTok{hjust =} \DecValTok{0}\NormalTok{), }
+        \AttributeTok{plot.subtitle =} \FunctionTok{element\_markdown}\NormalTok{(}\AttributeTok{hjust =} \DecValTok{0}\NormalTok{), }
+        \AttributeTok{plot.caption =} \FunctionTok{element\_markdown}\NormalTok{(}\AttributeTok{hjust =} \DecValTok{0}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\pandocbounded{\includegraphics[keepaspectratio]{manuscript_files/figure-pdf/unnamed-chunk-45-1.pdf}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{ggsave}\NormalTok{(}\FunctionTok{here}\NormalTok{(}\StringTok{"images"}\NormalTok{, }\StringTok{"figure\_7.pdf"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+Saving 5.5 x 3.5 in image
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{plot\_stacked\_bars }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(df, column, option) \{}
+  
+\NormalTok{  df }\SpecialCharTok{|\textgreater{}}
+    \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(\{\{column\}\}, }\AttributeTok{fill =} \FunctionTok{as.factor}\NormalTok{(Pilot))) }\SpecialCharTok{+} 
+    \FunctionTok{geom\_bar}\NormalTok{() }\SpecialCharTok{+}
+    \FunctionTok{scale\_fill\_viridis\_d}\NormalTok{(}
+      \AttributeTok{option =}\NormalTok{ option,}
+      \AttributeTok{name =} \StringTok{"Pilot Study: "}\NormalTok{,}
+      \AttributeTok{labels =} \FunctionTok{c}\NormalTok{(}\StringTok{"lyrics"} \OtherTok{=} \StringTok{"Lyrics"}\NormalTok{, }
+                 \StringTok{"speeches1"}  \OtherTok{=} \StringTok{"Speeches \#1"}\NormalTok{, }
+                 \StringTok{"speeches2"}  \OtherTok{=} \StringTok{"Speeches \#2"}\NormalTok{)) }\SpecialCharTok{+}
+    \FunctionTok{scale\_y\_continuous}\NormalTok{(}\AttributeTok{limits =} \FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{225}\NormalTok{)) }\SpecialCharTok{+}
+    \FunctionTok{scale\_x\_discrete}\NormalTok{(}\AttributeTok{drop =} \ConstantTok{FALSE}\NormalTok{)}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\pandocbounded{\includegraphics[keepaspectratio]{manuscript_files/figure-pdf/unnamed-chunk-47-1.pdf}}
+
+\begin{verbatim}
+Saving 5.5 x 3.5 in image
+\end{verbatim}
 
 \printbibliography
 
@@ -461,89 +694,158 @@ Q3 & 69 (69.7\%) & 65 (65.7\%) & 69 (70.4\%) \\
 
 \section{Appendix A: Stimuli}\label{appendix-a-stimuli}
 
-\subsection{Lyrics Stimuli}\label{lyrics-stimuli}
-
-Songs were sampled across four ``fuzzy'' strata: (1) Year of release,
-based on Musixmatch metadata; (2) Popularity, defined as the frequency
-with which an artist appeared on playlists in the Million Playlist
-Dataset (MPD); (3) Genre, estimated by topic modeling user-generated
-artist tags, which were originally drawn from Last.fm and merged into
-the MPD; and (4) Lyric topic, derived from topic modeling a bag-of-words
-representation of the lyrics. After selecting the final sample of 2,200
-songs, Musixmatch provided the first 30\% of the lyrics for each track
-via their API.
-
-The code \textcite{demetriou2024towards} used to sample lyrics can be
-found here:
-https://anonymous.4open.science/r/lyrics-value-estimators-CE33/1\_stimulus\_sampling/stratified\_sampling.py.
-
-Note: neither the raw lyric data nor the unanonymized repository can be
-made available due to limitations in licensing.
-
-\subsubsection{Release Date}\label{release-date}
-
-Release date was determined via Musixmatch metadata, some of which may
-contain errors. Metadata included a wide range of release years,
-beginning in 1890 (which appeared to include traditional songs
-e.g.~Little Drummer Boy). There were a total of 14 bins in 10 equally
-spaced year intervals (1890, 1900) \textasciitilde{} (2020, 2030).
-Number and percentage of songs that were kept after the manual screening
-procedure, by the meta-data year range per year bin are shown in Figure
-1 and Table 1.
-
-{\textbf{Figure s-1}\\
-\emph{Manual screening outcome by year bin range}}
-
 \begin{Shaded}
 \begin{Highlighting}[]
-\FunctionTok{make\_removed\_counts}\NormalTok{(lyrics\_df, year\_bin\_range)}
+\NormalTok{make\_apa\_freq\_table }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(df, bin\_col,}
+                                \AttributeTok{title =} \StringTok{"Table"}\NormalTok{,}
+                                \AttributeTok{subtitle =} \StringTok{"Frequencies by bin"}\NormalTok{) \{}
+
+\NormalTok{  bin\_sym   }\OtherTok{\textless{}{-}} \FunctionTok{enquo}\NormalTok{(bin\_col)}
+\NormalTok{  bin\_label }\OtherTok{\textless{}{-}} \FunctionTok{as\_label}\NormalTok{(bin\_sym)   }\CommentTok{\# for column header}
+
+  \CommentTok{\# 1) counts within levels of factor}
+\NormalTok{  sum\_df }\OtherTok{\textless{}{-}}\NormalTok{ df }\SpecialCharTok{\%\textgreater{}\%}
+    \FunctionTok{filter}\NormalTok{(selected }\SpecialCharTok{\%in\%} \FunctionTok{c}\NormalTok{(}\StringTok{"keep"}\NormalTok{,}\StringTok{"remove"}\NormalTok{, }\StringTok{"used"}\NormalTok{)) }\SpecialCharTok{\%\textgreater{}\%}
+    \FunctionTok{mutate}\NormalTok{(}\AttributeTok{selected =} \FunctionTok{factor}\NormalTok{(selected, }\AttributeTok{levels =} \FunctionTok{c}\NormalTok{(}\StringTok{"remove"}\NormalTok{,}\StringTok{"keep"}\NormalTok{, }\StringTok{"used"}\NormalTok{))) }\SpecialCharTok{\%\textgreater{}\%}
+    \FunctionTok{count}\NormalTok{(}\SpecialCharTok{!!}\NormalTok{bin\_sym, selected, }\AttributeTok{name =} \StringTok{"n"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+    \CommentTok{\# ensure both levels exist for every bin}
+\NormalTok{    tidyr}\SpecialCharTok{::}\FunctionTok{complete}\NormalTok{(}\SpecialCharTok{!!}\NormalTok{bin\_sym, selected, }\AttributeTok{fill =} \FunctionTok{list}\NormalTok{(}\AttributeTok{n =} \DecValTok{0}\NormalTok{)) }\SpecialCharTok{\%\textgreater{}\%}
+    \FunctionTok{group\_by}\NormalTok{(}\SpecialCharTok{!!}\NormalTok{bin\_sym) }\SpecialCharTok{\%\textgreater{}\%}
+    \FunctionTok{summarise}\NormalTok{(}
+      \AttributeTok{Total        =} \FunctionTok{sum}\NormalTok{(n),}
+      \AttributeTok{Removed\_n    =} \FunctionTok{sum}\NormalTok{(n[selected }\SpecialCharTok{==} \StringTok{"remove"}\NormalTok{]),}
+      \AttributeTok{Kept\_n       =} \FunctionTok{sum}\NormalTok{(n[selected }\SpecialCharTok{==} \StringTok{"keep"}\NormalTok{]),}
+      \AttributeTok{Annotated\_n  =} \FunctionTok{sum}\NormalTok{(n[selected }\SpecialCharTok{==} \StringTok{"used"}\NormalTok{]),}
+      \AttributeTok{Removed\_pct  =}\NormalTok{ Removed\_n }\SpecialCharTok{/}\NormalTok{ Total,}
+      \AttributeTok{Kept\_pct     =}\NormalTok{ Kept\_n }\SpecialCharTok{/}\NormalTok{ Total,}
+      \AttributeTok{Annotated\_pct =}\NormalTok{ Annotated\_n }\SpecialCharTok{/}\NormalTok{ Total, }
+      \AttributeTok{.groups =} \StringTok{"drop"}
+\NormalTok{    ) }\SpecialCharTok{\%\textgreater{}\%}
+    \FunctionTok{arrange}\NormalTok{(}\FunctionTok{desc}\NormalTok{(Removed\_n)) }\SpecialCharTok{\%\textgreater{}\%}
+    \FunctionTok{relocate}\NormalTok{(Total, }\AttributeTok{.after =} \FunctionTok{last\_col}\NormalTok{())}
+
+  \CommentTok{\# 2) build gt table}
+  \CommentTok{\# Note: cols\_merge() will merge the *\_n and *\_pct columns into a single display column.}
+\NormalTok{  gt\_tab }\OtherTok{\textless{}{-}}\NormalTok{ sum\_df }\SpecialCharTok{\%\textgreater{}\%}
+    \FunctionTok{gt}\NormalTok{() }\SpecialCharTok{\%\textgreater{}\%}
+    
+    \CommentTok{\# define title and subtitle}
+    \FunctionTok{tab\_header}\NormalTok{(}\AttributeTok{title =}\NormalTok{ title, }\AttributeTok{subtitle =}\NormalTok{ subtitle) }\SpecialCharTok{\%\textgreater{}\%}
+    
+    \CommentTok{\# center column headers}
+    \FunctionTok{tab\_style}\NormalTok{(}
+      \AttributeTok{style =} \FunctionTok{cell\_text}\NormalTok{(}\AttributeTok{align =} \StringTok{"center"}\NormalTok{),}
+      \AttributeTok{locations =} \FunctionTok{cells\_column\_labels}\NormalTok{(}\AttributeTok{columns =} \FunctionTok{everything}\NormalTok{())) }\SpecialCharTok{|\textgreater{}}
+    
+    \CommentTok{\# headers of each column}
+    \FunctionTok{cols\_label}\NormalTok{(}
+      \SpecialCharTok{!!}\AttributeTok{bin\_sym   :=}\NormalTok{ bin\_label,}
+      \AttributeTok{Total       =} \FunctionTok{html}\NormalTok{(}\StringTok{"Total n"}\NormalTok{),}
+      \AttributeTok{Removed\_n   =} \StringTok{"Removed"}\NormalTok{,}
+      \AttributeTok{Removed\_pct =} \StringTok{"Removed \%"}\NormalTok{,}
+      \AttributeTok{Kept\_n      =} \StringTok{"Kept"}\NormalTok{,}
+      \AttributeTok{Kept\_pct    =} \StringTok{"Kept \%"}\NormalTok{, }
+      \AttributeTok{Annotated\_n =} \StringTok{"Annotated"}\NormalTok{, }
+      \AttributeTok{Annotated\_pct =} \StringTok{"Annotated \%"}
+\NormalTok{    ) }\SpecialCharTok{\%\textgreater{}\%}
+    
+    \CommentTok{\# set number of decimal places}
+    \FunctionTok{fmt\_number}\NormalTok{(}\AttributeTok{columns =}\NormalTok{ Total, }\AttributeTok{decimals =} \DecValTok{0}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+    \FunctionTok{fmt\_number}\NormalTok{(}\AttributeTok{columns =} \FunctionTok{c}\NormalTok{(Removed\_n, Kept\_n, Annotated\_n), }\AttributeTok{decimals =} \DecValTok{0}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+    \FunctionTok{fmt\_percent}\NormalTok{(}\AttributeTok{columns =} \FunctionTok{c}\NormalTok{(Removed\_pct, Kept\_pct, Annotated\_pct), }\AttributeTok{decimals =} \DecValTok{1}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+    
+    \CommentTok{\# merge n and \% into "n (xx.x\%)"}
+    \FunctionTok{cols\_merge}\NormalTok{(}
+      \AttributeTok{columns =} \FunctionTok{c}\NormalTok{(Removed\_n, Removed\_pct),}
+      \AttributeTok{pattern =} \StringTok{"\{1\} (\{2\})"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+    \FunctionTok{cols\_merge}\NormalTok{(}
+      \AttributeTok{columns =} \FunctionTok{c}\NormalTok{(Kept\_n, Kept\_pct),}
+      \AttributeTok{pattern =} \StringTok{"\{1\} (\{2\})"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+    \FunctionTok{cols\_merge}\NormalTok{(}
+      \AttributeTok{columns =} \FunctionTok{c}\NormalTok{(Annotated\_n, Annotated\_pct),}
+      \AttributeTok{pattern =} \StringTok{"\{1\} (\{2\})"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+    \FunctionTok{cols\_hide}\NormalTok{(}\AttributeTok{columns =} \FunctionTok{c}\NormalTok{(Removed\_pct, Kept\_pct, Annotated\_pct)) }\SpecialCharTok{\%\textgreater{}\%}
+    
+    \CommentTok{\# set which lines show}
+    \FunctionTok{tab\_options}\NormalTok{(}
+      \AttributeTok{table.border.top.width =} \FunctionTok{px}\NormalTok{(}\DecValTok{0}\NormalTok{),}
+      \AttributeTok{table.border.bottom.width =} \FunctionTok{px}\NormalTok{(}\DecValTok{0}\NormalTok{),}
+      
+      \CommentTok{\# bold under the heading (title/subtitle)}
+      \AttributeTok{heading.border.bottom.width =} \FunctionTok{px}\NormalTok{(}\DecValTok{2}\NormalTok{),}
+      
+      \CommentTok{\# remove body row lines}
+      \AttributeTok{table\_body.hlines.width =} \FunctionTok{px}\NormalTok{(}\DecValTok{0}\NormalTok{),}
+      \AttributeTok{table\_body.border.top.width =} \FunctionTok{px}\NormalTok{(}\DecValTok{0}\NormalTok{),}
+      \AttributeTok{table\_body.border.bottom.width =} \FunctionTok{px}\NormalTok{(}\DecValTok{0}\NormalTok{),}
+      
+      \AttributeTok{column\_labels.border.top.width =} \FunctionTok{px}\NormalTok{(}\DecValTok{0}\NormalTok{),}
+      \AttributeTok{column\_labels.border.bottom.width =} \FunctionTok{px}\NormalTok{(}\DecValTok{1}\NormalTok{)}
+\NormalTok{    )}
+
+\NormalTok{  gt\_tab}
+\NormalTok{\}}
 \end{Highlighting}
 \end{Shaded}
 
-\pandocbounded{\includegraphics[keepaspectratio]{manuscript_files/figure-pdf/unnamed-chunk-42-1.pdf}}
+\subsubsection{Release Date}\label{release-date}
 
-{Note. ``remove'' indicates songs excluded due to manual screening
-criteria. Bins presented in reverse order of number of songs labelled
-``keep''. Each row indicates a decade-range year bin, with x axis labels
-showing the observed metadata range per year bin.}
+{\textbf{Figure A1}\\
+\emph{Manual screening outcome by year bin range}}
+
+\pandocbounded{\includegraphics[keepaspectratio]{manuscript_files/figure-pdf/unnamed-chunk-75-1.pdf}}
+
+{Note. ``Removed'', ``Kept'', indicate songs excluded and included
+respectively, from the manual screening process. ``Annotated'' indicate
+the subset of ``Kept'' that were reviewed by participants. Bins
+presented in order of number of songs labelled ``Annotated''. Each row
+indicates a decade-range year bin, with x axis labels showing the
+observed metadata range per year bin.}
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\FunctionTok{make\_apa\_freq\_table}\NormalTok{(}
+\NormalTok{table\_A1 }\OtherTok{\textless{}{-}} \FunctionTok{make\_apa\_freq\_table}\NormalTok{(}
 \NormalTok{  lyrics\_df}\SpecialCharTok{|\textgreater{}}\FunctionTok{rename}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Year Range}\StringTok{\textasciigrave{}}\OtherTok{=}\NormalTok{ year\_bin\_range),}
   \StringTok{\textasciigrave{}}\AttributeTok{Year Range}\StringTok{\textasciigrave{}}\NormalTok{,}
-  \AttributeTok{title =} \FunctionTok{md}\NormalTok{(}\StringTok{"**Table s{-}1**"}\NormalTok{),}
-  \AttributeTok{subtitle =} \FunctionTok{md}\NormalTok{(}\StringTok{"*Frequencies by release year bin*"}\NormalTok{)}
-\NormalTok{)}
+  \AttributeTok{title =} \FunctionTok{md}\NormalTok{(}\StringTok{"**Table A1**"}\NormalTok{),}
+  \AttributeTok{subtitle =} \FunctionTok{md}\NormalTok{(}\StringTok{"*Frequencies by release year bin*"}\NormalTok{))}
+
+\NormalTok{table\_A1}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{table}
 \caption*{
-{\large \textbf{Table s-1}} \\ 
+{\large \textbf{Table A1}} \\ 
 {\small \emph{Frequencies by release year bin}}
 } 
-\fontsize{9.0pt}{10.8pt}\selectfont
-\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lrrr}
+\fontsize{12.0pt}{14.4pt}\selectfont
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lrrrr}
 \toprule
-{Year Range} & Removed & Kept & Total n \\ 
+{Year Range} & Removed & Kept & Annotated & Total n \\ 
 \midrule\addlinespace[2.5pt]
-2010–2019 & 222 (43.6\%) & 287 (56.4\%) & 509 \\ 
-2000–2009 & 142 (42.3\%) & 194 (57.7\%) & 336 \\ 
-1990–1999 & 71 (35.5\%) & 129 (64.5\%) & 200 \\ 
-2020–2021 & 47 (27.3\%) & 125 (72.7\%) & 172 \\ 
-1980–1989 & 27 (18.1\%) & 122 (81.9\%) & 149 \\ 
-1961–1969 & 24 (17.8\%) & 111 (82.2\%) & 135 \\ 
-1952–1959 & 23 (17.8\%) & 106 (82.2\%) & 129 \\ 
-1970–1979 & 17 (12.2\%) & 122 (87.8\%) & 139 \\ 
-1942–1946 & 3 (23.1\%) & 10 (76.9\%) & 13 \\ 
-1900–1900 & 1 (20.0\%) & 4 (80.0\%) & 5 \\ 
-1925–1929 & 1 (33.3\%) & 2 (66.7\%) & 3 \\ 
-1930–1936 & 1 (16.7\%) & 5 (83.3\%) & 6 \\ 
-1899–1899 & 0 (0.0\%) & 3 (100.0\%) & 3 \\ 
+2010–2019 & 222 (43.6\%) & 99 (19.4\%) & 188 (36.9\%) & 509 \\ 
+2000–2009 & 142 (42.3\%) & 65 (19.3\%) & 129 (38.4\%) & 336 \\ 
+1990–1999 & 71 (35.5\%) & 46 (23.0\%) & 83 (41.5\%) & 200 \\ 
+2020–2021 & 47 (27.3\%) & 41 (23.8\%) & 84 (48.8\%) & 172 \\ 
+1980–1989 & 27 (18.1\%) & 41 (27.5\%) & 81 (54.4\%) & 149 \\ 
+1961–1969 & 24 (17.8\%) & 41 (30.4\%) & 70 (51.9\%) & 135 \\ 
+1952–1959 & 23 (17.8\%) & 33 (25.6\%) & 73 (56.6\%) & 129 \\ 
+1970–1979 & 17 (12.2\%) & 38 (27.3\%) & 84 (60.4\%) & 139 \\ 
+1942–1946 & 3 (23.1\%) & 1 (7.7\%) & 9 (69.2\%) & 13 \\ 
+1900–1900 & 1 (20.0\%) & 0 (0.0\%) & 4 (80.0\%) & 5 \\ 
+1925–1929 & 1 (33.3\%) & 0 (0.0\%) & 2 (66.7\%) & 3 \\ 
+1930–1936 & 1 (16.7\%) & 1 (16.7\%) & 4 (66.7\%) & 6 \\ 
+1899–1899 & 0 (0.0\%) & 0 (0.0\%) & 3 (100.0\%) & 3 \\ 
 \bottomrule
 \end{tabular*}
 \end{table}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#gtsave(table\_A1, here("tables", "table\_A1.tex"))}
+\end{Highlighting}
+\end{Shaded}
 
 {Note. ``Removed'' indicates songs excluded due to manual screening
 criteria. Bins presented in reverse order of number of songs removed.
@@ -577,52 +879,68 @@ highest 9\%:
   91--100\%)
 \end{itemize}
 
-{\textbf{Figure s-2}\\
+{\textbf{Figure A2}\\
 \emph{Manual screening outcome by popularity bin percentile range}}
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\FunctionTok{make\_removed\_counts}\NormalTok{(lyrics\_df, artist\_playlist\_frequency\_bin\_label)}
+\NormalTok{colors }\OtherTok{\textless{}{-}} \FunctionTok{viridis}\NormalTok{(}\DecValTok{10}\NormalTok{, }\AttributeTok{option=}\StringTok{"plasma"}\NormalTok{) }
+\FunctionTok{make\_removed\_counts}\NormalTok{(lyrics\_df, artist\_playlist\_frequency\_bin\_label) }
 \end{Highlighting}
 \end{Shaded}
 
-\pandocbounded{\includegraphics[keepaspectratio]{manuscript_files/figure-pdf/unnamed-chunk-44-1.pdf}}
-
-{Note. ``remove'' indicates songs excluded due to manual screening
-criteria. Bins presented in reverse order of number of songs labelled
-``keep''.}
+\pandocbounded{\includegraphics[keepaspectratio]{manuscript_files/figure-pdf/unnamed-chunk-77-1.pdf}}
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\FunctionTok{make\_apa\_freq\_table}\NormalTok{(}
+\CommentTok{\#ggsave(here("images", "figure\_A2.pdf"))}
+\end{Highlighting}
+\end{Shaded}
+
+{Note. ``Removed'', ``Kept'', indicate songs excluded and included
+respectively, from the manual screening process. ``Annotated'' indicate
+the subset of ``Kept'' that were reviewed by participants. Bins
+presented in order of number of songs labelled ``Annotated''.}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{table\_A2 }\OtherTok{\textless{}{-}} \FunctionTok{make\_apa\_freq\_table}\NormalTok{(}
 \NormalTok{  lyrics\_df}\SpecialCharTok{|\textgreater{}}\FunctionTok{rename}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Artist Popularity}\StringTok{\textasciigrave{}}\OtherTok{=}\NormalTok{artist\_playlist\_frequency\_bin\_label),}
   \StringTok{\textasciigrave{}}\AttributeTok{Artist Popularity}\StringTok{\textasciigrave{}}\NormalTok{,}
-  \AttributeTok{title =} \FunctionTok{md}\NormalTok{(}\StringTok{"**Table s{-}2**"}\NormalTok{),}
-  \AttributeTok{subtitle =} \FunctionTok{md}\NormalTok{(}\StringTok{"*Frequencies by artist playlist frequency*"}\NormalTok{)}
-\NormalTok{)}
+  \AttributeTok{title =} \FunctionTok{md}\NormalTok{(}\StringTok{"**Table A2**"}\NormalTok{),}
+  \AttributeTok{subtitle =} \FunctionTok{md}\NormalTok{(}\StringTok{"*Frequencies by artist playlist frequency*"}\NormalTok{))}
+
+
+\NormalTok{table\_A2}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{table}
 \caption*{
-{\large \textbf{Table s-2}} \\ 
+{\large \textbf{Table A2}} \\ 
 {\small \emph{Frequencies by artist playlist frequency}}
 } 
-\fontsize{9.0pt}{10.8pt}\selectfont
-\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lrrr}
+\fontsize{12.0pt}{14.4pt}\selectfont
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lrrrr}
 \toprule
-{Artist Popularity} & Removed & Kept & Total n \\ 
+{Artist Popularity} & Removed & Kept & Annotated & Total n \\ 
 \midrule\addlinespace[2.5pt]
-91\%-100\% & 145 (38.2\%) & 235 (61.8\%) & 380 \\ 
-81\%-91\% & 115 (41.2\%) & 164 (58.8\%) & 279 \\ 
-<= 40 \% & 80 (31.5\%) & 174 (68.5\%) & 254 \\ 
-71\%-80\% & 76 (31.9\%) & 162 (68.1\%) & 238 \\ 
-41\%-53\% & 58 (26.7\%) & 159 (73.3\%) & 217 \\ 
-61\%-70\% & 53 (23.7\%) & 171 (76.3\%) & 224 \\ 
-54\%-60\% & 52 (25.1\%) & 155 (74.9\%) & 207 \\ 
+91\%-100\% & 145 (38.2\%) & 93 (24.5\%) & 142 (37.4\%) & 380 \\ 
+81\%-91\% & 115 (41.2\%) & 51 (18.3\%) & 113 (40.5\%) & 279 \\ 
+<= 40 \% & 80 (31.5\%) & 55 (21.7\%) & 119 (46.9\%) & 254 \\ 
+71\%-80\% & 76 (31.9\%) & 51 (21.4\%) & 111 (46.6\%) & 238 \\ 
+41\%-53\% & 58 (26.7\%) & 55 (25.3\%) & 104 (47.9\%) & 217 \\ 
+61\%-70\% & 53 (23.7\%) & 55 (24.6\%) & 116 (51.8\%) & 224 \\ 
+54\%-60\% & 52 (25.1\%) & 46 (22.2\%) & 109 (52.7\%) & 207 \\ 
 \bottomrule
 \end{tabular*}
 \end{table}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#gtsave(table\_A2, here("tables", "table\_A2.tex"))}
+\end{Highlighting}
+\end{Shaded}
 
 {Note. ``Removed'' indicates songs excluded due to manual screening
 criteria. Bins presented in reverse order of number of songs removed.
@@ -631,43 +949,22 @@ Popularity showing the observed percentile range per popularity bin.}
 
 \subsubsection{Genre}\label{genre}
 
-\textcite{demetriou2024towards} used topic modelling applied to a
-bag-of-words representation of artist-tag data to estimate one of \(25\)
-estimated genres for each included artist, which were then applied to
-songs. To get the initial pool, \textcite{demetriou2024towards} first
-uniformly sampled 60k artists from the Spotify Million Playlist Dataset
-(MPD)\autocite{chen2018recsys}, which contains metadata on
-\textasciitilde2 million tracks by \textasciitilde300k artists. They
-then retrieved the full discographies of these artists via the Spotify
-API and cross-checked availability in Musixmatch, yielding a pool of
-\textasciitilde510k songs from \textasciitilde15.4k' artists. We used
-Latent Dirichlet allocation to create a topic model of the artist tags
-in order to derive estimated genres, shown in the ``Top LDA terms of
-initial pool'' column of Table 3a.
-
-From this pool, 2,200 songs were selected, and manually screened. As
-there is no definitive label for each estimated genre, we derived a
-second set of labels aimed at describing the 1,425 artists in the sample
-pool, as opposed to the initial 15.4k artist pool. Specifically, we
-gathered each unique artist in the 2,200 song sample, and drew the genre
-label tags for those artists from using the Spotify and Last.fm APIs. We
-then pooled all the artist genre tags for each artist, and estimated the
-tf-idf for each tag per genre bin. The top tf-idf terms are shown in the
-``Top tf-df terms of sample'' column of table 3a.
-
 \begin{Shaded}
 \begin{Highlighting}[]
-\FunctionTok{make\_genre\_comparison\_table}\NormalTok{(lyrics\_df,}
-  \AttributeTok{title =} \FunctionTok{md}\NormalTok{(}\StringTok{"**Table s{-}4**"}\NormalTok{),}
+\NormalTok{table\_A3 }\OtherTok{\textless{}{-}} \FunctionTok{make\_genre\_comparison\_table}\NormalTok{(lyrics\_df,}
+  \AttributeTok{title =} \FunctionTok{md}\NormalTok{(}\StringTok{"**Table A3**"}\NormalTok{),}
   \AttributeTok{subtitle =} \FunctionTok{md}\NormalTok{(}\StringTok{"*Comparison of terms of topic tags of initial pool of 15.4k artists, to secondary pool of 2200 songs*"}\NormalTok{)}
 \NormalTok{)  }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{cols\_width}\NormalTok{(lda\_genre\_terms }\SpecialCharTok{\textasciitilde{}} \FunctionTok{px}\NormalTok{(}\DecValTok{350}\NormalTok{), artist\_topic\_bin\_labels }\SpecialCharTok{\textasciitilde{}} \FunctionTok{px}\NormalTok{(}\DecValTok{300}\NormalTok{))}
+
+
+\NormalTok{table\_A3}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{table}
 \caption*{
-{\large \textbf{Table s-4}} \\ 
+{\large \textbf{Table A3}} \\ 
 {\small \emph{Comparison of terms of topic tags of initial pool of 15.4k artists, to secondary pool of 2200 songs}}
 } 
 \fontsize{9.0pt}{10.8pt}\selectfont
@@ -704,137 +1001,123 @@ world, Garage Rock, 60s, World Music, garage, traditional, Surf, Need to Rate, I
 \end{tabular*}
 \end{table}
 
-\textcite{demetriou2024towards} excluded songs if they contained more
-than \textgreater= \textasciitilde20\% non-English words, consisted only
-of onomatopoeia or nonsense, repeated a single word or phrase, or had
-too few words. This process yielded 380 songs. We extended screening
-with the same criteria, resulting in 1,200 songs. We used 800 in the
-main study and 14 for a pilot. Songs were primarily removed for
-containing too many non-English words, or having too few or single
-repeated words. Distribution of included songs by genre bin, as well as
-results from manual screening procedure are shown in Figure 3.
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#gtsave(table\_A3, here("tables", "table\_A3.tex"))}
+\end{Highlighting}
+\end{Shaded}
 
-{\textbf{Figure s-3}\\
+{\textbf{Figure A3}\\
 \emph{Manual screening outcome by genre}}
-
-\pandocbounded{\includegraphics[keepaspectratio]{manuscript_files/figure-pdf/screening_by_genre-1.pdf}}
-
-{Note. ``Remove'' indicates songs excluded due to screening criteria.}
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\FunctionTok{make\_apa\_freq\_table}\NormalTok{(}
+\FunctionTok{make\_removed\_counts}\NormalTok{(lyrics\_df, artist\_topic\_bin\_labels) }\SpecialCharTok{+}
+  \FunctionTok{theme}\NormalTok{(}\AttributeTok{legend.position =} \StringTok{"top"}\NormalTok{,   }\AttributeTok{legend.box.margin =} \FunctionTok{margin}\NormalTok{(}\AttributeTok{l =} \SpecialCharTok{{-}}\DecValTok{65}\NormalTok{) )}
+\end{Highlighting}
+\end{Shaded}
+
+\pandocbounded{\includegraphics[keepaspectratio]{manuscript_files/figure-pdf/screening_by_genre-1.pdf}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#ggsave(here("images", "figure\_A3.pdf"))}
+\end{Highlighting}
+\end{Shaded}
+
+{Note. ``Removed'', ``Kept'', indicate songs excluded and included
+respectively, from the manual screening process. ``Annotated'' indicate
+the subset of ``Kept'' that were reviewed by participants. Bins
+presented in order of number of songs labelled ``Annotated''. }
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{table\_A4 }\OtherTok{\textless{}{-}} \FunctionTok{make\_apa\_freq\_table}\NormalTok{(}
 \NormalTok{  lyrics\_df}\SpecialCharTok{|\textgreater{}}\FunctionTok{rename}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Artist Topic Tags}\StringTok{\textasciigrave{}}\OtherTok{=}\NormalTok{artist\_topic\_bin\_labels),}
   \StringTok{\textasciigrave{}}\AttributeTok{Artist Topic Tags}\StringTok{\textasciigrave{}}\NormalTok{,}
-  \AttributeTok{title =} \FunctionTok{md}\NormalTok{(}\StringTok{"**Table s{-}5**"}\NormalTok{),}
+  \AttributeTok{title =} \FunctionTok{md}\NormalTok{(}\StringTok{"**Table A4**"}\NormalTok{),}
   \AttributeTok{subtitle =} \FunctionTok{md}\NormalTok{(}\StringTok{"*Frequencies by artist topic*"}\NormalTok{)}
 \NormalTok{)}
+
+\NormalTok{table\_A4}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{table}
 \caption*{
-{\large \textbf{Table s-5}} \\ 
+{\large \textbf{Table A4}} \\ 
 {\small \emph{Frequencies by artist topic}}
 } 
-\fontsize{9.0pt}{10.8pt}\selectfont
-\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lrrr}
+\fontsize{12.0pt}{14.4pt}\selectfont
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lrrrr}
 \toprule
-{Artist Topic Tags} & Removed & Kept & Total n \\ 
+{Artist Topic Tags} & Removed & Kept & Annotated & Total n \\ 
 \midrule\addlinespace[2.5pt]
-reggae / roots reggae / dancehall / ragga & 49 (79.0\%) & 13 (21.0\%) & 62 \\ 
-indie rock / indie / indie pop / alternative & 44 (31.4\%) & 96 (68.6\%) & 140 \\ 
-eurodance / dance / trance / electronic & 40 (58.8\%) & 28 (41.2\%) & 68 \\ 
-rock / psychedelic rock / k-pop / progressive rock & 31 (33.3\%) & 62 (66.7\%) & 93 \\ 
-classical / drum and bass / choral / piano & 30 (52.6\%) & 27 (47.4\%) & 57 \\ 
-comedy / afrobeats / african / doo-wop & 28 (42.4\%) & 38 (57.6\%) & 66 \\ 
-sufi / gothic rock / darkwave / indian & 27 (45.0\%) & 33 (55.0\%) & 60 \\ 
-synthpop / new wave / post-punk / dubstep & 27 (40.3\%) & 40 (59.7\%) & 67 \\ 
-hip hop / rap / underground hip-hop / trap & 26 (32.5\%) & 54 (67.5\%) & 80 \\ 
-j-pop / ska / j-rock / rocksteady & 26 (43.3\%) & 34 (56.7\%) & 60 \\ 
-metal / power metal / heavy metal / speed metal & 25 (32.9\%) & 51 (67.1\%) & 76 \\ 
-electronic / ebm / industrial / electronica & 21 (28.0\%) & 54 (72.0\%) & 75 \\ 
-italian / latin / italian singer-songwriter / latino & 21 (38.9\%) & 33 (61.1\%) & 54 \\ 
-big band / jazz / vocal jazz / swing & 20 (29.9\%) & 47 (70.1\%) & 67 \\ 
-classic country / country / honky tonk / traditional country & 19 (27.1\%) & 51 (72.9\%) & 70 \\ 
-christian / worship / gospel / ccm & 18 (25.7\%) & 52 (74.3\%) & 70 \\ 
-hardcore punk / hardcore / punk rock / deathcore & 16 (20.0\%) & 64 (80.0\%) & 80 \\ 
-pop / female vocalists / chanson / eurovision & 16 (19.0\%) & 68 (81.0\%) & 84 \\ 
-punk rock / pop punk / hardcore punk / ska punk & 16 (19.3\%) & 67 (80.7\%) & 83 \\ 
-swedish / swedish pop / blues rock / nordic & 16 (29.1\%) & 39 (70.9\%) & 55 \\ 
-blues / blues rock / classic blues / black metal & 15 (23.8\%) & 48 (76.2\%) & 63 \\ 
-folk / singer-songwriter / folk rock / acoustic & 15 (16.9\%) & 74 (83.1\%) & 89 \\ 
-rock n roll / rockabilly / r\&b / new jack swing & 12 (20.7\%) & 46 (79.3\%) & 58 \\ 
-musicals / broadway / showtunes / shady & 11 (19.3\%) & 46 (80.7\%) & 57 \\ 
-soul / funk / r\&b / motown & 10 (15.4\%) & 55 (84.6\%) & 65 \\ 
+reggae / roots reggae / dancehall / ragga & 49 (79.0\%) & 9 (14.5\%) & 4 (6.5\%) & 62 \\ 
+indie rock / indie / indie pop / alternative & 44 (31.4\%) & 30 (21.4\%) & 66 (47.1\%) & 140 \\ 
+eurodance / dance / trance / electronic & 40 (58.8\%) & 4 (5.9\%) & 24 (35.3\%) & 68 \\ 
+rock / psychedelic rock / k-pop / progressive rock & 31 (33.3\%) & 18 (19.4\%) & 44 (47.3\%) & 93 \\ 
+classical / drum and bass / choral / piano & 30 (52.6\%) & 9 (15.8\%) & 18 (31.6\%) & 57 \\ 
+comedy / afrobeats / african / doo-wop & 28 (42.4\%) & 14 (21.2\%) & 24 (36.4\%) & 66 \\ 
+sufi / gothic rock / darkwave / indian & 27 (45.0\%) & 13 (21.7\%) & 20 (33.3\%) & 60 \\ 
+synthpop / new wave / post-punk / dubstep & 27 (40.3\%) & 13 (19.4\%) & 27 (40.3\%) & 67 \\ 
+hip hop / rap / underground hip-hop / trap & 26 (32.5\%) & 21 (26.2\%) & 33 (41.2\%) & 80 \\ 
+j-pop / ska / j-rock / rocksteady & 26 (43.3\%) & 12 (20.0\%) & 22 (36.7\%) & 60 \\ 
+metal / power metal / heavy metal / speed metal & 25 (32.9\%) & 16 (21.1\%) & 35 (46.1\%) & 76 \\ 
+electronic / ebm / industrial / electronica & 21 (28.0\%) & 18 (24.0\%) & 36 (48.0\%) & 75 \\ 
+italian / latin / italian singer-songwriter / latino & 21 (38.9\%) & 9 (16.7\%) & 24 (44.4\%) & 54 \\ 
+big band / jazz / vocal jazz / swing & 20 (29.9\%) & 16 (23.9\%) & 31 (46.3\%) & 67 \\ 
+classic country / country / honky tonk / traditional country & 19 (27.1\%) & 16 (22.9\%) & 35 (50.0\%) & 70 \\ 
+christian / worship / gospel / ccm & 18 (25.7\%) & 22 (31.4\%) & 30 (42.9\%) & 70 \\ 
+hardcore punk / hardcore / punk rock / deathcore & 16 (20.0\%) & 20 (25.0\%) & 44 (55.0\%) & 80 \\ 
+pop / female vocalists / chanson / eurovision & 16 (19.0\%) & 21 (25.0\%) & 47 (56.0\%) & 84 \\ 
+punk rock / pop punk / hardcore punk / ska punk & 16 (19.3\%) & 23 (27.7\%) & 44 (53.0\%) & 83 \\ 
+swedish / swedish pop / blues rock / nordic & 16 (29.1\%) & 14 (25.5\%) & 25 (45.5\%) & 55 \\ 
+blues / blues rock / classic blues / black metal & 15 (23.8\%) & 16 (25.4\%) & 32 (50.8\%) & 63 \\ 
+folk / singer-songwriter / folk rock / acoustic & 15 (16.9\%) & 21 (23.6\%) & 53 (59.6\%) & 89 \\ 
+rock n roll / rockabilly / r\&b / new jack swing & 12 (20.7\%) & 18 (31.0\%) & 28 (48.3\%) & 58 \\ 
+musicals / broadway / showtunes / shady & 11 (19.3\%) & 17 (29.8\%) & 29 (50.9\%) & 57 \\ 
+soul / funk / r\&b / motown & 10 (15.4\%) & 16 (24.6\%) & 39 (60.0\%) & 65 \\ 
 \bottomrule
 \end{tabular*}
 \end{table}
 
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#gtsave(table\_A4, here("tables", "table\_A4.tex"))}
+\end{Highlighting}
+\end{Shaded}
+
 \paragraph{Topic}\label{topic}
 
-Topic modelling resulted in imprecise lyrical topics, which
-\textcite{demetriou2024towards} included as a further means to diversify
-the sample of lyrics. Although no precise definition of each topic could
-be derived, the team agreed on the following approximations of \(8\)
-included lyric topics. Songs overwhelmingly fell categories relating to
-sadness and romance, a topic the original team felt was split into two
-groupings \texttt{sad/romantic1} and \texttt{sad/romantic2}.
-
-{\textbf{Figure s-4}\\
+{\textbf{Figure A4}\\
 \emph{Manual screening outcome by lyric topic}}
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\FunctionTok{make\_removed\_counts}\NormalTok{(lyrics\_df, topic\_label)}
+\FunctionTok{make\_removed\_counts}\NormalTok{(lyrics\_df, topic\_label) }
 \end{Highlighting}
 \end{Shaded}
 
-\pandocbounded{\includegraphics[keepaspectratio]{manuscript_files/figure-pdf/unnamed-chunk-48-1.pdf}}
+\pandocbounded{\includegraphics[keepaspectratio]{manuscript_files/figure-pdf/unnamed-chunk-81-1.pdf}}
 
-\subsubsection{Skew Correction}\label{skew-correction}
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#ggsave(here("images", "figure\_A4.pdf"))}
+\end{Highlighting}
+\end{Shaded}
 
-\textcite{demetriou2024towards} observed a skew in data concentration
-such that songs that were recent and artists that appeared very
-frequently in playlists were most likely be sampled. To compensate,
-\textcite{demetriou2024towards} oversampled less populated bins by
-increasing the probability that songs in underpopulated bins are
-selected, using a maximum-a-posteriori (MAP) estimate of the categorical
-distribution of each stratum \autocite{bassett2019maximum}. Oversampling
-is controlled via a concentration parameter \(a\) of the symmetric
-Dirichlet distribution which was heuristically set to 40,000, with the
-aim of between 5\% and 10\% of the overall pool of 2200 songs being
-drawn from underpopulated bins.
-
-\subsubsection{Mislabelled `Kept' Songs}\label{mislabelled-kept-songs}
-
-We observe 19 songs in the 380 songs used by
-\textcite{demetriou2024towards}, whereby 19 songs are labelled
-``remove'' but also ``wave\_1'', which suggests that those 19 songs were
-either included erroneously, or mislabeled ``remove'' erroneously. We
-elected not to use those 19 songs.
+{Note. ``Removed'', ``Kept'', indicate songs excluded and included
+respectively, from the manual screening process. ``Annotated'' indicate
+the subset of ``Kept'' that were reviewed by participants. Bins
+presented in order of number of songs labelled ``Annotated''. }
 
 \subsection{Political Speech Stimuli}\label{political-speech-stimuli}
-
-We sampled U.S. State of the Union addresses (post-1900) from the UVA
-Miller Center archive. Speeches were sampled across two strata: (1)
-President and (2) speech, both of which were labelled by the Miller
-center. Speeches were stratified by president and by individual address
-so that each president contributed a comparable number of excerpts.
-Presidents with fewer addresses contributed more chunks per speech,
-while those with many addresses contributed fewer. Each chunk yielded
-the first \textasciitilde200 words (ending at a sentence boundary),
-producing an approximately balanced set of excerpts across presidents
-and speeches. The final pool comprised 300 excerpts for the main study
-and 13 each for two pilot studies. Details of the average number of
-excerpts by party for both the initial pool and sample are shown in
-Table 5. Visualization of number of speeches per president are shown in
-Figure 5.
 
 Repository of sampling procedure can be found here:
 https://github.com/Gargant0373/PresidentialSpeechSampling/blob/master/sample.py
 
-{\textbf{Figure s-5}\\
+{\textbf{Figure A5}\\
 \emph{Number of speech excerpts per President}}
 
 \begin{Shaded}
@@ -842,23 +1125,48 @@ https://github.com/Gargant0373/PresidentialSpeechSampling/blob/master/sample.py
 \NormalTok{colors }\OtherTok{\textless{}{-}} \FunctionTok{viridis}\NormalTok{(}\DecValTok{10}\NormalTok{) }
 
 \NormalTok{speech\_df }\SpecialCharTok{|\textgreater{}} 
-  
-  \FunctionTok{filter}\NormalTok{(id }\SpecialCharTok{\%in\%}\NormalTok{ speech\_IDs) }\SpecialCharTok{|\textgreater{}}
-  
-  \FunctionTok{count}\NormalTok{(president, party, }\AttributeTok{name =} \StringTok{"n"}\NormalTok{) }\SpecialCharTok{|\textgreater{}}
-  
-  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{president =} \FunctionTok{fct\_reorder}\NormalTok{(president, n, }\AttributeTok{.desc =}\NormalTok{ T)) }\SpecialCharTok{|\textgreater{}}
-  
-  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ president, }\AttributeTok{y =}\NormalTok{ n, }\AttributeTok{fill =}\NormalTok{ party)) }\SpecialCharTok{+}
-    \FunctionTok{geom\_col}\NormalTok{(}\AttributeTok{alpha =}\NormalTok{ .}\DecValTok{75}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{status =} \FunctionTok{if\_else}\NormalTok{(item\_ID }\SpecialCharTok{\%in\%}\NormalTok{ speech\_IDs, }\StringTok{"Used"}\NormalTok{, }\StringTok{"Not used"}\NormalTok{)) }\SpecialCharTok{|\textgreater{}} 
+  \FunctionTok{count}\NormalTok{(president, party, status, }\AttributeTok{name =} \StringTok{"n"}\NormalTok{) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{group\_by}\NormalTok{(president) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{total\_used =} \FunctionTok{sum}\NormalTok{(n[status }\SpecialCharTok{==} \StringTok{"Used"}\NormalTok{])) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{ungroup}\NormalTok{() }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{president =} \FunctionTok{fct\_reorder}\NormalTok{(president, total\_used, }\AttributeTok{.desc =}\NormalTok{ F)) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ president, }\AttributeTok{y =}\NormalTok{ n, }\AttributeTok{fill =}\NormalTok{ party, }\AttributeTok{alpha =}\NormalTok{ status)) }\SpecialCharTok{+}
+    \FunctionTok{geom\_col}\NormalTok{(}\AttributeTok{position =} \StringTok{"stack"}\NormalTok{) }\SpecialCharTok{+}
     \FunctionTok{coord\_flip}\NormalTok{() }\SpecialCharTok{+}
-    \FunctionTok{labs}\NormalTok{(}\AttributeTok{x =} \ConstantTok{NULL}\NormalTok{, }\AttributeTok{y =} \StringTok{"Count"}\NormalTok{) }\SpecialCharTok{+}
-    \FunctionTok{scale\_fill\_manual}\NormalTok{(}\AttributeTok{values =} \FunctionTok{c}\NormalTok{(colors[}\DecValTok{5}\NormalTok{], colors[}\DecValTok{9}\NormalTok{])) }\SpecialCharTok{+} 
-    \FunctionTok{theme\_apa}\NormalTok{()}
+    \FunctionTok{scale\_alpha\_manual}\NormalTok{(}\AttributeTok{values =} \FunctionTok{c}\NormalTok{(}\StringTok{"Used"} \OtherTok{=} \DecValTok{1}\NormalTok{, }\StringTok{"Not used"} \OtherTok{=} \FloatTok{0.3}\NormalTok{)) }\SpecialCharTok{+}
+    \FunctionTok{scale\_fill\_manual}\NormalTok{(}\AttributeTok{values =} \FunctionTok{c}\NormalTok{(}\StringTok{"Democratic"} \OtherTok{=}\NormalTok{ colors[}\DecValTok{5}\NormalTok{], }\StringTok{"Republican"} \OtherTok{=}\NormalTok{ colors[}\DecValTok{9}\NormalTok{])) }\SpecialCharTok{+}
+    \FunctionTok{labs}\NormalTok{(}
+      \AttributeTok{x =} \ConstantTok{NULL}\NormalTok{,}
+      \AttributeTok{y =} \StringTok{"Number of speech excerpts"}\NormalTok{,}
+      \AttributeTok{fill =} \StringTok{"Party"}\NormalTok{,}
+      \AttributeTok{alpha =} \StringTok{"Selection"}
+\NormalTok{    ) }\SpecialCharTok{+}
+        \FunctionTok{theme\_apa}\NormalTok{() }\SpecialCharTok{+} 
+  
+  \FunctionTok{scale\_fill\_manual}\NormalTok{(}
+  \AttributeTok{name =} \StringTok{"Party"}\NormalTok{,  }
+  \AttributeTok{values =} \FunctionTok{c}\NormalTok{(}\StringTok{"Democratic"} \OtherTok{=}\NormalTok{ colors[}\DecValTok{5}\NormalTok{], }\StringTok{"Republican"} \OtherTok{=}\NormalTok{ colors[}\DecValTok{9}\NormalTok{])) }\SpecialCharTok{+}
+  \FunctionTok{theme}\NormalTok{(}\AttributeTok{legend.position =} \StringTok{"top"}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
-\pandocbounded{\includegraphics[keepaspectratio]{manuscript_files/figure-pdf/unnamed-chunk-49-1.pdf}}
+\begin{verbatim}
+Scale for fill is already present.
+Adding another scale for fill, which will replace the existing scale.
+\end{verbatim}
+
+\pandocbounded{\includegraphics[keepaspectratio]{manuscript_files/figure-pdf/unnamed-chunk-82-1.pdf}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{ggsave}\NormalTok{(}\FunctionTok{here}\NormalTok{(}\StringTok{"images"}\NormalTok{, }\StringTok{"figure\_A5.pdf"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+Saving 5.5 x 3.5 in image
+\end{verbatim}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -883,7 +1191,7 @@ https://github.com/Gargant0373/PresidentialSpeechSampling/blob/master/sample.py
   \FunctionTok{mutate}\NormalTok{(}\AttributeTok{sample =} \StringTok{"Initial pool"}\NormalTok{)}
 
 \CommentTok{\# 2) Annotated subsample}
-\NormalTok{sub\_df }\OtherTok{\textless{}{-}}\NormalTok{ df }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{filter}\NormalTok{(id }\SpecialCharTok{\%in\%}\NormalTok{ speech\_IDs)}
+\NormalTok{sub\_df }\OtherTok{\textless{}{-}}\NormalTok{ df }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{filter}\NormalTok{(item\_ID }\SpecialCharTok{\%in\%}\NormalTok{ speech\_IDs)}
 \NormalTok{sub\_summary }\OtherTok{\textless{}{-}} \FunctionTok{summarise\_party}\NormalTok{(sub\_df) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{mutate}\NormalTok{(}\AttributeTok{sample =} \StringTok{"Sample"}\NormalTok{)}
 
@@ -892,10 +1200,10 @@ https://github.com/Gargant0373/PresidentialSpeechSampling/blob/master/sample.py
   \FunctionTok{relocate}\NormalTok{(sample, }\AttributeTok{.before =}\NormalTok{ party)}
 
 \CommentTok{\# 4) Render as gt table}
-\NormalTok{combined\_summary }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{table\_A5 }\OtherTok{\textless{}{-}}\NormalTok{ combined\_summary }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{gt}\NormalTok{(}\AttributeTok{groupname\_col =} \StringTok{"sample"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}   
     \FunctionTok{tab\_header}\NormalTok{(}
-    \AttributeTok{title =} \FunctionTok{md}\NormalTok{(}\StringTok{"**Table s{-}6**"}\NormalTok{),   }
+    \AttributeTok{title =} \FunctionTok{md}\NormalTok{(}\StringTok{"**Table A5**"}\NormalTok{),   }
     \AttributeTok{subtitle =} \FunctionTok{md}\NormalTok{(}\StringTok{"*Descriptive statistics of speech excerpts by party*"}\NormalTok{)) }\SpecialCharTok{|\textgreater{}}
   \FunctionTok{cols\_label}\NormalTok{(}
     \AttributeTok{party =} \StringTok{"Party"}\NormalTok{,}
@@ -935,12 +1243,15 @@ https://github.com/Gargant0373/PresidentialSpeechSampling/blob/master/sample.py
     \AttributeTok{locations =} \FunctionTok{cells\_row\_groups}\NormalTok{()) }\SpecialCharTok{\%\textgreater{}\%}
   
   \FunctionTok{cols\_align}\NormalTok{(}\AttributeTok{align =} \StringTok{"center"}\NormalTok{, }\AttributeTok{columns =} \FunctionTok{everything}\NormalTok{())}
+
+
+\NormalTok{table\_A5}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{table}
 \caption*{
-{\large \textbf{Table s-6}} \\ 
+{\large \textbf{Table A5}} \\ 
 {\small \emph{Descriptive statistics of speech excerpts by party}}
 } 
 \fontsize{9.0pt}{10.8pt}\selectfont
@@ -961,6 +1272,12 @@ Republican & 180 & 64 & 12 & 15.0 & 55.2\% \\
 \end{tabular*}
 \end{table}
 
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#gtsave(table\_A5, here("tables", "table\_A5.tex"))}
+\end{Highlighting}
+\end{Shaded}
+
 \subsection{Word Counts}\label{word-counts}
 
 \begin{Shaded}
@@ -968,18 +1285,10 @@ Republican & 180 & 64 & 12 & 15.0 & 55.2\% \\
 \NormalTok{lyrics\_summary }\OtherTok{\textless{}{-}}\NormalTok{ lyrics\_df }\SpecialCharTok{|\textgreater{}} \FunctionTok{filter}\NormalTok{(item\_ID }\SpecialCharTok{\%in\%}\NormalTok{ lyrics\_IDs) }\SpecialCharTok{|\textgreater{}} 
   \FunctionTok{summarize}\NormalTok{(}\AttributeTok{mean =} \FunctionTok{mean}\NormalTok{(word\_count), }\AttributeTok{sd =} \FunctionTok{sd}\NormalTok{(word\_count))}
 
-\NormalTok{speech\_summary }\OtherTok{\textless{}{-}}\NormalTok{ speech\_df }\SpecialCharTok{|\textgreater{}} \FunctionTok{filter}\NormalTok{(id }\SpecialCharTok{\%in\%}\NormalTok{ speech\_IDs) }\SpecialCharTok{|\textgreater{}} 
+\NormalTok{speech\_summary }\OtherTok{\textless{}{-}}\NormalTok{ speech\_df }\SpecialCharTok{|\textgreater{}} \FunctionTok{filter}\NormalTok{(item\_ID }\SpecialCharTok{\%in\%}\NormalTok{ speech\_IDs) }\SpecialCharTok{|\textgreater{}} 
   \FunctionTok{summarize}\NormalTok{(}\AttributeTok{mean =} \FunctionTok{mean}\NormalTok{(word\_count), }\AttributeTok{sd =} \FunctionTok{sd}\NormalTok{(word\_count))}
 \end{Highlighting}
 \end{Shaded}
-
-Distributions of word counts differ substantially between song lyrics
-and speeches. All lyrics were truncated to the first 30\% as estimated
-by Musixmatch, the word counts vary substantially more than the speech
-excerpts, where our process for determining an excerpt truncated to the
-nearest complete sentence after 200 words. On average, speech excerpts
-were longer (\emph{M} = 246.6, \emph{SD} = 12.5 words) than lyric
-excerpts (\emph{M} = 82.8, \emph{SD} = 45.4 words).
 
 {\textbf{Figure 6}\\
 \emph{Density plot of word counts in speech and lyric excerpts}}
@@ -989,13 +1298,13 @@ excerpts (\emph{M} = 82.8, \emph{SD} = 45.4 words).
 \NormalTok{df }\OtherTok{\textless{}{-}} \FunctionTok{bind\_rows}\NormalTok{(}
 \NormalTok{  lyrics\_df }\SpecialCharTok{|\textgreater{}} \FunctionTok{filter}\NormalTok{(item\_ID }\SpecialCharTok{\%in\%}\NormalTok{ lyrics\_IDs) }\SpecialCharTok{|\textgreater{}} 
     \FunctionTok{select}\NormalTok{(item\_ID, word\_count) }\SpecialCharTok{|\textgreater{}} \FunctionTok{mutate}\NormalTok{(}\AttributeTok{source =} \StringTok{"Lyrics"}\NormalTok{, }\AttributeTok{item\_ID =} \FunctionTok{as.character}\NormalTok{(item\_ID)), }
-\NormalTok{  speech\_df }\SpecialCharTok{|\textgreater{}} \FunctionTok{filter}\NormalTok{(id }\SpecialCharTok{\%in\%}\NormalTok{ speech\_IDs) }\SpecialCharTok{|\textgreater{}} 
-    \FunctionTok{select}\NormalTok{(id, word\_count) }\SpecialCharTok{|\textgreater{}} \FunctionTok{rename}\NormalTok{(}\AttributeTok{item\_ID =}\NormalTok{ id) }\SpecialCharTok{|\textgreater{}}
-    \FunctionTok{mutate}\NormalTok{(}\AttributeTok{source =} \StringTok{"Speeches"}\NormalTok{)) }
+\NormalTok{  speech\_df }\SpecialCharTok{|\textgreater{}} \FunctionTok{filter}\NormalTok{(item\_ID }\SpecialCharTok{\%in\%}\NormalTok{ speech\_IDs) }\SpecialCharTok{|\textgreater{}} 
+    \FunctionTok{select}\NormalTok{(item\_ID, word\_count) }\SpecialCharTok{|\textgreater{}} 
+    \FunctionTok{mutate}\NormalTok{(}\AttributeTok{source =} \StringTok{"Speeches"}\NormalTok{)) }\SpecialCharTok{|\textgreater{}} \FunctionTok{rename}\NormalTok{(}\AttributeTok{Source =}\NormalTok{ source)}
 
 \NormalTok{df }\SpecialCharTok{|\textgreater{}}
   
-  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ word\_count, }\AttributeTok{fill =}\NormalTok{ source)) }\SpecialCharTok{+}
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ word\_count, }\AttributeTok{fill =}\NormalTok{ Source)) }\SpecialCharTok{+}
     \FunctionTok{geom\_density}\NormalTok{(}\AttributeTok{alpha =} \FloatTok{0.7}\NormalTok{) }\SpecialCharTok{+}
   \FunctionTok{scale\_fill\_manual}\NormalTok{(}\AttributeTok{values =} \FunctionTok{c}\NormalTok{(}\StringTok{"Speeches"} \OtherTok{=} \StringTok{"\#21908C"}\NormalTok{, }\StringTok{"Lyrics"} \OtherTok{=} \StringTok{"\#440154"}\NormalTok{)) }\SpecialCharTok{+}
     \FunctionTok{labs}\NormalTok{(}
@@ -1005,286 +1314,63 @@ excerpts (\emph{M} = 82.8, \emph{SD} = 45.4 words).
 \end{Highlighting}
 \end{Shaded}
 
-\pandocbounded{\includegraphics[keepaspectratio]{manuscript_files/figure-pdf/unnamed-chunk-52-1.pdf}}
+\pandocbounded{\includegraphics[keepaspectratio]{manuscript_files/figure-pdf/unnamed-chunk-85-1.pdf}}
 
-\section{Appendix B: Survey}\label{appendix-b-survey}
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#ggsave(here("images", "figure\_A6.pdf"))}
+\end{Highlighting}
+\end{Shaded}
 
-\subsection{SSVS Instructions for
-participants}\label{ssvs-instructions-for-participants}
+\subsection{Pilot Methods}\label{pilot-methods-1}
 
-``In this questionnaire you are to ask yourself:
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{table\_C1 }\OtherTok{\textless{}{-}}\NormalTok{ pilot\_2\_demog\_dfs[[}\DecValTok{3}\NormalTok{]] }\SpecialCharTok{|\textgreater{}} 
+    \FunctionTok{count}\NormalTok{(Ethnicity) }\SpecialCharTok{\%\textgreater{}\%}
+    \FunctionTok{mutate}\NormalTok{(}
+      \AttributeTok{pct =} \DecValTok{100} \SpecialCharTok{*}\NormalTok{ n }\SpecialCharTok{/} \FunctionTok{sum}\NormalTok{(n),}
+      \AttributeTok{value =} \FunctionTok{paste0}\NormalTok{(n, }\StringTok{" ("}\NormalTok{, }\FunctionTok{round}\NormalTok{(pct, }\DecValTok{1}\NormalTok{), }\StringTok{"\%)"}\NormalTok{)) }\SpecialCharTok{|\textgreater{}} 
+  \FunctionTok{select}\NormalTok{(Ethnicity, value) }\SpecialCharTok{|\textgreater{}}
+  
+  \FunctionTok{gt}\NormalTok{() }\SpecialCharTok{|\textgreater{}}
+  
+  \FunctionTok{cols\_label}\NormalTok{(}\AttributeTok{Ethnicity =} \StringTok{"Ethnicity (Simplified)"}\NormalTok{, }\AttributeTok{value =} \StringTok{"N (\%)"}\NormalTok{) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{cols\_align}\NormalTok{(}\AttributeTok{align =} \StringTok{"center"}\NormalTok{, }\AttributeTok{columns =} \FunctionTok{c}\NormalTok{(Ethnicity, value)) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{format\_apa\_table}\NormalTok{(}\FunctionTok{md}\NormalTok{(}\StringTok{"**Table C1**"}\NormalTok{), }\FunctionTok{md}\NormalTok{(}\StringTok{"*Participant ethnicity, Pilot 3 Speeches: Political Spectrum*"}\NormalTok{))}
 
-``What values are important to ME as guiding principles in MY life, and
-what values are less important to me?''
+\NormalTok{table\_C1}
+\end{Highlighting}
+\end{Shaded}
 
-There is a list of values on the following page. These values come from
-different cultures. In the parentheses following each value is an
-explanation that may help you to understand its meaning. Your task is to
-rate how important each value is for you as a guiding principle in your
-life.
+\begin{table}
+\caption*{
+{\large \textbf{Table C1}} \\ 
+{\small \emph{Participant ethnicity, Pilot 3 Speeches: Political Spectrum}}
+} 
+\fontsize{9.0pt}{10.8pt}\selectfont
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}cc}
+\toprule
+Ethnicity (Simplified) & N (\%) \\ 
+\midrule\addlinespace[2.5pt]
+Asian & 5 (5.1\%) \\ 
+Black & 35 (35.7\%) \\ 
+Mixed & 11 (11.2\%) \\ 
+Other & 3 (3.1\%) \\ 
+White & 42 (42.9\%) \\ 
+NA & 2 (2\%) \\ 
+\bottomrule
+\end{tabular*}
+\end{table}
 
-Use the rating scale below:
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{gtsave}\NormalTok{(table\_C1, }\FunctionTok{here}\NormalTok{(}\StringTok{"tables"}\NormalTok{, }\StringTok{"table\_C1.tex"}\NormalTok{))}
 
-0 means the value is not at all important, it is not relevant as a
-guiding principle for you. 3 means the value is important. 6 means the
-value is very important.
+\FunctionTok{rm}\NormalTok{(table\_C1)}
+\end{Highlighting}
+\end{Shaded}
 
-The higher the number (0, 1, 2, 3, 4, 5, 6, 7), the more important the
-value is as a guiding principle in YOUR life.
-
--1 is for rating any values opposed to the principles that guide you. 7
-is for rating a value of supreme importance as a guiding principle in
-your life; Ordinarily there are no more than two such values.
-
-On the scale next to each value, indicate the number
-(-1,0,1,2,3,4,5,6,7) that indicates the importance of that value for
-you, personally. Try to distinguish as much as possible between the
-values by using all the numbers.
-
-You may need to use numbers more than once.''
-
-\subsection{Task Instructions}\label{task-instructions}
-
-\subsubsection{Lyrics}\label{lyrics}
-
-\paragraph{General Instructions:}\label{general-instructions}
-
-``In the main part of this survey, you will be shown parts of song
-lyrics from 15 songs, and asked to complete similar questions about the
-values you perceive them.
-
-IMPORTANT: Lyrics can be written from different perspectives, some of
-which are not the same as the writer of the lyrics. In other words, the
-AUTHOR of the lyrics may choose a SPEAKER for their lyrics that is not
-themselves.
-
-The SPEAKER of the lyrics could be a fictional character, a real person
-from history or the present other than the author, or even an imaginary
-object. And of course it could be the AUTHOR themselves. Please read the
-lyrics, and answer the questions while thinking about the SPEAKER.
-
-Do not look up the lyrics elsewhere.
-
-Ask yourself: ``What values are important to the SPEAKER as guiding
-principles in in their life, and what values are less important to them?
-Use the same rating scale that you used in the questionnaire earlier: 0
-means the value is not at all important. 3 means the value is important.
-6 means the value is very important. -1 means the value is opposed to
-the principles that guide the SPEAKER. 7 means the value is of supreme
-importance as the guiding principle in the SPEAKER's life.
-
-Please start by rating the value you feel is the most important to the
-SPEAKER with a 6 or 7, and the value that is most opposed to their
-values with a -1 or 0, (green arrows).Then complete the scales for the
-remainder of the values. Indicate NA (red arrow) if you feel the SPEAKER
-doesn't describe how they feel about that value. Try to distinguish as
-much as possible between the values by using all the numbers. You may
-need to use numbers more than once, but try not to.''
-
-\paragraph{Post-Quiz Final
-Instructions:}\label{post-quiz-final-instructions}
-
-``Thanks! We'll now ask you to respond to our questions about 15 song
-lyrics. Please read only the lyrics between the quotes, do not search
-them on the internet or look them up elsewhere. Think about the SPEAKER
-of the lyrics, and answer the questions with them in mind.
-
-Please click on the arrow below when you are ready.
-
-WARNING: These lyrics are randomly selected from popular music, some of
-which use offensive language or describe offensive situations.''
-
-\paragraph{Question Instructions:}\label{question-instructions}
-
-``Between the quotation marks below are some song lyrics. Please take a
-moment to read them and think about the SPEAKER the lyrics. Please
-remember that this SPEAKER might be a the AUTHOR themselves, or someone
-or something else:''
-
-\paragraph{Attention Test}\label{attention-test}
-
-``This song lyric is actually a test to see if you are paying attention
-Please indicate that the Speaker and Author are the same person, That
-you are not familiar with this song, indicate that this Speaker values
-STIMULATION at 7, and please set all other values to 0''
-
-\subsubsection{Speeches}\label{speeches}
-
-\paragraph{General Instructions:}\label{general-instructions-1}
-
-``You will now be shown 15 pieces of U.S. Presidential Speeches, and
-asked to complete similar questions about the values you perceive in
-them.
-
-IMPORTANT: Some speeches were delivered in written form, and some were
-delivered as speeches. Sometimes, the transcript refers to dialogue from
-people other than the U.S. President, laughter, or contains other
-indications. In our questions, we refer to the SPEAKER, which is always
-the U.S. President delivering the speech.
-
-Please read the piece of the speech, and answer the questions while
-thinking about the SPEAKER and their words.
-
-Please do not look up the speeches elsewhere.
-
-Ask yourself: ``What values are important to the SPEAKER as guiding
-principles in in their life, and what values are less important to them?
-Use the same rating scale that you used in the questionnaire earlier: 0
-means the value is not at all important. 3 means the value is important.
-6 means the value is very important. -1 means the value is opposed to
-the principles that guide the SPEAKER. 7 means the value is of supreme
-importance as the guiding principle in the SPEAKER's life.
-
-Please start by rating the value you feel is the most important to the
-SPEAKER with a 6 or 7, and the value that is most opposed to their
-values with a -1 or 0, (green arrows). Then complete the scales for the
-remainder of the values. Indicate NA (red arrow) if you feel the SPEAKER
-doesn't describe how they feel about that value.
-
-Try to distinguish as much as possible between the values by using all
-the numbers. You may need to use numbers more than once.''
-
-\paragraph{Post-Quiz Final
-Instructions:}\label{post-quiz-final-instructions-1}
-
-``Thanks! We'll now ask you to respond to our questions about 15 parts
-from U.S. Presidential speeches. Please read only the parts of the
-speeches between the quotes, do not search them on the internet or look
-them up elsewhere. Think about the SPEAKER of the speech, the U.S.
-president, and answer the questions with them in mind.
-
-Please click on the arrow below when you are ready.
-
-WARNING: These speeches were randomly selected, some of which use
-language that might have been acceptable at the time, but would be
-considered offensive today.''
-
-\paragraph{Question Instructions:}\label{question-instructions-1}
-
-``Between the quotation marks below are parts of a U.S. Presidential
-Speech. Please take a moment to read them and think about the SPEAKER of
-the speech.''
-
-\paragraph{Attention Test:}\label{attention-test-1}
-
-``This speech part is actually a test to see if you are paying
-attention. Please indicate that you are not familiar with this
-president, that the president is a Republican. Indicate that this
-Speaker values STIMULATION at 7, and please set all other values to 0.''
-
-\subsection{Debrief}\label{debrief}
-
-\subsubsection{Lyrics}\label{lyrics-1}
-
-``Thanks for completing the survey!
-
-Our research group, and other scientists like us, are interested in
-perceived personal values in song lyrics.
-
-By `values', we mean the abstract concepts or beliefs that we feel are
-important as life-guide principles. They have been shown to be related
-to our behaviors and goals at the most abstract level, above and beyond
-any specific situation. According to Shalom Schwartz, there are 10 main
-values that all people share, and each person has their own ranking of
-these values. In more recent work, these are broken up further into 19
-values, but we used a shorter 10-item version.
-
-This study is helping us learn how to gather data from people about the
-values that they think song lyrics express. Our questionnaire about
-values is based on one that was a part of the European Social Survey,
-and later shortened. You responded to it about yourself at the start of
-the study. Respondents like yourself then also completed it about what
-they thought of the values of the `speaker' of each song lyric. We will
-analyze the data to see whether our version of this questionnaire is
-also useful for gathering information on song lyrics.
-
-We expect that different people will interpret the values of lyrics
-differently. People might have a preference for different genres of
-music or prioritize different values in their lives. People with
-different backgrounds (e.g.~ethnicity, gender, level of education, age)
-or who prioritize different values might also interpret song lyrics
-differently. We used various options on the Prolific platform to screen
-respondents like yourself, and also asked a number of questions, to
-explore whether any of these factors make a difference in the way people
-interpret the values of song lyrics.
-
-Knowing our reasons for the study might have changed the way you would
-answer the questions in this survey. For this reason, we only explain
-the reasons for our study at the end.
-
-Some songs have lyrics that are difficult or impossible to interpret. We
-asked about your confidence in your ratings, to see if some songs are
-more vague, or ambiguous than others. We also asked about how subjective
-you thought the task was overall, to help us estimate how many
-participants we might need for future studies.
-
-De-identified data from this study may be part of published academic
-work in the future. We will not include personally identifying
-information (e.g.~your Prolific ID), but it will include your responses
-to questions about the song lyrics, your music preferences,
-demographics, and values. We'd like to remind you that you can request
-to withdraw your data at any time by emailing a.m.demetriou@tudelft.nl.
-Please be aware that as time passess this will become more challenging
-especially if work from this study has been published. We will make all
-necessary efforts to remove it, but there is always a risk that we will
-not recover every instance of it after it has been published.
-
-Thanks again for participating! Please let us know if you have any
-feedback for us below. NOTE: Please do not enter any identifying or
-sensitive information in the field.''
-
-\subsubsection{Speeches}\label{speeches-1}
-
-``Thanks for completing the survey!
-
-Our research group, and other scientists like us, are interested in
-perceived personal values in text, like political speeches. By `values',
-we mean the abstract concepts or beliefs that we feel are important as
-life-guide principles. They have been shown to be related to our
-behaviors and goals at the most abstract level, above and beyond any
-specific situation. According to Shalom Schwartz, there are 10 main
-values that all people share, and each person has their own ranking of
-these values. In more recent work, these are broken up further into 19
-values, but we used a shorter 10-item version.
-
-This study is helping us learn how to gather data from people about the
-values that they think political speeches express. Our questionnaire
-about values is based on one that was a part of the European Social
-Survey, and later shortened. Respondents like yourself completed it
-about what they thought of the values of the `speaker' in song lyrics in
-a prior study. In this study, we will analyze the data to see whether
-our version of this questionnaire is also useful for gathering
-information on political speeches. We expect that diﬀerent people will
-interpret the values of speeches diﬀerently. People with diﬀerent
-backgrounds (e.g.~ethnicity, gender, level of education, age), or
-political aﬃliations might also interpret speeches diﬀerently. We used
-various options on the Prolific platform to screen respondents like
-yourself, to explore whether any of these factors make a diﬀerence in
-the way people interpret the values in speeches.
-
-Knowing our reasons for the study might have changed the way you would
-answer the questions in this survey. For this reason, we only explain
-the reasons for our study at the end. Some parts of speeches taken out
-of context are diﬃcult or impossible to interpret. We asked about your
-confidence in your ratings, to see if some excerpts are more vague, or
-ambiguous than others. We also asked about how subjective you thought
-the task was overall, to help us estimate how many participants we might
-need for future studies.
-
-De-identified data from this study may be part of published academic
-work in the future. We will not include personally identifying
-information (e.g.~your Prolific ID), but it will include your responses
-to questions about the song lyrics, your music preferences,
-demographics, and values. We'd like to remind you that you can request
-to withdraw your data at any time by emailing a.m.demetriou@tudelft.nl.
-Please be aware that as time passess this will become more challenging
-especially if work from this study has been published. We will make all
-necessary eﬀorts to remove it, but there is always a risk that we will
-not recover every instance of it after it has been published.
-
-Thanks again for participating! Please let us know if you have any
-feedback for us below. Please do not enter any identifying or sensitive
-information in the field.''
 
 
 

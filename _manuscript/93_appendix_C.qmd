@@ -1,4 +1,4 @@
-## Pilot Methods
+# Appendix C: Pilot Methods
 
 ```{r, include=FALSE}
 library("here")       # file logistics
@@ -88,7 +88,7 @@ table_C1 <- pilot_2_demog_dfs[[3]] |>
 
 table_C1
 
-gtsave(table_C1, here("tables", "table_C1.tex"))
+#gtsave(table_C1, here("tables", "table_C1.tex"))
 
 rm(table_C1)
 ```

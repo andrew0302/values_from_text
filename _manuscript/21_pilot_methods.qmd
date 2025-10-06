@@ -3,7 +3,6 @@
 ```{r, include=FALSE}
 library("here")       # file logistics
 library("tidyverse")  # code logistics
-#library("rlang")
 library("gt")         # rendering tables
 ```
 
@@ -76,7 +75,7 @@ pilot_labels <- c(
 pilot_2_demog_df <- pilot_2_demog_dfs |> bind_rows(.id = "study")
 ```
 
-Thus, the total participant pool consisted of `r nrow(pilot_2_demog_df)` participants 
+The total participant pool consisted of `r nrow(pilot_2_demog_df)` participants 
 (`r round(mean(pilot_2_demog_df$Sex == "Female", na.rm = TRUE) * 100, 1)`% female, 
 $M_{\text{age}} = `r round(mean(pilot_2_demog_df$Age, na.rm = TRUE), 1)`$ years, 
 $SD_{\text{age}} = `r round(sd(pilot_2_demog_df$Age, na.rm = TRUE), 1)`$) 
@@ -162,10 +161,8 @@ table_1 <- table_1 %>%
   format_apa_table(md("**Table 1**"), md("*Participant demographics — Pilot studies*"))
 
 table_1
-```
 
-```{r, include=FALSE}
-gtsave(table_1, here("tables", "table_1.tex"))
+#gtsave(table_1, here("tables", "table_1.tex"))
 
 rm(table_1)
 ```
@@ -194,7 +191,7 @@ format_apa_table(md("**Table 2**"), md("*Participant ethnicity — Pilot studies
 
 table_2
 
-gtsave(table_2, here("tables", "table_2.tex"))
+#gtsave(table_2, here("tables", "table_2.tex"))
 
 rm(table_2)
 ```
@@ -218,7 +215,7 @@ table_3 <- pilot_spectrum_tbl |>
 
 table_3
 
-gtsave(table_3, here("tables", "table_3.tex"))
+#gtsave(table_3, here("tables", "table_3.tex"))
 
 rm(table_3)
 ```

@@ -39,7 +39,7 @@ theme_apa <- function(base_size = 12, base_family = "sans") {
       legend.title = element_text(face = "plain"))}
 ```
 
-```{r}
+```{r include=FALSE}
 # plot ICC2k and 95% CI by value
 plot_summary_by_metric <- function(df, metric, metric_lower, metric_upper, option) {
   
@@ -100,7 +100,7 @@ figure_2 <- (p1 /p2) +
 
 figure_2
 
-ggsave(here("images", "figure_2.pdf"), figure_2)
+#ggsave(here("images", "figure_2.pdf"), figure_2)
 ```
 
 ```{r warning=FALSE, echo=FALSE}
@@ -147,13 +147,13 @@ figure_3b <- (p1 /p2) +
 figure_3b
 ```
 
-```{r warning=FALSE, fig.width=6.5}
+```{r include=FALSE, warning=FALSE, fig.width=6.5}
 figure_3 <- (figure_3a  | figure_3b) +  
   plot_layout(guides = "collect") +
   plot_annotation(tag_levels = 'A') &
   theme(legend.position = "bottom")
 
-ggsave(here("images", "figure_3.pdf"),figure_3)
+#ggsave(here("images", "figure_3.pdf"),figure_3)
 ```
 
 
@@ -204,10 +204,10 @@ p2 <- (p1_1 | p1_2) / (p1_3 | p1_4) +
 
 p2 
 ```
-```{r}
+```{r include=FALSE}
 figure_4 <- p1 / p2
 
-ggsave(here("images", "figure_4.pdf"), height=8.5)
+#ggsave(here("images", "figure_4.pdf"), height=8.5)
 ```
 
 ```{r}
@@ -238,10 +238,10 @@ p2 <- (p1_1 | p1_2) / (p1_3 | p1_4) +
 p2 
 ```
 
-```{r}
+```{r include=FALSE}
 figure_5 <- p1 / p2
 
-ggsave(here("images", "figure_5.pdf"), height=8.5)
+#ggsave(here("images", "figure_5.pdf"), height=8.5)
 ```
 
 ```{r}
@@ -271,10 +271,10 @@ p2 <- ((p1_1 / p1_2) | (p1_3 / p1_4)) +
 p2
 ```
 
-```{r}
+```{r include=FALSE}
 figure_6 <- p1 / p2
 
-ggsave(here("images", "figure_6.pdf"), height=8.5)
+#ggsave(here("images", "figure_6.pdf"), height=8.5)
 ```
 
 
@@ -282,7 +282,7 @@ ggsave(here("images", "figure_6.pdf"), height=8.5)
 
 ```{r include=FALSE, warning=FALSE, echo=FALSE}
 pilot_2_dfs <- readRDS(file = here("_data", "_participant_scores", "wave_2", "pilot_2_dfs.RDS"))
-df <- bind_rows(quiz_dfs, .id = "Pilot")
+
 
 # subset pilot dfs
 quiz_dfs <- lapply(pilot_2_dfs, function(df){
@@ -325,6 +325,8 @@ apa_theme <-
     strip.background = element_blank(),  
     strip.text = element_text(size = 11)
   )
+
+df <- bind_rows(quiz_dfs, .id = "Pilot")
 ```
 
 ```{r}
@@ -379,11 +381,11 @@ table_4 <- lapply(quiz_dfs, summarize_study) %>%
 
 table_4
 
-gtsave(table_4, here("tables", "table_4.tex"))
+#gtsave(table_4, here("tables", "table_4.tex"))
 ```
 
 
-```{r}
+```{r include=FALSE}
 plot_bars <- function(df, column1, column2, option) {
   
   df |> 
@@ -418,7 +420,7 @@ p3 <- plot_bars(df, Quiz3_1, Quiz3, option = "D") +
         plot.subtitle = element_markdown(hjust = 0), 
         plot.caption = element_markdown(hjust = 0))
 
-ggsave(here("images", "figure_7.pdf"))
+#ggsave(here("images", "figure_7.pdf"))
 ```
 
 
@@ -464,6 +466,6 @@ p3 <- plot_stacked_bars(df, Quiz3_1, option = "C") +
           plot.subtitle = element_markdown(hjust = 0), 
           plot.caption = element_markdown(hjust = 0))
 
-ggsave(here("images", "figure_C1.pdf"))
+#ggsave(here("images", "figure_C1.pdf"))
 ```
 
