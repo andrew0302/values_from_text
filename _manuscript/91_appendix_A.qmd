@@ -446,26 +446,34 @@ Repository of sampling procedure can be found here: https://github.com/Gargant03
 colors <- viridis(10) 
 
 speech_df |> 
-  
-  filter(item_ID %in% speech_IDs) |>
-  
-  count(president, party, name = "n") |>
-  
-  mutate(president = fct_reorder(president, n, .desc = F)) |>
-  
-  ggplot(aes(x = president, y = n, fill = party)) +
-    geom_col(alpha = .75) +
+  mutate(status = if_else(item_ID %in% speech_IDs, "Used", "Not used")) |> 
+  count(president, party, status, name = "n") |>
+  group_by(president) |>
+  mutate(total_used = sum(n[status == "Used"])) |>
+  ungroup() |>
+  mutate(president = fct_reorder(president, total_used, .desc = F)) |>
+  ggplot(aes(x = president, y = n, fill = party, alpha = status)) +
+    geom_col(position = "stack") +
     coord_flip() +
-    labs(x = NULL, y = "Count") +
-    theme_apa() + 
+    scale_alpha_manual(values = c("Used" = 1, "Not used" = 0.3)) +
+    scale_fill_manual(values = c("Democratic" = colors[5], "Republican" = colors[9])) +
+    labs(
+      x = NULL,
+      y = "Number of speech excerpts",
+      fill = "Party",
+      alpha = "Selection"
+    ) +
+        theme_apa() + 
+  
   scale_fill_manual(
   name = "Party",  
-  values = c("Democratic" = colors[5], "Republican" = colors[9]),
-  labels = c("remove" = "Removed", "keep" = "Kept")) +
+  values = c("Democratic" = colors[5], "Republican" = colors[9])) +
   theme(legend.position = "top")
 
 ggsave(here("images", "figure_A5.pdf"))
 ```
+
+
 
 
 ```{r}

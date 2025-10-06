@@ -32,12 +32,36 @@ rm(wave_2_dfs)
 
 ```{r}
 speech_df |> 
+  mutate(status = if_else(id %in% speech_IDs, "Used", "Not used")) |> 
+  count(president, party, status, name = "n") |>
+  group_by(president) |>
+  mutate(total_used = sum(n[status == "Used"])) |>
+  ungroup() |>
+  mutate(president = fct_reorder(president, total_used, .desc = F)) |>
+  ggplot(aes(x = president, y = n, fill = party, alpha = status)) +
+    geom_col(position = "stack") +
+    coord_flip() +
+    scale_alpha_manual(values = c("Used" = 1, "Not used" = 0.3)) +
+    scale_fill_manual(values = c("Democratic" = colors[5], "Republican" = colors[9])) +
+    labs(
+      x = NULL,
+      y = "Number of speech excerpts",
+      fill = "Party",
+      alpha = "Selection status"
+    ) +
+    theme_minimal()
+
+```
+
+
+```{r}
+speech_df |> 
   
   filter(id %in% speech_IDs) |>
   
   count(president, party, name = "n") |>
   
-  mutate(president = fct_reorder(president, n, .desc = T)) |>
+  mutate(president = fct_reorder(president, n, .desc = F)) |>
   
   ggplot(aes(x = president, y = n, fill = party)) +
     geom_col(alpha = .75) +
