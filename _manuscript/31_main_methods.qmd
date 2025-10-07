@@ -2,12 +2,16 @@
 
 ### Participants
 
-```{r main_participants_setup, include=FALSE}
+```{r, include=FALSE}
 library("here")
 library("tidyverse")
 library("rlang")
 library("gt")
+library("patchwork")
+library("ggtext")
+```
 
+```{r, include=FALSE}
 data_path <- here("_data", "_participant_scores", "wave_2")
 
 # read in data
@@ -44,7 +48,7 @@ wave_labels <- c(
 )
 ```
 
-```{r main_participants_table_functions, include=FALSE}
+```{r, include=FALSE}
 format_apa_table <- function(gt_tbl, title, subtitle = NULL) {
   gt_tbl %>%
     tab_header(
@@ -60,7 +64,10 @@ format_apa_table <- function(gt_tbl, title, subtitle = NULL) {
       data_row.padding                  = px(2)
     )
 }
+```
 
+
+```{r include=FALSE}
 summarize_demographics <- function(df, study_name) {
   df %>%
     summarise(
@@ -109,16 +116,21 @@ summarize_spectrum <- function(df, study_name) {
 
 wave_demog_tbl <- imap_dfr(
   wave_2_demog_dfs,
-  ~ summarize_demographics(.x, wave_labels[[.y]] %||% .y)
-)
+  ~ summarize_demographics(.x, wave_labels[[.y]] %||% .y))
 
 # main table
-wave_demog_tbl %>%
+table_5 <- wave_demog_tbl %>%
   gt() %>%
   cols_align(align = "left",  columns = c(Study)) %>%
   cols_align(align = "center", columns = c(N, `% Female`, `Age range`, `Age M (SD)`)) %>%
   fmt_number(columns = `% Female`, decimals = 1) %>%
-  format_apa_table("Table 1b", "Participant demographics — Main studies")
+  format_apa_table("Table 5", "Participant demographics — Main studies")
+
+table_5  
+  
+#gtsave(table_5, here("tables", "table_5.tex"))
+
+rm(table_5)
 ```
 
 ```{r}
@@ -126,7 +138,7 @@ wave_ethnicity_tbl <- imap_dfr(
   wave_2_demog_dfs,
   ~ summarize_ethnicity(.x, wave_labels[[.y]] %||% .y))
 
-wave_ethnicity_tbl |>
+table_6 <- wave_ethnicity_tbl |>
   gt() %>%
   cols_label(
     `Black/African American` = html("Black/<br>African American"),
@@ -140,7 +152,13 @@ wave_ethnicity_tbl |>
              columns = c(Asian, `Black/African American`, 
                          `Latino/Hispanic`, White)) %>%
   
-  format_apa_table("Table 2c", "Participant ethnicity — Main studies")
+  format_apa_table("Table 6", "Participant ethnicity — Main studies")
+
+table_6
+
+#gtsave(table_6, here("tables", "table_6.tex"))
+
+rm(table_6)
 ```
 
 ```{r}
@@ -148,7 +166,7 @@ wave_spectrum_tbl <- imap_dfr(
   wave_2_demog_dfs[3:4],
   ~ summarize_spectrum(.x, wave_labels[[.y]] %||% .y))
 
-wave_spectrum_tbl |>
+table_7 <- wave_spectrum_tbl |>
   
   gt() %>%
   
@@ -159,5 +177,174 @@ wave_spectrum_tbl |>
   
   cols_align(align = "center", columns = c(Conservative, Liberal, Moderate)) %>%
   
-  format_apa_table("Table 5", "Participants by political leaning — Main studies")
+  format_apa_table("Table 7", "Participants by political leaning — Main studies")
+
+table_7
+
+gtsave(table_7, here("tables", "table_7.tex"))
+
+rm(table_7)
+```
+
+```{r, include=FALSE}
+quiz_df <- readRDS(here("_data", "_participant_scores", "wave_2", "wave_2_quiz_df.RDS"))
+
+quiz_df <- quiz_df |>
+  
+    select(-Ethnicity) |> 
+  
+    # convert to numeric
+    mutate(
+      Quiz_1 = as.numeric(Quiz_1), 
+      Quiz_2 = as.numeric(Quiz_2), 
+      Quiz_3 = as.numeric(Quiz_3)) |>
+    
+    # set as ordered factors
+    mutate(
+      Quiz1 = ifelse(is.na(Quiz1), "NA", as.character(Quiz1)),
+      Quiz1 = factor(Quiz1, levels = c("NA","-1","0","1","2","3","4","5","6","7"), ordered = TRUE),
+      
+      Quiz2 = ifelse(is.na(Quiz2), "NA", as.character(Quiz2)),
+      Quiz2 = factor(Quiz2, levels = c("NA","-1","0","1","2","3","4","5","6","7"), ordered = TRUE),
+      
+      Quiz3 = ifelse(is.na(Quiz3), "NA", as.character(Quiz3)),
+      Quiz3 = factor(Quiz3, levels = c("NA","-1","0","1","2","3","4","5","6","7"), ordered = TRUE)) |>
+  
+  rename(Study = wave)
+```
+
+```{r include=FALSE}
+summarize_study <- function(df) {
+  df %>%
+    summarise(
+      Q1 = sprintf("%d (%.1f%%)", sum(Quiz_1, na.rm = TRUE),
+                      mean(Quiz_1, na.rm = TRUE) * 100),
+      Q2 = sprintf("%d (%.1f%%)", sum(Quiz_2, na.rm = TRUE),
+                      mean(Quiz_2, na.rm = TRUE) * 100),
+      Q3 = sprintf("%d (%.1f%%)", sum(Quiz_3, na.rm = TRUE),
+                      mean(Quiz_3, na.rm = TRUE) * 100)
+    ) %>%
+    
+    pivot_longer(everything(), names_to = "Question", values_to = "N_percent")
+}
+```
+
+```{r}
+# create a list of dataframes, one for each study
+quiz_dfs <- split.data.frame(quiz_df, quiz_df$Study)
+
+
+table_8 <- lapply(quiz_dfs, summarize_study) %>%
+  
+  bind_rows(.id = "Study") %>%
+  
+  pivot_wider(names_from = Study, values_from = N_percent) %>%
+  
+  gt() %>%
+  
+  tab_header(
+    title = md("**Table 8**"),
+    subtitle = md("*Main Study Waves: Overall Quiz Item Correctness*")
+  ) %>%
+  cols_label(
+    Question = "Item",
+    lyrics_1 = "Wave: Lyrics 1",
+    lyrics_2 = "Wave: Lyrics 2",
+    speeches_1 = "Wave: Speeches 1",
+    speeches_2 = "Wave: Speeches 2"
+  ) %>%
+  cols_align(
+    align = "center",
+    columns = everything()
+  ) %>%
+  cols_width(everything() ~ px(100)) |>
+  tab_options(
+    table.font.size = 12,
+    heading.align = "left",
+    table.border.top.width = px(0),       # remove top rule
+    table.border.bottom.width = px(0),    # remove bottom rule
+    table_body.hlines.width = px(0),   # removes horizontal lines inside body
+    table_body.vlines.width = px(0)    # removes vertical lines
+  ) %>%
+  tab_source_note(
+    
+    md("*Note.* Entries are number and percentage of participants who answered correctly. Quiz responses were used to exclude participants in main studies."))
+
+
+table_8
+
+gtsave(table_8, here("tables", "table_8.tex"))
+
+rm(table_8, quiz_dfs)
+```
+
+
+```{r}
+plot_bars <- function(df, 
+                      column1, # responses
+                      column2, # color
+                      option) {
+  
+  df |> 
+    mutate({{column2}} := fct_recode(as.factor({{column2}}), 
+                                     "Correct"   = "1","Incorrect" = "0")) |>
+        
+    ggplot(aes({{column1}}, fill = as.factor({{column2}}))) + 
+    geom_bar() +
+    scale_fill_viridis_d(option = option,
+                         name = "Response:") +
+    
+    scale_x_discrete(drop = FALSE)}
+```
+
+```{r}
+# including those that were screened out
+df <- quiz_df
+
+p1 <- plot_bars(df, Quiz1, Quiz_1, option = "D") +
+  xlab("Q1 Responses") + ylab("Count") +
+  apa_theme
+
+p2 <- plot_bars(df, Quiz2, Quiz_2, option = "D") +
+  xlab("Q2 Responses") + ylab("Count") +
+  apa_theme
+
+p3 <- plot_bars(df, Quiz3, Quiz_3, option = "D") +
+  xlab("Q3 Responses") + ylab("") +
+  apa_theme
+
+(p1 | p2 | p3) +
+  plot_layout(guides = "collect") &     
+  theme(legend.position = "bottom", 
+        plot.title = element_markdown(hjust = 0), 
+        plot.subtitle = element_markdown(hjust = 0), 
+        plot.caption = element_markdown(hjust = 0))
+
+ggsave(here("images", "figure_7.pdf"))
+```
+
+```{r}
+# # not including those that were screened out
+# df <- quiz_df |> filter(Status == "APPROVED")
+# 
+# p1 <- plot_bars(df, Quiz1, Quiz_1, option = "D") +
+#   xlab("Q1 Responses") + ylab("Count") +
+#   apa_theme
+# 
+# p2 <- plot_bars(df, Quiz2, Quiz_2, option = "D") +
+#   xlab("Q2 Responses") + ylab("Count") +
+#   apa_theme
+# 
+# p3 <- plot_bars(df, Quiz3, Quiz_3, option = "D") +
+#   xlab("Q3 Responses") + ylab("") +
+#   apa_theme
+# 
+# (p1 | p2 | p3) +
+#   plot_layout(guides = "collect") &     
+#   theme(legend.position = "bottom", 
+#         plot.title = element_markdown(hjust = 0), 
+#         plot.subtitle = element_markdown(hjust = 0), 
+#         plot.caption = element_markdown(hjust = 0))
+# 
+# ggsave(here("images", "figure_8.pdf"))
 ```
