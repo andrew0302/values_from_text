@@ -1,6 +1,5 @@
-## Main Studies
+## Main Study Addendum
 
-### Participants
 
 ```{r, include=FALSE}
 library("here")
@@ -49,139 +48,6 @@ wave_labels <- c(
 ```
 
 ```{r, include=FALSE}
-format_apa_table <- function(gt_tbl, title, subtitle = NULL) {
-  gt_tbl %>%
-    tab_header(
-      title = title, 
-      subtitle = subtitle
-    ) %>%
-    tab_options(
-      table.font.names                  = c("Times New Roman", "Times", "serif"),
-      table.border.top.width            = 1,  # top line
-      column_labels.border.bottom.width = 1,  # header line
-      table.border.bottom.width         = 1,  # bottom line
-      table_body.hlines.width           = 0,  # no row lines
-      data_row.padding                  = px(2)
-    )
-}
-```
-
-
-```{r include=FALSE}
-summarize_demographics <- function(df, study_name) {
-  df %>%
-    summarise(
-      Study   = study_name,
-      N       = n(),
-      Age_M   = mean(Age, na.rm = TRUE),
-      Age_SD  = sd(Age, na.rm = TRUE),
-      Age_Min  = min(Age, na.rm = TRUE),
-      Age_Max  = max(Age, na.rm = TRUE),
-      Female_p  = mean(Sex == "Female", na.rm = TRUE) * 100) %>%
-  mutate(
-    `Age M (SD)` = sprintf("%.1f (%.1f)", Age_M, Age_SD),
-    `Age range`  = sprintf("%d–%d", round(Age_Min), round(Age_Max)),
-    `% Female`   = round(Female_p, 1)) %>%
-  select(Study, N, `Age M (SD)`, `Age range`, `% Female`)
-}
-
-summarize_ethnicity <- function(df, study_name) {
-  df %>%
-    count(Ethnicity) %>%
-    mutate(
-      pct = 100 * n / sum(n),
-      value = paste0(n, " (", round(pct, 1), "%)")
-    ) %>%
-    select(Ethnicity, value) %>%
-    pivot_wider(names_from = Ethnicity, values_from = value) %>%
-    mutate(Study = study_name, .before = 1)
-}
-
-
-summarize_spectrum <- function(df, study_name) {
-  df %>%
-    count(`Political spectrum (us)`) %>%
-    mutate(
-      pct = 100 * n / sum(n),
-      value = paste0(n, " (", round(pct, 1), "%)")
-    ) %>%
-    select(`Political spectrum (us)`, value) %>%
-    pivot_wider(names_from = `Political spectrum (us)`, values_from = value) %>%
-    mutate(Study = study_name, .before = 1)
-}
-```
-
-```{r}
-# demographics table
-
-wave_demog_tbl <- imap_dfr(
-  wave_2_demog_dfs,
-  ~ summarize_demographics(.x, wave_labels[[.y]] %||% .y))
-
-# main table
-table <- wave_demog_tbl %>%
-  gt() %>%
-  cols_align(align = "left",  columns = c(Study)) %>%
-  cols_align(align = "center", columns = c(N, `% Female`, `Age range`, `Age M (SD)`)) %>%
-  fmt_number(columns = `% Female`, decimals = 1)
-
-table  
-  
-gtsave(table, here("tables", "main_demographics.tex"))
-
-rm(table)
-```
-
-```{r}
-wave_ethnicity_tbl <- imap_dfr(
-  wave_2_demog_dfs,
-  ~ summarize_ethnicity(.x, wave_labels[[.y]] %||% .y))
-
-table <- wave_ethnicity_tbl |>
-  gt() %>%
-  cols_label(
-    `Black/African American` = html("Black/<br>African American"),
-    `Latino/Hispanic`        = html("Latino/<br>Hispanic"),
-    Asian                    = "Asian",
-    White                    = "White") |>
-  
-  fmt_number(columns = -Study, decimals = 1) %>%
-  
-  cols_align(align = "center", 
-             columns = c(Asian, `Black/African American`, 
-                         `Latino/Hispanic`, White))
-
-table
-
-gtsave(table, here("tables", "main_ethnicity.tex"))
-
-rm(table)
-```
-
-```{r}
-wave_spectrum_tbl <- imap_dfr(
-  wave_2_demog_dfs[3:4],
-  ~ summarize_spectrum(.x, wave_labels[[.y]] %||% .y))
-
-table <- wave_spectrum_tbl |>
-  
-  gt() %>%
-  
-  fmt_number(
-    columns = -Study, 
-    decimals = 1
-  ) %>%
-  
-  cols_align(align = "center", columns = c(Conservative, Liberal, Moderate))
-
-table
-
-gtsave(table, here("tables", "main_political_leaning.tex"))
-
-rm(table)
-```
-
-```{r, include=FALSE}
 quiz_df <- readRDS(here("_data", "_participant_scores", "wave_2", "wave_2_quiz_df.RDS"))
 
 quiz_df <- quiz_df |>
@@ -223,6 +89,40 @@ summarize_study <- function(df) {
     pivot_longer(everything(), names_to = "Question", values_to = "N_percent")
 }
 ```
+
+```{r}
+# create a list of dataframes, one for each study
+quiz_dfs <- split.data.frame(quiz_df, quiz_df$Study)
+
+
+table <- lapply(quiz_dfs, summarize_study) %>%
+  
+  bind_rows(.id = "Study") %>%
+  
+  pivot_wider(names_from = Study, values_from = N_percent) %>%
+  
+  gt() %>%
+  
+  cols_label(
+    Question = "Item",
+    lyrics_1 = "Wave: Lyrics 1",
+    lyrics_2 = "Wave: Lyrics 2",
+    speeches_1 = "Wave: Speeches 1",
+    speeches_2 = "Wave: Speeches 2"
+  ) %>%
+  cols_align(
+    align = "center",
+    columns = everything()
+  ) %>%
+  cols_width(everything() ~ px(100))
+
+table
+
+gtsave(table, here("tables", "main_quiz_correctness.tex"))
+
+rm(table, quiz_dfs)
+```
+
 
 ```{r}
 plot_bars <- function(df, 

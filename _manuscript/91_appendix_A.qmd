@@ -325,20 +325,20 @@ make_genre_comparison_table <- function(df,
 colors <- viridis(10, option="plasma") 
 make_removed_counts(lyrics_df, year_bin_range) 
 
-#ggsave(here("images", "figure_A1.pdf"))
+ggsave(here("images", "general_lyric_year.pdf"))
 ```
 <span style="font-size: 80%"><em>Note.</em> “Removed”, "Kept", indicate songs excluded  and included respectively, from the manual screening process. "Annotated" indicate the subset of "Kept" that were reviewed by participants. Bins presented in order of number of songs labelled "Annotated". Each row indicates a decade-range year bin, with x axis labels showing the observed metadata range per year bin.</span>
 
 ```{r}
-table_A1 <- make_apa_freq_table(
+table <- make_apa_freq_table(
   lyrics_df|>rename(`Year Range`= year_bin_range),
   `Year Range`,
   title = md("**Table A1**"),
   subtitle = md("*Frequencies by release year bin*"))
 
-table_A1
+table
 
-#gtsave(table_A1, here("tables", "table_A1.tex"))
+gtsave(table, here("tables", "general_lyric_year.tex"))
 ```
 <span style="font-size: 80%"><em>Note.</em> “Removed” indicates songs excluded due to manual screening criteria. Bins presented in reverse order of number of songs removed. Each row indicates a decade-range year bin, with column Year Range showing the observed metadata range per year bin.</span>
 
@@ -360,21 +360,21 @@ Popularity was extremely exponentially distributed, with an extreme left skew. W
 ```{r}
 colors <- viridis(10, option="plasma") 
 make_removed_counts(lyrics_df, artist_playlist_frequency_bin_label) 
-#ggsave(here("images", "figure_A2.pdf"))
+ggsave(here("images", "general_lyric_popularity.pdf"))
 ```
 <span style="font-size: 80%"><em>Note.</em> “Removed”, "Kept", indicate songs excluded  and included respectively, from the manual screening process. "Annotated" indicate the subset of "Kept" that were reviewed by participants. Bins presented in order of number of songs labelled "Annotated".</span>
 
 ```{r}
-table_A2 <- make_apa_freq_table(
+table <- make_apa_freq_table(
   lyrics_df|>rename(`Artist Popularity`=artist_playlist_frequency_bin_label),
   `Artist Popularity`,
   title = md("**Table A2**"),
   subtitle = md("*Frequencies by artist playlist frequency*"))
 
 
-table_A2
+table
 
-#gtsave(table_A2, here("tables", "table_A2.tex"))
+gtsave(table, here("tables", "general_lyric_popularity.tex"))
 ```
 
 <span style="font-size: 80%"><em>Note.</em> “Removed” indicates songs excluded due to manual screening criteria. Bins presented in reverse order of number of songs removed. Each row indicates a popularity percentile range bin, with column Artist Popularity showing the observed percentile range per popularity bin.</span>
@@ -382,42 +382,41 @@ table_A2
 ### Genre
 
 ```{r}
-table_A3 <- make_genre_comparison_table(lyrics_df,
+table <- make_genre_comparison_table(lyrics_df,
   title = md("**Table A3**"),
   subtitle = md("*Comparison of terms of topic tags of initial pool of 15.4k artists, to secondary pool of 2200 songs*")
 )  %>%
   cols_width(lda_genre_terms ~ px(350), artist_topic_bin_labels ~ px(300))
 
 
-table_A3
+table
 
-#gtsave(table_A3, here("tables", "table_A3.tex"))
+gtsave(table, here("tables", "general_lyric_genre_terms.tex"))
 ```
 
 <span style="font-size: 90%">**Figure A3**  
 *Manual screening outcome by genre*</span>
 
 ```{r screening_by_genre}
-
 make_removed_counts(lyrics_df, artist_topic_bin_labels) +
   theme(legend.position = "top",   legend.box.margin = margin(l = -65) )
 
-#ggsave(here("images", "figure_A3.pdf"))
+ggsave(here("images", "general_lyric_genre.pdf"))
 ```
 
 <span style="font-size: 80%"><em>Note.</em> “Removed”, "Kept", indicate songs excluded  and included respectively, from the manual screening process. "Annotated" indicate the subset of "Kept" that were reviewed by participants. Bins presented in order of number of songs labelled "Annotated". </span>
 
 ```{r}
-table_A4 <- make_apa_freq_table(
+table <- make_apa_freq_table(
   lyrics_df|>rename(`Artist Topic Tags`=artist_topic_bin_labels),
   `Artist Topic Tags`,
   title = md("**Table A4**"),
   subtitle = md("*Frequencies by artist topic*")
 )
 
-table_A4
+table
 
-#gtsave(table_A4, here("tables", "table_A4.tex"))
+gtsave(table, here("tables", "general_lyric_genre.tex"))
 ```
 
 
@@ -428,7 +427,7 @@ table_A4
 
 ```{r}
 make_removed_counts(lyrics_df, topic_label) 
-#ggsave(here("images", "figure_A4.pdf"))
+ggsave(here("images", "general_lyric_topic.pdf"))
 ```
 
 <span style="font-size: 80%"><em>Note.</em> “Removed”, "Kept", indicate songs excluded  and included respectively, from the manual screening process. "Annotated" indicate the subset of "Kept" that were reviewed by participants. Bins presented in order of number of songs labelled "Annotated". </span>
@@ -470,7 +469,7 @@ speech_df |>
   values = c("Democratic" = colors[5], "Republican" = colors[9])) +
   theme(legend.position = "top")
 
-ggsave(here("images", "figure_A5.pdf"))
+ggsave(here("images", "general_speeches_president.pdf"))
 ```
 
 
@@ -507,7 +506,7 @@ combined_summary <- bind_rows(full_summary, sub_summary) %>%
   relocate(sample, .before = party)
 
 # 4) Render as gt table
-table_A5 <- combined_summary %>%
+table <- combined_summary %>%
   gt(groupname_col = "sample") %>%   
     tab_header(
     title = md("**Table A5**"),   
@@ -552,9 +551,9 @@ table_A5 <- combined_summary %>%
   cols_align(align = "center", columns = everything())
 
 
-table_A5
+table
 
-#gtsave(table_A5, here("tables", "table_A5.tex"))
+gtsave(table_A5, here("tables", "general_speeches_party.tex"))
 ``` 
 
 ## Word Counts
@@ -587,6 +586,6 @@ df |>
     y = "Density") +
   theme_apa()
 
-#ggsave(here("images", "figure_A6.pdf"))
+ggsave(here("images", "general_wordcount.pdf"))
 ```
 

@@ -80,7 +80,7 @@ plot_raters <- function(df, metric, name, option){
 
 ### Estimating the number of raters
 
-```{r warning=FALSE, fig.width=6.5}
+```{r warning=FALSE}
 p1 <- plot_raters(
   pilot_2_lyrics_by_row_dfs[[1]] %>% filter(n <= 25), 
   metric = r, "Pearson's r", option = "plasma") + 
@@ -100,10 +100,8 @@ figure_2a <- (p1 /p2) +
         plot.subtitle = element_markdown(hjust = 0), 
         plot.caption = element_markdown(hjust = 0))
 
-figure_2a
-```
+#figure_2a
 
-```{r warning=FALSE, echo=FALSE}
 p1 <- plot_raters(
   pilot_2_speeches1_by_row_dfs[[1]] %>% filter(n >= 25), 
   metric = r, "Pearson's r", option = "viridis") + 
@@ -122,10 +120,8 @@ figure_2b <- (p1 /p2) +
         plot.subtitle = element_markdown(hjust = 0), 
         plot.caption = element_markdown(hjust = 0))
 
-figure_2b
-```
+#figure_2b
 
-```{r warning=FALSE, echo=FALSE}
 p1 <- plot_raters(
   pilot_2_speeches2_by_row_dfs[[1]] %>% filter(n >= 25), 
   metric = r, "Pearson's r", option = "viridis") + 
@@ -144,19 +140,8 @@ figure_2c <- (p1 /p2) +
         plot.subtitle = element_markdown(hjust = 0), 
         plot.caption = element_markdown(hjust = 0))
 
-figure_2c
-```
+#figure_2c
 
-```{r include=FALSE, warning=FALSE, fig.width=6.5}
-# figure_3 <- (figure_3a  | figure_3b) +  
-#   plot_layout(guides = "collect") +
-#   plot_annotation(tag_levels = 'A') &
-#   theme(legend.position = "bottom")
-
-#ggsave(here("images", "figure_3.pdf"),figure_3)
-```
-
-```{r}
 right_group <- (figure_2b | figure_2c) +
   plot_layout(guides = "collect") &
   theme(legend.position = "bottom",
@@ -170,7 +155,9 @@ figure <- (figure_2a| right_group) +
 
 figure
 
-ggsave(here("images", "figure_2.pdf"),figure)
+ggsave(here("images", "pilot_reliability_by_n.pdf"),figure)
+
+rm(figure_2a, figure_2b, figure_2c, figure)
 ```
 
 
@@ -194,7 +181,7 @@ pilot_2_speeches2_agreement_plots <- plot_summary_by_metric(
   option = "viridis")
 ```
 
-```{r}
+```{r include=FALSE}
 p1 <- pilot_2_lyrics_agreement_plots[[1]] 
 
 p1 <- p1 + 
@@ -203,10 +190,6 @@ p1 <- p1 +
         plot.subtitle = element_markdown(hjust = 0), 
         plot.caption = element_markdown(hjust = 0))
 
-p1
-```
-
-```{r}
 p1_1 <- pilot_2_lyrics_agreement_plots[[2]]
 p1_2 <- pilot_2_lyrics_agreement_plots[[3]]
 p1_3 <- pilot_2_lyrics_agreement_plots[[4]]
@@ -219,12 +202,11 @@ p2 <- (p1_1 | p1_2) / (p1_3 | p1_4) +
         plot.subtitle = element_markdown(hjust = 0), 
         plot.caption = element_markdown(hjust = 0))
 
-p2 
-```
-```{r include=FALSE}
-figure_3 <- p1 / p2
+figure <- p1 / p2
 
-ggsave(here("images", "figure_3.pdf"), height=8.5)
+figure
+
+ggsave(here("images", "pilot_lyrics_reliability_by_value.pdf"), height=8.5)
 ```
 
 ```{r}
@@ -236,10 +218,6 @@ p1 <- p1 +
         plot.subtitle = element_markdown(hjust = 0), 
         plot.caption = element_markdown(hjust = 0))
 
-p1
-```
-
-```{r}
 p1_1 <- pilot_2_speeches1_agreement_plots[[2]]
 p1_2 <- pilot_2_speeches1_agreement_plots[[3]]
 p1_3 <- pilot_2_speeches1_agreement_plots[[4]]
@@ -252,13 +230,11 @@ p2 <- (p1_1 | p1_2) / (p1_3 | p1_4) +
         plot.subtitle = element_markdown(hjust = 0), 
         plot.caption = element_markdown(hjust = 0))
 
-p2 
-```
+figure <- p1 / p2
 
-```{r include=FALSE}
-figure_4 <- p1 / p2
+figure
 
-ggsave(here("images", "figure_4.pdf"), height=8.5)
+ggsave(here("images", "pilot_speeches1_reliability_by_value.pdf"), height=8.5)
 ```
 
 ```{r}
@@ -270,10 +246,6 @@ p1 <- p1 +
         plot.subtitle = element_markdown(hjust = 0), 
         plot.caption = element_markdown(hjust = 0))
 
-p1
-```
-
-```{r}
 p1_1 <- pilot_2_speeches2_agreement_plots[[2]]
 p1_2 <- pilot_2_speeches2_agreement_plots[[3]]
 p1_3 <- pilot_2_speeches2_agreement_plots[[4]]
@@ -285,13 +257,10 @@ p2 <- ((p1_1 / p1_2) | (p1_3 / p1_4)) +
         plot.subtitle = element_markdown(hjust = 0), 
         plot.caption = element_markdown(hjust = 0))
 
-p2
-```
+figure <- p1 / p2
+figure
 
-```{r include=FALSE}
-figure_5 <- p1 / p2
-
-ggsave(here("images", "figure_5.pdf"), height=8.5)
+ggsave(here("images", "pilot_speeches2_reliability_by_value.pdf"), height=8.5)
 ```
 
 
@@ -331,77 +300,25 @@ quiz_dfs <- lapply(pilot_2_dfs, function(df){
       Quiz3_1 = factor(Quiz3_1, levels = c("NA","-1","0","1","2","3","4","5","6","7"), ordered = TRUE)
 )})
 
-apa_theme <- 
+df <- bind_rows(quiz_dfs, .id = "Pilot")
+```
+
+```{r include=FALSE}
+apa_theme <-
   theme_classic(base_size = 12, base_family = "sans") +
   theme(
     axis.title = element_text(size = 12),
     axis.text  = element_text(size = 10),
-    legend.position = "bottom",          
+    legend.position = "bottom",
     legend.title = element_text(size = 11),
     legend.text  = element_text(size = 10),
-    panel.border = element_blank(),      
+    panel.border = element_blank(),
     axis.line = element_line(color = "black"),
-    strip.background = element_blank(),  
+    strip.background = element_blank(),
     strip.text = element_text(size = 11)
   )
-
-df <- bind_rows(quiz_dfs, .id = "Pilot")
 ```
 
-```{r}
-summarize_study <- function(df) {
-  df %>%
-    summarise(
-      Q1 = sprintf("%d (%.1f%%)", sum(Quiz1, na.rm = TRUE),
-                      mean(Quiz1, na.rm = TRUE) * 100),
-      Q2 = sprintf("%d (%.1f%%)", sum(Quiz2, na.rm = TRUE),
-                      mean(Quiz2, na.rm = TRUE) * 100),
-      Q3 = sprintf("%d (%.1f%%)", sum(Quiz3, na.rm = TRUE),
-                      mean(Quiz3, na.rm = TRUE) * 100)
-    ) %>%
-    
-    pivot_longer(everything(), names_to = "Question", values_to = "N_percent")
-}
-
-table_4 <- lapply(quiz_dfs, summarize_study) %>%
-  
-  bind_rows(.id = "Study") %>%
-  
-  pivot_wider(names_from = Study, values_from = N_percent) %>%
-  
-  gt() %>%
-  
-  tab_header(
-    title = md("**Table 4**"),
-    subtitle = md("*Pilot Studies: Quiz Item Correctness*")
-  ) %>%
-  cols_label(
-    Question = "Item",
-    lyrics = "Pilot: Lyrics",
-    speeches1 = "Pilot: Speeches 1",
-    speeches2 = "Pilot: Speeches 2"
-  ) %>%
-  cols_align(
-    align = "center",
-    columns = everything()
-  ) %>%
-  cols_width(everything() ~ px(100)) |>
-  tab_options(
-    table.font.size = 12,
-    heading.align = "left",
-    table.border.top.width = px(0),       # remove top rule
-    table.border.bottom.width = px(0),    # remove bottom rule
-    table_body.hlines.width = px(0),   # removes horizontal lines inside body
-    table_body.vlines.width = px(0)    # removes vertical lines
-  ) %>%
-  tab_source_note(
-    
-    md("*Note.* Entries are number and percentage of participants who answered correctly. Quiz responses were not used to exclude participants in pilot studies."))
-
-table_4
-
-#gtsave(table_4, here("tables", "table_4.tex"))
-```
 
 ```{r include=FALSE}
 plot_bars <- function(df, column1, column2, option) {
@@ -414,6 +331,8 @@ plot_bars <- function(df, column1, column2, option) {
     geom_bar() +
     scale_fill_viridis_d(option = option,
                          name = "Response:") +
+    
+    scale_y_continuous(limits = c(0, 225)) +
     
     scale_x_discrete(drop = FALSE)}
 ```
@@ -438,50 +357,8 @@ p3 <- plot_bars(df, Quiz3_1, Quiz3, option = "D") +
         plot.subtitle = element_markdown(hjust = 0), 
         plot.caption = element_markdown(hjust = 0))
 
-ggsave(here("images", "figure_6.pdf"))
+ggsave(here("images", "pilot_quiz_correctness.pdf"))
 ```
 
-```{r}
-plot_stacked_bars <- function(df, column, option) {
-  
-  df |>
-    ggplot(aes({{column}}, fill = as.factor(Pilot))) + 
-    geom_bar() +
-    scale_fill_viridis_d(
-      option = option,
-      name = "Pilot Study: ",
-      labels = c("lyrics" = "Lyrics", 
-                 "speeches1"  = "Speeches #1", 
-                 "speeches2"  = "Speeches #2")) +
-    scale_y_continuous(limits = c(0, 225)) +
-    scale_x_discrete(drop = FALSE)
-}
-```
 
-```{r echo=FALSE}
-p1 <- plot_stacked_bars(df, Quiz1_1, option = "C") +
-  xlab("Q1 Responses") + ylab("Count") +
-  apa_theme
-
-p2 <- plot_stacked_bars(df, Quiz2_1, option = "C") +
-  xlab("Q2 Responses") + ylab("Count") +
-  apa_theme
-
-p3 <- plot_stacked_bars(df, Quiz3_1, option = "C") +
-  xlab("Q3 Responses") + ylab("") +
-  apa_theme
-
-(p1 | p2 | p3) +
-    plot_layout(guides = "collect") &
-    # plot_annotation(
-    #   title = "**Figure 10**",
-    #   subtitle = "*Participant Quiz Responses*", 
-    #   caption = md("*Note*. Bars represent raw counts of responses, including NA as a category, for all participants that answered incorrectly.<br> Colors represent specific pilot study. Correct response for Q1 was 5, 6,or 7. Correct response for Q2 was NA. <br> Correct response for Q3 was -1, 0, or 1.")) &
-    theme(legend.position = "bottom", 
-          plot.title = element_markdown(hjust = 0), 
-          plot.subtitle = element_markdown(hjust = 0), 
-          plot.caption = element_markdown(hjust = 0))
-
-ggsave(here("images", "figure_C1.pdf"))
-```
 

@@ -1,12 +1,12 @@
 ## Survey Flow
 
 ```{r}
-library(DiagrammeR)
-library(DiagrammeRsvg)
-library(rsvg)
-library(here)
+library(DiagrammeR)     # flow charts
+library(DiagrammeRsvg)  # convert flow chart to svg
+library(rsvg)           # convert svg to other formats
+library(here)           # file logistics
 
-images_path <- here("_manuscript", "images")
+images_path <- here("images")
 ```
 
 
@@ -20,14 +20,6 @@ digraph survey_flow {
   # Main vertical flow
   Consent -> SSVS -> General_Instructions -> Quiz -> Final_Instructions -> Randomizer1 -> AttentionCheck -> Randomizer2 -> Debrief -> Prolific3
 
-  # Exit paths (horizontal, off to the side)
-  Consent -> Prolific1 [label = \"No Consent\", fontsize = 20, constraint=false]
-  Quiz -> Prolific2 [label = \"  < 2 out of 3\", fontsize = 20, constraint=false]
-
-
-  # Align exit nodes horizontally
-  { rank = same; Prolific1 Prolific2 Prolific3}
-
   # Node colors
   Consent [fillcolor = gainsboro]
   SSVS [fillcolor = lightblue]
@@ -38,17 +30,12 @@ digraph survey_flow {
   Randomizer2 [label = \"Randomizer:\\n 7 Items\", fillcolor = thistle1]
   AttentionCheck [fillcolor = gainsboro]
   Debrief [fillcolor = gainsboro]
-  Prolific1 [label = \"Prolific:\\n No Consent\", fillcolor = mistyrose]
-  Prolific2 [label = \"Prolific:\\n Failed Quiz\", fillcolor = mistyrose]
   Prolific3 [label = \"Prolific:\\n End of Survey\", fillcolor = mistyrose]
 }
 ")
-```
 
-```{r}
 diagram
 ```
-
 
 ```{r}
 # Export as SVG

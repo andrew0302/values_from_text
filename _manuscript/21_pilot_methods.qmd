@@ -25,8 +25,7 @@ pilot_2_dfs[['speeches2']] <- pilot_2_dfs[['speeches2']] |>
 pilot_2_demog_dfs <- lapply(pilot_2_dfs, function(df){
   df <- df |> 
     select(participant_ID, Age, Sex, `Ethnicity`) |> 
-    unique()
-  })
+    unique()})
 
 #re-add spectrum to speeches2 df
 pilot_2_demog_dfs[['speeches2']] <- merge(
@@ -43,9 +42,8 @@ rm(pilot_2_dfs)
 
 
 # convert age to numeric
-pilot_2_demog_dfs <- lapply(
-  pilot_2_demog_dfs, 
-  function(df){df|>mutate(Age = as.numeric(Age))})
+pilot_2_demog_dfs <- lapply(pilot_2_demog_dfs, 
+                            function(df){df|>mutate(Age = as.numeric(Age))})
 
 # recode Asian ethnicity
 pilot_2_demog_dfs[["lyrics"]] <- pilot_2_demog_dfs[["lyrics"]] |> 
@@ -58,6 +56,7 @@ pilot_2_demog_dfs[["speeches1"]]<- pilot_2_demog_dfs[["speeches1"]] |>
     Ethnicity == "East Asian" | Ethnicity == "South East Asian" | Ethnicity == "South Asian" ~ "Asian", 
     .default = Ethnicity))
 
+# Remove expired data
 pilot_2_demog_dfs[["speeches2"]] <- pilot_2_demog_dfs[["speeches2"]] |> mutate(Ethnicity = case_when(
   Ethnicity == "DATA_EXPIRED" ~ NA, 
   .default = Ethnicity
@@ -68,9 +67,7 @@ pilot_labels <- c(
   lyrics     = "Pilot 1 (Lyrics)",
   speeches1  = "Pilot 2 (Speeches: Ethnicity)",
   speeches2  = "Pilot 3 (Speeches: Political)")
-```
 
-```{r, include=FALSE}
 # details for all studies
 pilot_2_demog_df <- pilot_2_demog_dfs |> bind_rows(.id = "study")
 ```
@@ -83,26 +80,7 @@ $SD_{\text{age}} = `r round(sd(pilot_2_demog_df$Age, na.rm = TRUE), 1)`$)
 
 
 ```{r, include=FALSE}
-# general apa-style formatting
-format_apa_table <- function(gt_tbl, title, subtitle = NULL) {
-  gt_tbl %>%
-    tab_header(
-      title = title, 
-      subtitle = subtitle
-    ) %>%
-    tab_options(
-      table.font.size = 12,
-      heading.align = "left",      
-      column_labels.border.bottom.width = px(1),  # header line
-      table_body.hlines.width           = px(0),  # no row lines
-      table_body.vlines.width           = px(0),  # no column lines
-      table.border.top.width            = px(0),  # remove top rule
-      table.border.bottom.width         = px(0),  # remove bottom rule
-      data_row.padding                  = px(2)
-    )
-}
-
-
+# summary functions
 summarize_demographics <- function(df, study_name) {
   df %>%
     summarise(
@@ -148,32 +126,30 @@ summarize_spectrum <- function(df, study_name) {
 
 ```{r pilot_demogs}
 # demographics table
-
-table_1 <- imap_dfr(
+table <- imap_dfr(
   pilot_2_demog_dfs,
   ~ summarize_demographics(.x, pilot_labels[[.y]] %||% .y))
 
-table_1 <- table_1 %>%
+table <- table %>%
   gt() %>%
   cols_align(align = "left",  columns = c(Study)) %>%
   cols_align(align = "center", columns = c(N, `% Female`, `Age range`, `Age M (SD)`)) %>%
-  fmt_number(columns = `% Female`, decimals = 1) %>%
-  format_apa_table(md("**Table 1**"), md("*Participant demographics — Pilot studies*"))
+  fmt_number(columns = `% Female`, decimals = 1) 
 
-table_1
+table
 
-#gtsave(table_1, here("tables", "table_1.tex"))
+gtsave(table, here("tables", "pilot_demographics.tex"))
 
-rm(table_1)
+rm(table)
 ```
 
 
 ```{r}
-table_2 <- imap_dfr(
+table <- imap_dfr(
   pilot_2_demog_dfs[1:2], 
   ~ summarize_ethnicity(.x, pilot_labels[[.y]] %||% .y)) 
 
-table_2 <- table_2 |>
+table <- table |>
   gt() %>%
   cols_label(
     `Black/African American` = html("Black/<br>African American"),
@@ -185,37 +161,32 @@ table_2 <- table_2 |>
   
   cols_align(align = "center", 
              columns = c(Asian, `Black/African American`, 
-                         `Latino/Hispanic`, White)) %>%
-  
-format_apa_table(md("**Table 2**"), md("*Participant ethnicity — Pilot studies*"))
+                         `Latino/Hispanic`, White))
 
-table_2
+table
 
-#gtsave(table_2, here("tables", "table_2.tex"))
+gtsave(table, here("tables", "pilot_ethnicity.tex"))
 
-rm(table_2)
+rm(table)
 ```
 
 ```{r}
-table_3 <- pilot_spectrum_tbl <- imap_dfr(
+table <- pilot_spectrum_tbl <- imap_dfr(
   pilot_2_demog_dfs["speeches2"],
   ~ summarize_spectrum(.x, pilot_labels[[.y]] %||% .y))
 
-table_3 <- pilot_spectrum_tbl |>
+table <- pilot_spectrum_tbl |>
   gt() %>%
   
   fmt_number(
     columns = -Study, 
-    decimals = 1
-  ) %>%
+    decimals = 1) %>%
   
-  cols_align(align = "center", columns = c(Conservative, Liberal, Moderate)) %>%
-  
-  format_apa_table(md("**Table 3**"), md("*Participants by political leaning — Main studies*"))
+  cols_align(align = "center", columns = c(Conservative, Liberal, Moderate)) 
 
-table_3
+table
 
-#gtsave(table_3, here("tables", "table_3.tex"))
+gtsave(table, here("tables", "pilot_political_leaning.tex"))
 
-rm(table_3)
+rm(table)
 ```
