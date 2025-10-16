@@ -163,6 +163,7 @@ rm(figure_2a, figure_2b, figure_2c, figure)
 
 ### Exploring annotator sample strata
 
+
 ```{r include=FALSE}
 # compute plots
 pilot_2_lyrics_agreement_plots <- plot_summary_by_metric(
@@ -264,101 +265,7 @@ ggsave(here("images", "pilot_speeches2_reliability_by_value.pdf"), height=8.5)
 ```
 
 
-### Exploring Quiz Results
 
-```{r include=FALSE, warning=FALSE, echo=FALSE}
-pilot_2_dfs <- readRDS(file = here("_data", "_participant_scores", "wave_2", "pilot_2_dfs.RDS"))
-
-
-# subset pilot dfs
-quiz_dfs <- lapply(pilot_2_dfs, function(df){
- 
-  df |>
-    select(participant_ID, 
-           Quiz1_1, Quiz2_1, Quiz3_1, 
-           Quiz1, Quiz2, Quiz3) |>
-    
-    unique() |>
-    
-    # recalculate Quiz 3
-    mutate(Quiz3 = case_when(
-      Quiz3_1 == "-1" | Quiz3_1 == "0" | Quiz3_1 == "1"  ~ "1", 
-      .default = "0")) |>
-    
-    # convert to numeric
-    mutate(
-      Quiz1 = as.numeric(Quiz1), 
-      Quiz2 = as.numeric(Quiz2), 
-      Quiz3 = as.numeric(Quiz3)) |>
-    
-    mutate(
-      Quiz1_1 = ifelse(is.na(Quiz1_1), "NA", as.character(Quiz1_1)),
-      Quiz1_1 = factor(Quiz1_1, levels = c("NA","-1","0","1","2","3","4","5","6","7"), ordered = TRUE),
-      Quiz2_1 = ifelse(is.na(Quiz2_1), "NA", as.character(Quiz2_1)),
-      Quiz2_1 = factor(Quiz2_1, levels = c("NA","-1","0","1","2","3","4","5","6","7"), ordered = TRUE),
-      Quiz3_1 = ifelse(is.na(Quiz3_1), "NA", as.character(Quiz3_1)),
-      Quiz3_1 = factor(Quiz3_1, levels = c("NA","-1","0","1","2","3","4","5","6","7"), ordered = TRUE)
-)})
-
-df <- bind_rows(quiz_dfs, .id = "Pilot")
-```
-
-```{r include=FALSE}
-apa_theme <-
-  theme_classic(base_size = 12, base_family = "sans") +
-  theme(
-    axis.title = element_text(size = 12),
-    axis.text  = element_text(size = 10),
-    legend.position = "bottom",
-    legend.title = element_text(size = 11),
-    legend.text  = element_text(size = 10),
-    panel.border = element_blank(),
-    axis.line = element_line(color = "black"),
-    strip.background = element_blank(),
-    strip.text = element_text(size = 11)
-  )
-```
-
-
-```{r include=FALSE}
-plot_bars <- function(df, column1, column2, option) {
-  
-  df |> 
-    mutate({{column2}} := fct_recode(as.factor({{column2}}), 
-                                     "Correct"   = "1","Incorrect" = "0")) |>
-        
-    ggplot(aes({{column1}}, fill = as.factor({{column2}}))) + 
-    geom_bar() +
-    scale_fill_viridis_d(option = option,
-                         name = "Response:") +
-    
-    scale_y_continuous(limits = c(0, 225)) +
-    
-    scale_x_discrete(drop = FALSE)}
-```
-
-```{r}
-p1 <- plot_bars(df, Quiz1_1, Quiz1, option = "D") +
-  xlab("Q1 Responses") + ylab("Count") +
-  apa_theme
-
-p2 <- plot_bars(df, Quiz2_1, Quiz2, option = "D") +
-  xlab("Q2 Responses") + ylab("Count") +
-  apa_theme
-
-p3 <- plot_bars(df, Quiz3_1, Quiz3, option = "D") +
-  xlab("Q3 Responses") + ylab("") +
-  apa_theme
-
-(p1 | p2 | p3) +
-  plot_layout(guides = "collect") &     
-  theme(legend.position = "bottom", 
-        plot.title = element_markdown(hjust = 0), 
-        plot.subtitle = element_markdown(hjust = 0), 
-        plot.caption = element_markdown(hjust = 0))
-
-ggsave(here("images", "pilot_quiz_correctness.pdf"))
-```
 
 
 

@@ -26,48 +26,52 @@ values <- c("POWER", "ACHIEVEMENT", "HEDONISM",
 
 
 ```{r}
-plots <- lapply(pilot_dfs, function(df){
-  
-  gg_miss_var(df%>%select(all_of(values)), show_pct = TRUE) + 
-    ylim(0, 50) +
-    xlab("") +
-    theme_classic()
-  
-})
+# missingness: save for main
 
-p1 <- plots[['lyrics']] + ggtitle('lyrics')
-p2 <- plots[['speeches1']] + ggtitle('speeches1')
-p3 <- plots[['speeches2']] + ggtitle('speeches2')
-
-(p1 | p2 | p3)
+# plots <- lapply(pilot_dfs, function(df){
+#   
+#   gg_miss_var(df%>%select(all_of(values)), show_pct = TRUE) + 
+#     ylim(0, 50) +
+#     xlab("") +
+#     theme_classic()
+#   
+# })
+# 
+# p1 <- plots[['lyrics']] + ggtitle('lyrics')
+# p2 <- plots[['speeches1']] + ggtitle('speeches1')
+# p3 <- plots[['speeches2']] + ggtitle('speeches2')
+# 
+# (p1 | p2 | p3)
 ```
 
 
 ```{r}
-plots <- lapply(pilot_dfs, function(df){
-  
-  df <- df %>% select(item_ID, participant_ID, all_of(values))%>%
-                pivot_longer(cols = values, names_to = 'value', values_to = 'score')
-  
-  df %>%
-    ggplot(aes(x=score, y=value, fill = value, alpha = .7)) +
-    geom_density_ridges() +
-    theme_minimal() +
-    theme(legend.position="none") +
-    #xlim(-1, 7) 
-    scale_x_continuous(breaks = seq(-1, 7, 1))
-})
+# save for main
 
-p1 <- plots[['lyrics']] 
-p2 <- plots[['speeches1']] + ylab("")
-p3 <- plots[['speeches2']] + ylab("")
-
-(p1 | p2 | p3)
+# plots <- lapply(pilot_dfs, function(df){
+#   
+#   df <- df %>% select(item_ID, participant_ID, all_of(values))%>%
+#                 pivot_longer(cols = values, names_to = 'value', values_to = 'score')
+#   
+#   df %>%
+#     ggplot(aes(x=score, y=value, fill = value, alpha = .7)) +
+#     geom_density_ridges() +
+#     theme_classic() +
+#     theme(legend.position="none") +
+#     #xlim(-1, 7) 
+#     scale_x_continuous(breaks = seq(-1, 7, 1))
+# })
+# 
+# p1 <- plots[['lyrics']] 
+# p2 <- plots[['speeches1']] + ylab("")
+# p3 <- plots[['speeches2']] + ylab("")
+# 
+# (p1 | p2 | p3)
 ```
 
 
 ```{r}
-pilot_dfs <- lapply(pilot_dfs, function(df){
+plot_dfs <- lapply(pilot_dfs, function(df){
   
   df %>% mutate(c = case_when(
     c == "Completely Confident" ~ 5, 
@@ -77,31 +81,27 @@ pilot_dfs <- lapply(pilot_dfs, function(df){
     c == "Completely Unconfident" ~ 1
   ))
 })
-```
 
-```{r}
-plots <- lapply(pilot_dfs, function(df){
-  df %>% ggplot(aes(x=c)) +
+plots <- lapply(names(plot_dfs), function(name) {
+  df <- plot_dfs[[name]]
+  ggplot(df, aes(x = c)) +
     geom_histogram(bins = 5) +
-    theme_minimal() 
+    theme_classic() +
+    labs(title = name) +
+    xlab("Confidence") + ylab("Count")
 })
+names(plots) <- names(plot_dfs)
 
-plots[['lyrics']]
-plots[['speeches1']]
-plots[['speeches2']]
 
-plot_grid(plots[['lyrics']], plots[['speeches1']], plots[['speeches2']], 
-          labels = c('lyrics', 'speeches1', 'speeches2'))
+p1 <- plots[['lyrics']]
+p2 <- plots[['speeches1']]
+p3 <- plots[['speeches2']]
+
+pilot_confidence_plot <- (p1 | p2 | p3 )
 ```
 
 ```{r}
-sapply(pilot_dfs[['lyrics']]   %>% select(c), function(x) prop.table(table(x))) %>% as.data.frame()
-sapply(pilot_dfs[['speeches1']] %>% select(c), function(x) prop.table(table(x))) %>% as.data.frame()
-sapply(pilot_dfs[['speeches2']] %>% select(c), function(x) prop.table(table(x))) %>% as.data.frame()
-```
-
-```{r}
-pilot_dfs <- lapply(pilot_dfs, function(df){
+plot_dfs <- lapply(plot_dfs, function(df){
   
   df %>% mutate(subjective = case_when(
     `subjective ` == "Completely subjective" ~ 7, 
@@ -113,138 +113,33 @@ pilot_dfs <- lapply(pilot_dfs, function(df){
     `subjective ` == "Completely objective" ~ 1
   ))
 })
-```
 
-```{r}
-sapply(pilot_dfs[['lyrics']]   %>% select(subjective), function(x) prop.table(table(x))) %>% as.data.frame()
-sapply(pilot_dfs[['speeches1']] %>% select(subjective), function(x) prop.table(table(x))) %>% as.data.frame()
-sapply(pilot_dfs[['speeches2']] %>% select(subjective), function(x) prop.table(table(x))) %>% as.data.frame()
-```
-
-```{r}
-plots <- lapply(pilot_dfs, function(df){
-  df %>% ggplot(aes(x=subjective)) +
+plots <- lapply(names(plot_dfs), function(name) {
+  df <- plot_dfs[[name]] |> 
+    select(participant_ID, subjective) |> 
+    unique()
+  
+  ggplot(df, aes(x = subjective)) +
     geom_histogram(bins = 7) +
-    theme_minimal() 
+    theme_classic() +
+    labs(title = name) +
+    xlab("Subjectivity") + ylab("Count")
 })
+names(plots) <- names(plot_dfs)
 
-plots[['lyrics']]
-plots[['speeches1']]
-plots[['speeches2']]
 
-plot_grid(plots[['lyrics']], plots[['speeches1']], plots[['speeches2']], 
-          labels = c('lyrics', 'speeches1', 'speeches2'))
+p1 <- plots[['lyrics']]
+p2 <- plots[['speeches1']]
+p3 <- plots[['speeches2']]
+
+pilot_subjectivity_plot <- (p1 | p2 | p3 )
 ```
 
 ```{r}
-lapply(pilot_dfs, function(df){
-  df %>% 
-    group_by(item_ID) %>%
-    summarize(mean_c = mean(c), 
-              pct_miss = mean(is.na(r))) %>%
-    arrange(mean_c)
-})
+(pilot_confidence_plot / pilot_subjectivity_plot) + 
+  plot_annotation(tag_levels = "A")
 ```
 
-```{r}
-plots <- lapply(pilot_dfs, function(df){
-  df %>% 
-    dplyr::select(participant_ID, item_ID, r) %>% 
-    pivot_wider(names_from = item_ID, values_from = r) %>%
-    select(-participant_ID) %>%
-    gg_miss_var(show_pct = T)
-})
-plots[['lyrics']]
-plots[['speeches1']]
-plots[['speeches2']]
-
-plot_grid(plots[['lyrics']], plots[['speeches1']], plots[['speeches2']], 
-          labels = c('lyrics', 'speeches1', 'speeches2'))
-```
-
-```{r}
-pilot_dfs[[1]] %>% filter(item_ID == "114170086") %>%
-  select(r) %>%
-  filter(!is.na(r))
-
-
-pilot_dfs[[1]] %>% filter(item_ID == "102975974") %>%
-  select(r) %>%
-  filter(!is.na(r))
-```
-
-```{r}
-pilot_dfs[[2]] %>% filter(item_ID == "0005") %>%
-  select(r) %>%
-  filter(!is.na(r))
-
-pilot_dfs[[2]] %>% filter(item_ID == "0002") %>%
-  select(r) %>%
-  filter(!is.na(r))
-```
-
-```{r}
-pilot_dfs[[3]] %>% filter(item_ID == "0289") %>%
-  select(r) %>%
-  filter(!is.na(r))
-
-pilot_dfs[[3]] %>% filter(item_ID == "0091") %>%
-  select(r) %>%
-  filter(!is.na(r))
-```
-
-```{r}
-lapply(pilot_dfs, function(df){
-  
-  words <- df %>% 
-    select(r) %>%
-    filter(! is.na(r)) %>%
-    unnest_tokens(word, r) %>%
-    anti_join(get_stopwords()) %>%
-    count(word, sort=TRUE) %>%
-    filter(word != "lyrics") %>%
-    filter(word != "speech")
-  
-  wordcloud(words = words$word, 
-            freq = words$n, 
-            min.freq = 1, 
-            max.words = 200, 
-            random.order = TRUE, 
-            rot.per=0.45, 
-            colors = brewer.pal(8, "Dark2"), 
-            scale=c(3, .5))
-})
-```
-
-```{r}
-df <- pilot_dfs[[1]] %>% select(debrief) %>% filter(! is.na(debrief)) %>% unique()
-df <- pilot_dfs[[2]] %>% select(debrief) %>% filter(! is.na(debrief)) %>% unique()
-df <- pilot_dfs[[3]] %>% select(debrief) %>% filter(! is.na(debrief)) %>% unique()
-```
-
-
-```{r}
-lapply(pilot_dfs, function(df){
-  
-  words <- df %>% 
-    select(debrief) %>%
-    filter(! is.na(debrief)) %>%
-    unnest_tokens(word, debrief) %>%
-    anti_join(get_stopwords()) %>%
-    count(word, sort=TRUE) %>%
-    filter(word != "lyrics") %>%
-    filter(word != "speech")
-  
-  wordcloud(words = words$word, 
-            freq = words$n, 
-            min.freq = 1, 
-            max.words = 200, 
-            random.order = TRUE, 
-            rot.per=0.45, 
-            colors = brewer.pal(8, "Dark2"), 
-            scale=c(3, .5))
-})
-```
 
 ```{r}
 df <- pilot_dfs[[1]] %>% 
@@ -258,22 +153,23 @@ df <- pilot_dfs[[1]] %>%
          Q2_1  # percentage of music lib
          ) %>%
   unique()
-```
 
-```{r}
 df %>%
   ggplot(aes(x=as.numeric(Q2_1))) +
-  geom_histogram() +
-  geom_vline(xintercept = median(as.numeric(df$Q2_1)), color = 'red') +
-  theme_minimal()
+  geom_histogram(bins=10, aes(y=..density..)) +
+  geom_density() +
+  xlab("Music Library Percentage") + ylab("Count") + 
+  theme_classic()
 ```
 
 ```{r}
-df <- df %>% 
-  select(-Q2_1) %>%
+df |>
+  
+  select(-Q2_1) |>
   pivot_longer(cols = paste0('Q1_', seq(1, 6)), 
                names_to = 'question', 
-               values_to = 'response') %>%
+               values_to = 'response') |>
+  
   mutate(response = case_when(
     response == "Strongly agree" ~ 7, 
     response == "Agree" ~ 6, 
@@ -281,26 +177,25 @@ df <- df %>%
     response == "Neither agree nor disagree" ~ 4, 
     response == "Somewhat disagree" ~ 3, 
     response == "Disagree" ~ 2, 
-    response == "Strongly disagree" ~ 1, 
-  )) %>%
+    response == "Strongly disagree" ~ 1)) |>
+  
   mutate(question = case_when(
     question == 'Q1_1' ~ "I prefer music that contains lyrics over music that does not", 
     question == 'Q1_2' ~ "My favorite songs all have lyrics", 
     question == 'Q1_3' ~ "I skip songs that don't have lyrics", 
     question == 'Q1_4' ~ "If a song has lyrics that I don't like, I skip it", 
     question == 'Q1_5' ~ "I listen to music in languages that I dont' speak",
-    question == 'Q1_6' ~ "I look at the lyrics of songs in the apps of streaming services that I use"
-  ))
-```
+    question == 'Q1_6' ~ "I look at the lyrics of songs in the apps of streaming services that I use")) |>
+  
+  mutate(
+    question = fct_reorder(question, response, .fun = median, na.rm = TRUE)) |>
 
-```{r}
-df %>%
-  ggplot(aes(x=response, y=question, fill = question, alpha = .7)) +
-    geom_density_ridges() +
-    theme_minimal() +
+  ggplot(aes(x=response, y=question, fill = question)) +
+    geom_density_ridges(alpha=.8, linewidth= .3) +
+    theme_classic() +
     scale_x_continuous(breaks = seq(1, 7, 1)) +
-    scale_fill_viridis_d(option = "magma") +
-    scale_y_discrete(labels = function(x) str_wrap(x, width = 35)) +
+    scale_fill_viridis_d(option = "inferno") +
+    scale_y_discrete(labels = function(x) str_wrap(x, width = 30), expand = expansion(mult = c(0.02, 0.35))) +
     ylab("") + xlab("Response") +
     theme(legend.position="none", axis.text.y = element_text(size = 12))
 ```

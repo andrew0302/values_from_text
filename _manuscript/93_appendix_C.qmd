@@ -4,6 +4,10 @@
 library("here")       # file logistics
 library("tidyverse")  # code logistics
 library("gt")         # rendering tables
+library("patchwork")
+library("rlang")
+library("ggtext")     # text plots
+library("ggridges")   # joy plots
 ```
 
 ```{r, include=FALSE}
@@ -92,156 +96,142 @@ gtsave(table, here("tables", "pilot_ethnicity_speeches2.tex"))
 rm(table)
 ```
 
-### Exploring Quiz Results
 
-```{r include=FALSE, warning=FALSE, echo=FALSE}
+
+```{r include=FALSE}
 pilot_2_dfs <- readRDS(file = here("_data", "_participant_scores", "wave_2", "pilot_2_dfs.RDS"))
 
-
-# subset pilot dfs
-quiz_dfs <- lapply(pilot_2_dfs, function(df){
- 
-  df |>
-    select(participant_ID, 
-           Quiz1_1, Quiz2_1, Quiz3_1, 
-           Quiz1, Quiz2, Quiz3) |>
-    
-    unique() |>
-    
-    # recalculate Quiz 3
-    mutate(Quiz3 = case_when(
-      Quiz3_1 == "-1" | Quiz3_1 == "0" | Quiz3_1 == "1"  ~ "1", 
-      .default = "0")) |>
-    
-    # convert to numeric
-    mutate(
-      Quiz1 = as.numeric(Quiz1), 
-      Quiz2 = as.numeric(Quiz2), 
-      Quiz3 = as.numeric(Quiz3)) |>
-    
-    mutate(
-      Quiz1_1 = ifelse(is.na(Quiz1_1), "NA", as.character(Quiz1_1)),
-      Quiz1_1 = factor(Quiz1_1, levels = c("NA","-1","0","1","2","3","4","5","6","7"), ordered = TRUE),
-      Quiz2_1 = ifelse(is.na(Quiz2_1), "NA", as.character(Quiz2_1)),
-      Quiz2_1 = factor(Quiz2_1, levels = c("NA","-1","0","1","2","3","4","5","6","7"), ordered = TRUE),
-      Quiz3_1 = ifelse(is.na(Quiz3_1), "NA", as.character(Quiz3_1)),
-      Quiz3_1 = factor(Quiz3_1, levels = c("NA","-1","0","1","2","3","4","5","6","7"), ordered = TRUE)
-)})
-
-df <- bind_rows(quiz_dfs, .id = "Pilot")
-```
-
-```{r}
-summarize_study <- function(df) {
-  df %>%
-    summarise(
-      Q1 = sprintf("%d (%.1f%%)", sum(Quiz1, na.rm = TRUE),
-                      mean(Quiz1, na.rm = TRUE) * 100),
-      Q2 = sprintf("%d (%.1f%%)", sum(Quiz2, na.rm = TRUE),
-                      mean(Quiz2, na.rm = TRUE) * 100),
-      Q3 = sprintf("%d (%.1f%%)", sum(Quiz3, na.rm = TRUE),
-                      mean(Quiz3, na.rm = TRUE) * 100)) %>%
-    
-    pivot_longer(everything(), names_to = "Question", values_to = "N_percent")
-}
-
-table <- lapply(quiz_dfs, summarize_study) %>%
+plot_dfs <- lapply(pilot_2_dfs, function(df){
   
-  bind_rows(.id = "Study") %>%
-  
-  pivot_wider(names_from = Study, values_from = N_percent) %>%
-  
-  gt() %>%
+  df %>% mutate(c = case_when(
+    c == "Completely Confident" ~ 5, 
+    c == "Somewhat Confident" ~ 4, 
+    c == "Neither Confident nor Unconfident" ~ 3, 
+    c == "Somewhat Unconfident" ~ 2, 
+    c == "Completely Unconfident" ~ 1
+  ))
+})
 
-  cols_label(
-    Question = "Item",
-    lyrics = "Pilot: Lyrics",
-    speeches1 = "Pilot: Speeches 1",
-    speeches2 = "Pilot: Speeches 2"
-  ) %>%
-  cols_align(
-    align = "center",
-    columns = everything()
-  ) %>%
-  cols_width(everything() ~ px(100))
+plots <- lapply(names(plot_dfs), function(name) {
+  df <- plot_dfs[[name]]
+  ggplot(df, aes(x = c)) +
+    geom_histogram(bins = 5) +
+    theme_classic() +
+    labs(title = name) +
+    xlab("Confidence") + ylab("Count")
+})
+names(plots) <- names(plot_dfs)
 
-table
 
-gtsave(table, here("tables", "pilot_quiz_correctness.tex"))
+p1 <- plots[['lyrics']]
+p2 <- plots[['speeches1']]
+p3 <- plots[['speeches2']]
 
-rm(summarize_study)
+pilot_confidence_plot <- (p1 | p2 | p3 )
 ```
 
 ```{r include=FALSE}
-apa_theme <-
-  theme_classic(base_size = 12, base_family = "sans") +
-  theme(
-    axis.title = element_text(size = 12),
-    axis.text  = element_text(size = 10),
-    legend.position = "bottom",
-    legend.title = element_text(size = 11),
-    legend.text  = element_text(size = 10),
-    panel.border = element_blank(),
-    axis.line = element_line(color = "black"),
-    strip.background = element_blank(),
-    strip.text = element_text(size = 11)
-  )
-```
-
-
-```{r include=FALSE}
-plot_bars <- function(df, column1, column2, option) {
+plot_dfs <- lapply(pilot_2_dfs, function(df){
   
-  df |> 
-    mutate({{column2}} := fct_recode(as.factor({{column2}}), 
-                                     "Correct"   = "1","Incorrect" = "0")) |>
-        
-    ggplot(aes({{column1}}, fill = as.factor({{column2}}))) + 
-    geom_bar() +
-    scale_fill_viridis_d(option = option,
-                         name = "Response:") +
-    
-    scale_y_continuous(limits = c(0, 225)) +
-    
-    scale_x_discrete(drop = FALSE)}
+  df %>% mutate(subjective = case_when(
+    `subjective ` == "Completely subjective" ~ 7, 
+    `subjective ` == "Very subjective" ~ 6, 
+    `subjective ` == "Somewhat subjective" ~ 5, 
+    `subjective ` == "Neither subjective nor objective" ~ 4, 
+    `subjective ` == "Somewhat objective" ~ 3, 
+    `subjective ` == "Very objective" ~ 2, 
+    `subjective ` == "Completely objective" ~ 1
+  ))
+})
+
+plots <- lapply(names(plot_dfs), function(name) {
+  df <- plot_dfs[[name]] |> 
+    select(participant_ID, subjective) |> 
+    unique()
+  
+  ggplot(df, aes(x = subjective)) +
+    geom_histogram(bins = 7) +
+    theme_classic() +
+    labs(title = name) +
+    xlab("Subjectivity") + ylab("Count")
+})
+names(plots) <- names(plot_dfs)
+
+
+p1 <- plots[['lyrics']]
+p2 <- plots[['speeches1']]
+p3 <- plots[['speeches2']]
+
+pilot_subjectivity_plot <- (p1 | p2 | p3 )
 ```
 
 ```{r}
-plot_stacked_bars <- function(df, column, option) {
+(pilot_confidence_plot / pilot_subjectivity_plot) + 
+  plot_annotation(tag_levels = "A")
+
+ggsave(here("images", "pilot_quiz_confidence.pdf"))
+```
+
+```{r include=FALSE}
+df <- pilot_2_dfs[[1]] %>% 
+  select(participant_ID, 
+         Q1_1, # I prefer music that contains lyrics over music that does not
+         Q1_2, # My favorite songs all have lyrics
+         Q1_3, # I skip songs that don't have lyrics
+         Q1_4, # If a song has lyrics that I don't like, I skip it
+         Q1_5, # I listen to music in languages that I dont' speak
+         Q1_6, # I look at the lyrics of songs in the apps of streaming services that I use
+         Q2_1  # percentage of music lib
+         ) %>%
+  unique()
+
+pilot_music_lib_plot <- df %>%
+  ggplot(aes(x=as.numeric(Q2_1))) +
+  geom_histogram(bins=10, aes(y=..density..)) +
+    geom_density() +
+  xlab("Music Library Percentage") + ylab("Count") + 
+  theme_classic()
+```
+
+```{r include=FALSE}
+ pilot_lyric_questions_plot <- df |>
   
-  df |>
-    ggplot(aes({{column}}, fill = as.factor(Pilot))) + 
-    geom_bar() +
-    scale_fill_viridis_d(
-      option = option,
-      name = "Pilot Study: ",
-      labels = c("lyrics" = "Lyrics", 
-                 "speeches1"  = "Speeches #1", 
-                 "speeches2"  = "Speeches #2")) +
-    scale_y_continuous(limits = c(0, 225)) +
-    scale_x_discrete(drop = FALSE)
-}
+  select(-Q2_1) |>
+  pivot_longer(cols = paste0('Q1_', seq(1, 6)), 
+               names_to = 'question', 
+               values_to = 'response') |>
+  
+  mutate(response = case_when(
+    response == "Strongly agree" ~ 7, 
+    response == "Agree" ~ 6, 
+    response == "Somewhat agree" ~ 5, 
+    response == "Neither agree nor disagree" ~ 4, 
+    response == "Somewhat disagree" ~ 3, 
+    response == "Disagree" ~ 2, 
+    response == "Strongly disagree" ~ 1)) |>
+  
+  mutate(question = case_when(
+    question == 'Q1_1' ~ "I prefer music that contains lyrics over music that does not", 
+    question == 'Q1_2' ~ "My favorite songs all have lyrics", 
+    question == 'Q1_3' ~ "I skip songs that don't have lyrics", 
+    question == 'Q1_4' ~ "If a song has lyrics that I don't like, I skip it", 
+    question == 'Q1_5' ~ "I listen to music in languages that I dont' speak",
+    question == 'Q1_6' ~ "I look at the lyrics of songs in the apps of streaming services that I use")) |>
+  
+  mutate(
+    question = fct_reorder(question, response, .fun = median, na.rm = TRUE)) |>
+
+  ggplot(aes(x=response, y=question, fill = question)) +
+    geom_density_ridges(alpha=.8, linewidth= .3) +
+    theme_classic() +
+    scale_x_continuous(breaks = seq(1, 7, 1)) +
+    scale_fill_viridis_d(option = "inferno") +
+    scale_y_discrete(labels = function(x) str_wrap(x, width = 30), expand = expansion(mult = c(0.02, 0.35))) +
+    ylab("") + xlab("Response") +
+    theme(legend.position="none", axis.text.y = element_text(size = 12))
 ```
 
-```{r echo=FALSE}
-p1 <- plot_stacked_bars(df, Quiz1_1, option = "C") +
-  xlab("Q1 Responses") + ylab("Count") +
-  apa_theme
-
-p2 <- plot_stacked_bars(df, Quiz2_1, option = "C") +
-  xlab("Q2 Responses") + ylab("Count") +
-  apa_theme
-
-p3 <- plot_stacked_bars(df, Quiz3_1, option = "C") +
-  xlab("Q3 Responses") + ylab("") +
-  apa_theme
-
-(p1 | p2 | p3) +
-    plot_layout(guides = "collect") &
-    theme(legend.position = "bottom", 
-          plot.title = element_markdown(hjust = 0), 
-          plot.subtitle = element_markdown(hjust = 0), 
-          plot.caption = element_markdown(hjust = 0))
-
-ggsave(here("images", "pilot_quiz_correctness_by_study.pdf"))
+```{r}
+(pilot_lyric_questions_plot | pilot_music_lib_plot)
 ```
+

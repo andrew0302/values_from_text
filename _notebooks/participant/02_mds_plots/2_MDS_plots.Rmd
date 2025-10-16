@@ -1,0 +1,223 @@
+---
+title: "MDS plotting"
+author: "andrew demetriou"
+---
+
+AIM: Produce multi-dimensional scaling plots
+
+```{r setup, include=FALSE}
+library('here')       # file logistics
+library('tidyverse')  # data logistics
+library('smacof')     # multidimensional scaling
+library('patchwork')  # merge multiple plots 
+
+values <- c("POWER", "ACHIEVEMENT", "HEDONISM",  
+            "STIMULATION", "SELF", "UNIVERSALISM", 
+            "BENEVOLENCE", "TRADITION",  
+            "CONFORMITY", "SECURITY")
+
+# remove scientific notation
+options(scipen=999)
+# make default plot theme minimal
+theme_set(theme_minimal())
+```
+
+```{r}
+# read in data
+wave_2_dfs <- readRDS(here("_data", "_participant_scores", "wave_2", "wave_2_dfs.RDS"))
+```
+
+```{r}
+# participants first complete the SSVS about themselves
+# subset dataset by these participant self-ratings
+
+SSVS_dfs <- lapply(wave_2_dfs, function(df){
+    df %>% 
+    select(participant_ID, 
+           # note: SSVS values are in the same order as above values
+           all_of(paste0("SSVS_", seq(1,10,1)))) %>% 
+    unique()
+})
+
+SSVS_df <- SSVS_dfs |> bind_rows(.id = "text") %>% 
+  
+  mutate(text = str_remove_all(as.character(text), "\\d+") %>%
+           as.factor()) |>
+  
+  # take 10 SSVS self rating variables, make them numeric
+  mutate_at(all_of(paste0("SSVS_", seq(1,10,1))), as.numeric) %>% 
+  # then rename them to fit the naming convention
+  rename(
+    POWER = SSVS_1, 
+    ACHIEVEMENT = SSVS_2, 
+    HEDONISM = SSVS_3, 
+    STIMULATION = SSVS_4, 
+    SELF = SSVS_5, 
+    UNIVERSALISM = SSVS_6, 
+    BENEVOLENCE= SSVS_7, 
+    TRADITION = SSVS_8, 
+    CONFORMITY = SSVS_9, 
+    SECURITY = SSVS_10
+)
+```
+
+
+
+
+
+```{r}
+# estimate mean per item
+mean_dfs <- lapply(wave_2_dfs, function(df){
+    df %>% 
+      select(item_ID, all_of(values)) %>%
+      filter(item_ID != "attention") %>%
+      pivot_longer(cols = all_of(values), names_to = 'value', values_to = 'rating') %>%
+      group_by(item_ID, value) %>%
+      mutate(rating = mean(rating, na.rm = T))  %>%
+      unique() %>% ungroup() %>%
+      pivot_wider(values_from = rating, names_from = value)
+})
+```
+
+
+```{r}
+# multi-method correlation matrices from Schwartz, 2001, Table 2:
+svs_mat <- rbind(
+    c(   1,  .04, -.04, -.20, -.32, -.48,  -.11,  .01,  .09,   .50), #power
+    c( .04,    1,  .25,  .08,  .01, -.30,  -.34, -.35, -.12,  -.11), #security
+    c(-.04,  .25,    1,  .35,  .15, -.19,  -.41, -.31, -.32,  -.18), #conformity
+    c(-.20,  .08,  .35,    1,  .12, -.07,  -.31, -.19, -.42,  -.38), #tradition
+    c(-.32,  .01,  .15,  .12,    1, -.08,  -.20, -.25, -.26,  -.25), #benevolence
+    c(-.48, -.30, -.19, -.07, -.08,    1,   .12, -.02, -.01,  -.39), #universalism
+    c(-.11, -.34, -.41, -.31, -.20,  .12,     1,  .22,  .19,   .13), #self-direction
+    c( .01, -.35, -.31, -.19, -.25, -.02,   .22,    1,  .29,   .02), #stimulation
+    c( .09, -.12, -.32, -.42, -.26, -.01,   .19,  .29,    1,   .12), #hedonism
+    c( .50, -.11, -.18, -.38, -.25, -.39,   .13,  .02,  .12,     1)  #achievement 
+) %>% as.data.frame()
+
+# rename columns to fit convention
+colnames(svs_mat) <- c("power", "security", "conformity", 
+                        "tradition", "benevolence", "universalism", 
+                        "self", "stimulation", 
+                        "hedonism", "achievement") %>% toupper() 
+
+pvq_mat<- rbind(
+    c(   1,  .00, -.04, -.31, -.31, -.46,  -.04,  -.07,  .08,   .43), #power
+    c( .00,    1,  .09,  .14,  .09, -.25,  -.41,  -.34, -.16,  -.24), #security
+    c(-.04,  .09,    1,  .28,  .14, -.07,  -.44,  -.46, -.41,  -.14), #conformity
+    c(-.31,  .14,  .28,    1,  .03, -.02,  -.34,  -.20, -.44,  -.44), #tradition
+    c(-.31,  .09,  .14,  .03,    1,  .15,  -.32,  -.31, -.18,  -.27), #benevolence
+    c(-.46, -.25, -.07, -.02,  .15,    1,  -.02,  -.12, -.11,  -.36), #universalism
+    c(-.04, -.41, -.44, -.34, -.32, -.02,     1,   .34,  .10,   .18), #self-direction
+    c(-.07, -.34, -.46, -.20, -.31, -.12,   .34,     1,  .37,  -.05), #stimulation
+    c( .08, -.16, -.41, -.44, -.18, -.11,   .10,   .37,    1,   .03), #hedonism
+    c( .43, -.24, -.14, -.44, -.27, -.36,   .18,  -.05,  .03,     1)  #achievement
+) %>% as.data.frame()
+
+# rename columns to fit convention
+colnames(pvq_mat) <- c("power", "security", "conformity", 
+                                  "tradition", "benevolence", "universalism", 
+                                  "self", "stimulation", 
+                                  "hedonism", "achievement") %>% toupper() 
+```
+
+```{r}
+# takes a correlation matrix and computes MDS coordinates
+mds_data <- function(correlation_matrix){
+  
+  #compute distance matrix from correlation matrix
+  idiss <- sim2diss(correlation_matrix)
+  rownames(idiss) <- colnames(idiss)
+  # fit ratio mds 
+  fit_ratio <-  smacof::mds(idiss)
+  
+  # extract mds values and place in dataframe
+  mds.values <- fit_ratio$conf
+  mds.data   <- data.frame(
+    Sample = rownames(mds.values), 
+    X=mds.values[,1],
+    Y=mds.values[,2], 
+    # point stress contribution per value:
+    # the larger the value, the less certain the estimate
+    spp = fit_ratio$spp)
+  
+  return(mds.data)
+}
+```
+
+```{r}
+# rotates MDS plot
+rotate_mds <- function(df, degrees = 0) {
+  radians <- degrees * pi / 180
+  rot <- matrix(c(cos(radians), -sin(radians),
+                  sin(radians),  cos(radians)), ncol = 2)
+  rotated <- as.matrix(df[, c("X", "Y")]) %*% rot
+  df$X <- rotated[, 1]
+  df$Y <- rotated[, 2]
+  df
+}
+```
+
+```{r}
+# plot MDS coordinates
+plot_mds_df <- function(mds.data, title, option){
+
+  mds.data %>%
+    ggplot(aes(x=X, y=Y, label=Sample)) + 
+    # set scales of axes
+    scale_x_continuous(name="", limits=c(-1, 1)) + 
+    scale_y_continuous(name="", limits=c(-1, 1)) +
+    # map point size to stress per point
+    geom_point(aes(size = spp, color = Sample)) +
+    geom_point(shape = 1, color = "black", (aes(size = spp))) +
+    scale_color_viridis_d(option = option) +
+    # place text underneath points
+    geom_text(nudge_y = -.10) +
+    # remove all plot elements
+    theme_void() +
+    # remove legend
+    theme(legend.position = "none") +
+    ggtitle(title)
+  
+}
+```
+
+
+```{r}
+p1 <- svs_mat |> mds_data() %>% plot_mds_df("SVS: Schwartz, 2001", "plasma")
+p2 <- pvq_mat |> mds_data() %>% plot_mds_df("PVQ: Schwartz, 2001", "plasma")
+p3 <- SSVS_df |>
+    select(all_of(values)) %>%
+    cor(use = "pairwise.complete.obs") %>%
+    mds_data() %>%
+    rotate_mds(degrees = 135) %>%                 
+    plot_mds_df("SSVS: Present Study", "plasma")
+
+(p1 | p2 | p3) +
+  plot_annotation(tag_levels = "A") &
+  theme(plot.title = element_text(hjust = 0.5))
+  
+ggsave(here("images", "main_SSVS_self.pdf"), height = 5, width = 11)
+```
+
+```{r}
+p1 <- bind_rows(mean_dfs[[1]], mean_dfs[[2]]) %>% 
+  select(all_of(values)) %>% 
+  cor(use = "complete.obs") |> 
+  mds_data() %>% rotate_mds(degrees = -45) %>%  
+  plot_mds_df("Lyrics", "magma")
+
+p2 <- bind_rows(mean_dfs[[3]], mean_dfs[[4]]) %>% 
+  select(all_of(values)) %>% 
+  cor(use = "complete.obs") |> 
+  mds_data() %>% rotate_mds(degrees = -85) %>%  
+  plot_mds_df("Speeches", "D")
+
+(p1 | p2) +
+  plot_annotation(tag_levels = "A") &
+  theme(plot.title = element_text(hjust = 0.5))
+
+ggsave(here("images", "main_SSVS_text.pdf"))
+```
+
+
