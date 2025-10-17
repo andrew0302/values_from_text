@@ -1,0 +1,82 @@
+## Pilot Methods
+
+```{r, include=FALSE}
+library("here")       # file logistics
+library("tidyverse")  # code logistics
+library("gt")         # rendering tables
+```
+
+```{r, include=FALSE}
+# read in pilot data
+data_path <- here("_data", "_participant_scores", "wave_2")
+
+# read in data
+pilot_2_dfs <- readRDS(here(data_path, "pilot_2_dfs.RDS"))
+
+# rename ethnicity column 
+pilot_2_dfs[['speeches2']] <- pilot_2_dfs[['speeches2']] |> 
+  rename(Ethnicity = `Ethnicity simplified`)
+```
+
+```{r, include=FALSE}
+# format pilot data
+
+# subset each df
+pilot_2_demog_dfs <- lapply(pilot_2_dfs, function(df){
+  df <- df |> 
+    select(participant_ID, Age, Sex, `Ethnicity`) |> 
+    unique()})
+
+#re-add spectrum to speeches2 df
+pilot_2_demog_dfs[['speeches2']] <- merge(
+  
+  pilot_2_demog_dfs[['speeches2']],
+  
+  pilot_2_dfs[['speeches2']] |> 
+    select(participant_ID, `Political spectrum (us)`) |> 
+    unique(), 
+  
+  by = "participant_ID", all.x=T)
+
+rm(pilot_2_dfs)
+
+
+# convert age to numeric
+pilot_2_demog_dfs <- lapply(pilot_2_demog_dfs, 
+                            function(df){df|>mutate(Age = as.numeric(Age))})
+
+# recode Asian ethnicity
+pilot_2_demog_dfs[["lyrics"]] <- pilot_2_demog_dfs[["lyrics"]] |> 
+  mutate(Ethnicity = case_when(
+    Ethnicity == "East Asian" | Ethnicity == "South East Asian" | Ethnicity == "South Asian" ~ "Asian", 
+    .default = Ethnicity))
+
+pilot_2_demog_dfs[["speeches1"]]<- pilot_2_demog_dfs[["speeches1"]] |> 
+  mutate(Ethnicity = case_when(
+    Ethnicity == "East Asian" | Ethnicity == "South East Asian" | Ethnicity == "South Asian" ~ "Asian", 
+    .default = Ethnicity))
+
+# Remove expired data
+pilot_2_demog_dfs[["speeches2"]] <- pilot_2_demog_dfs[["speeches2"]] |> mutate(Ethnicity = case_when(
+  Ethnicity == "DATA_EXPIRED" ~ NA, 
+  .default = Ethnicity
+))
+
+# study labels
+pilot_labels <- c(
+  lyrics     = "Pilot 1 (Lyrics)",
+  speeches1  = "Pilot 2 (Speeches: Ethnicity)",
+  speeches2  = "Pilot 3 (Speeches: Political)")
+
+# details for all studies
+pilot_2_demog_df <- pilot_2_demog_dfs |> bind_rows(.id = "study")
+```
+
+```{r}
+# save to intermediary data
+saveRDS(pilot_2_demog_df, here("_data", "_intermediary_data", "demog_dfs", "pilot_2_demog_df.RDS"))
+saveRDS(pilot_2_demog_dfs, here("_data", "_intermediary_data", "demog_dfs", "pilot_2_demog_dfs.RDS"))
+```
+
+
+

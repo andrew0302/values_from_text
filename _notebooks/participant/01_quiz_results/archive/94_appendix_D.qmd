@@ -1,4 +1,4 @@
-## Quiz Analysis: Pilot and Main Study
+## Quiz Analysis
 
 
 ```{r, include=FALSE}
@@ -105,13 +105,13 @@ pilot_quiz_correctness_plot <- (p1 | p2 | p3) +
 
 pilot_quiz_correctness_plot
 
-#ggsave(here("images", "pilot_quiz_correctness.pdf"))
+ ggsave(here("images", "pilot_quiz_correctness.pdf"))
 ```
 
 
 
 ```{r include=FALSE, warning=FALSE, echo=FALSE}
-#pilot_2_dfs <- readRDS(file = here("_data", "_participant_scores", "wave_2", "pilot_2_dfs.RDS"))
+pilot_2_dfs <- readRDS(file = here("_data", "_participant_scores", "wave_2", "pilot_2_dfs.RDS"))
 
 
 # subset pilot dfs

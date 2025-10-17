@@ -1,0 +1,249 @@
+
+
+```{r, include=FALSE}
+library("here")       # file logistics
+library("tidyverse")  # code logistics
+library("gt")         # rendering tables
+library("patchwork")
+library("rlang")
+library("ggtext")     # text plots
+library("ggridges")   # joy plots
+library("viridisLite")
+
+colors_1 <- viridisLite::plasma(2)
+colors_2 <- viridisLite::viridis(2)
+```
+
+```{r}
+pilot_2_dfs <- readRDS(file = here("_data", "_participant_scores", "wave_2", "pilot_2_dfs.RDS"))
+
+plot_dfs <- lapply(pilot_2_dfs, function(df){
+  
+  df %>% mutate(c = case_when(
+    c == "Completely Confident" ~ 5, 
+    c == "Somewhat Confident" ~ 4, 
+    c == "Neither Confident nor Unconfident" ~ 3, 
+    c == "Somewhat Unconfident" ~ 2, 
+    c == "Completely Unconfident" ~ 1
+  ))
+})
+
+pilot_confidence_summary_stats <- plot_dfs |> bind_rows(.id = "Pilot") |> select(participant_ID, c) |>
+    summarise(
+    median_value = median(c, na.rm = TRUE),
+    pct_over_4 = sum(c >= 4, na.rm = TRUE) / sum(!is.na(c)) * 100)
+
+pilot_confidence_summary_stats
+```
+
+```{r include=FALSE}
+plots <- lapply(names(plot_dfs), function(name) {
+  df <- plot_dfs[[name]]
+  ggplot(df, aes(x = c)) +
+    geom_histogram(bins = 5, fill = colors_1[[1]]) +
+    theme_classic() +
+    labs(title = name) +
+    xlab("Confidence") + ylab("Count")
+})
+names(plots) <- names(plot_dfs)
+
+
+p1 <- plots[['lyrics']]
+p2 <- plots[['speeches1']]
+p3 <- plots[['speeches2']]
+
+pilot_confidence_plot <- (p1 | p2 | p3 )
+```
+
+```{r}
+plot_dfs <- lapply(pilot_2_dfs, function(df){
+  
+  df %>% mutate(subjective = case_when(
+    `subjective ` == "Completely subjective" ~ 7, 
+    `subjective ` == "Very subjective" ~ 6, 
+    `subjective ` == "Somewhat subjective" ~ 5, 
+    `subjective ` == "Neither subjective nor objective" ~ 4, 
+    `subjective ` == "Somewhat objective" ~ 3, 
+    `subjective ` == "Very objective" ~ 2, 
+    `subjective ` == "Completely objective" ~ 1
+  ))
+})
+
+pilot_subjectivity_summary_stats <- plot_dfs |> bind_rows(.id = "Pilot") |> 
+  select(participant_ID, subjective) |>
+    summarise(
+      median_value = median(subjective, na.rm = TRUE),
+      pct_over_4 = sum(subjective >= 5, na.rm = TRUE) / sum(!is.na(subjective)) * 100)
+
+pilot_subjectivity_summary_stats
+```
+
+```{r include=FALSE}
+plots <- lapply(names(plot_dfs), function(name) {
+  df <- plot_dfs[[name]] |> 
+    select(participant_ID, subjective) |> 
+    unique()
+  
+  ggplot(df, aes(x = subjective)) +
+    geom_histogram(bins = 7, fill = colors_1[[2]]) +
+    theme_classic() +
+    labs(title = name) +
+    xlab("Subjectivity") + ylab("Count")
+})
+names(plots) <- names(plot_dfs)
+
+
+p1 <- plots[['lyrics']]
+p2 <- plots[['speeches1']]
+p3 <- plots[['speeches2']]
+
+pilot_subjectivity_plot <- (p1 | p2 | p3 )
+```
+
+```{r}
+(pilot_confidence_plot / pilot_subjectivity_plot) + 
+  plot_annotation(tag_levels = "A")
+
+ggsave(here("images", "pilot_confidence_subjectivity.pdf"))
+```
+
+
+
+```{r}
+wave_2_dfs <- readRDS(file = here("_data", "_participant_scores", "wave_2", "wave_2_dfs.RDS"))
+
+plot_dfs <- lapply(wave_2_dfs, function(df){
+  
+  df %>% filter(!item_ID == "attention") |>
+    mutate(c = case_when(
+    c == "Completely Confident" ~ 5, 
+    c == "Somewhat Confident" ~ 4, 
+    c == "Neither Confident nor Unconfident" ~ 3, 
+    c == "Somewhat Unconfident" ~ 2, 
+    c == "Completely Unconfident" ~ 1
+  ))
+})
+
+main_confidence_summary_stats <- plot_dfs |> bind_rows(.id = "Study") |> select(participant_ID, c) |>
+    summarise(
+    median_value = median(c, na.rm = TRUE),
+    pct_over_4 = sum(c >= 4, na.rm = TRUE) / sum(!is.na(c)) * 100)
+
+main_confidence_summary_stats
+```
+
+```{r}
+plots <- lapply(names(plot_dfs), function(name) {
+  df <- plot_dfs[[name]] |> select(participant_ID, c) |> unique()
+  ggplot(df, aes(x = c)) +
+    geom_histogram(bins = 5, fill = colors_2[[1]]) +
+    theme_classic() +
+    labs(title = name) +
+    scale_y_continuous(limits = c(0, 550)) +
+    xlab("Confidence") + ylab("Count")
+})
+names(plots) <- names(plot_dfs)
+
+
+p1 <- plots[['lyrics1']]
+p2 <- plots[['lyrics2']]
+p3 <- plots[['speeches1']]
+p4 <- plots[['speeches2']]
+
+main_confidence_plot <- (p1 | p2 | p3 | p4) 
+
+#main_confidence_plot
+```
+
+```{r}
+plot_dfs <- lapply(wave_2_dfs, function(df){
+  
+  df %>% filter(!item_ID == "attention") |> 
+    mutate(subjective = case_when(
+    `subjective` == "Completely subjective" ~ 7, 
+    `subjective` == "Very subjective" ~ 6, 
+    `subjective` == "Somewhat subjective" ~ 5, 
+    `subjective` == "Neither subjective nor objective" ~ 4, 
+    `subjective` == "Somewhat objective" ~ 3, 
+    `subjective` == "Very objective" ~ 2, 
+    `subjective` == "Completely objective" ~ 1
+  ))
+})
+
+
+main_subjectivity_summary_stats <- plot_dfs |> bind_rows(.id = "Pilot") |> 
+  select(participant_ID, subjective) |>
+    summarise(
+      median_value = median(subjective, na.rm = TRUE),
+      pct_over_4 = sum(subjective >= 5, na.rm = TRUE) / sum(!is.na(subjective)) * 100)
+
+main_subjectivity_summary_stats
+```
+
+
+```{r}
+plots <- lapply(names(plot_dfs), function(name) {
+  df <- plot_dfs[[name]] |> 
+    select(participant_ID, subjective) |> 
+    unique()
+  
+  ggplot(df, aes(x = subjective)) +
+    geom_histogram(bins = 7, fill = colors_2[[2]]) +
+    theme_classic() +
+    labs(title = name) +
+    scale_y_continuous(limits = c(0, 200)) +
+    xlab("Subjectivity") + ylab("Count")
+})
+names(plots) <- names(plot_dfs)
+
+
+p1 <- plots[['lyrics1']]
+p2 <- plots[['lyrics2']]
+p3 <- plots[['speeches1']]
+p4 <- plots[['speeches2']]
+
+main_subjectivity_plot <- (p1 | p2 | p3 | p4)
+
+#main_subjectivity_plot
+```
+
+
+```{r include = F}
+# subjectivity missing for a couple participant rows
+
+df <- plot_dfs[[3]]
+
+df$s_na <- is.na(df$subjective)
+
+df <- df |> filter(s_na == T)
+
+df
+```
+
+
+
+```{r}
+(main_confidence_plot / main_subjectivity_plot) + 
+  plot_annotation(tag_levels = "A")
+
+ggsave(here("images", "main_confidence_subjectivity.pdf"))
+```
+
+```{r}
+print(paste0(
+  "median score of ", pilot_confidence_summary_stats$median_value, 
+  " with ", round(pilot_confidence_summary_stats$pct_over_4, 2), "% scoring 4 or greater."))
+
+print(paste0(
+  "median score of ", pilot_subjectivity_summary_stats$median_value, 
+  " with ", round(pilot_subjectivity_summary_stats$pct_over_4, 2), "% scoring 5 or greater."))
+
+print(paste0(
+  "median score of ", main_confidence_summary_stats$median_value, 
+  " with ", round(main_confidence_summary_stats$pct_over_4, 2), "% scoring 4 or greater."))
+
+print(paste0(
+  "median score of ", main_subjectivity_summary_stats$median_value, 
+  " with ", round(main_subjectivity_summary_stats$pct_over_4, 2), "% scoring 5 or greater."))
+```
+

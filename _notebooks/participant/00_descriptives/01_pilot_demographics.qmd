@@ -1,0 +1,159 @@
+# Appendix C: Pilot Study Addendum
+
+```{r, include=FALSE}
+library("here")       # file logistics
+library("tidyverse")  # code logistics
+library("gt")         # rendering tables
+library("patchwork")
+library("rlang")
+library("ggtext")     # text plots
+library("ggridges")   # joy plots
+```
+
+```{r, include=FALSE}
+# read in pilot data
+data_path <- here("_data", "_intermediary_data", "demog_dfs")
+
+# read in data
+pilot_2_dfs <- readRDS(here(data_path, "pilot_2_demog_dfs.RDS"))
+```
+
+The total participant pool consisted of `r nrow(pilot_2_demog_df)` participants 
+(`r round(mean(pilot_2_demog_df$Sex == "Female", na.rm = TRUE) * 100, 1)`% female, 
+$M_{\text{age}} = `r round(mean(pilot_2_demog_df$Age, na.rm = TRUE), 1)`$ years, 
+$SD_{\text{age}} = `r round(sd(pilot_2_demog_df$Age, na.rm = TRUE), 1)`$) 
+(see Table 1).
+
+```{r, include=FALSE}
+# summary functions
+summarize_demographics <- function(df, study_name) {
+  df %>%
+    summarise(
+      Study   = study_name,
+      N       = n(),
+      Age_M   = mean(Age, na.rm = TRUE),
+      Age_SD  = sd(Age, na.rm = TRUE),
+      Age_Min  = min(Age, na.rm = TRUE),
+      Age_Max  = max(Age, na.rm = TRUE),
+      Female_p  = mean(Sex == "Female", na.rm = TRUE) * 100) %>%
+  mutate(
+    `Age M (SD)` = sprintf("%.1f (%.1f)", Age_M, Age_SD),
+    `Age range`  = sprintf("%d–%d", round(Age_Min), round(Age_Max)),
+    `% Female`   = round(Female_p, 1)) %>%
+  select(Study, N, `Age M (SD)`, `Age range`, `% Female`)
+}
+
+summarize_ethnicity <- function(df, study_name) {
+  df %>%
+    count(Ethnicity) %>%
+    mutate(
+      pct = 100 * n / sum(n),
+      value = paste0(n, " (", round(pct, 1), "%)")
+    ) %>%
+    select(Ethnicity, value) %>%
+    pivot_wider(names_from = Ethnicity, values_from = value) %>%
+    mutate(Study = study_name, .before = 1)
+}
+
+
+summarize_spectrum <- function(df, study_name) {
+  df %>%
+    count(`Political spectrum (us)`) %>%
+    mutate(
+      pct = 100 * n / sum(n),
+      value = paste0(n, " (", round(pct, 1), "%)")
+    ) %>%
+    select(`Political spectrum (us)`, value) %>%
+    pivot_wider(names_from = `Political spectrum (us)`, values_from = value) %>%
+    mutate(Study = study_name, .before = 1)
+}
+```
+
+```{r pilot_demogs}
+# demographics table
+table <- imap_dfr(
+  pilot_2_demog_dfs,
+  ~ summarize_demographics(.x, pilot_labels[[.y]] %||% .y))
+
+table <- table %>%
+  gt() %>%
+  cols_align(align = "left",  columns = c(Study)) %>%
+  cols_align(align = "center", columns = c(N, `% Female`, `Age range`, `Age M (SD)`)) %>%
+  fmt_number(columns = `% Female`, decimals = 1) 
+
+table
+
+gtsave(table, here("tables", "pilot_demographics.tex"))
+
+rm(table)
+```
+
+
+```{r}
+table <- imap_dfr(
+  pilot_2_demog_dfs[1:2], 
+  ~ summarize_ethnicity(.x, pilot_labels[[.y]] %||% .y)) 
+
+table <- table |>
+  gt() %>%
+  cols_label(
+    `Black/African American` = html("Black/<br>African American"),
+    `Latino/Hispanic`        = html("Latino/<br>Hispanic"),
+    Asian                    = "Asian",
+    White                    = "White") |>
+  
+  fmt_number(columns = -Study, decimals = 1) %>%
+  
+  cols_align(align = "center", 
+             columns = c(Asian, `Black/African American`, 
+                         `Latino/Hispanic`, White))
+
+table
+
+gtsave(table, here("tables", "pilot_ethnicity.tex"))
+
+rm(table)
+```
+
+```{r}
+table <- pilot_spectrum_tbl <- imap_dfr(
+  pilot_2_demog_dfs["speeches2"],
+  ~ summarize_spectrum(.x, pilot_labels[[.y]] %||% .y))
+
+table <- pilot_spectrum_tbl |>
+  gt() %>%
+  
+  fmt_number(
+    columns = -Study, 
+    decimals = 1) %>%
+  
+  cols_align(align = "center", columns = c(Conservative, Liberal, Moderate)) 
+
+table
+
+gtsave(table, here("tables", "pilot_political_leaning.tex"))
+
+rm(table)
+```
+
+
+
+```{r}
+table <- pilot_2_demog_dfs[[3]] |> 
+    count(Ethnicity) %>%
+    mutate(
+      pct = 100 * n / sum(n),
+      value = paste0(n, " (", round(pct, 1), "%)")) |> 
+  select(Ethnicity, value) |>
+  
+  gt() |>
+  
+  cols_label(Ethnicity = "Ethnicity (Simplified)", value = "N (%)") |>
+  cols_align(align = "center", columns = c(Ethnicity, value))
+
+table
+
+gtsave(table, here("tables", "pilot_ethnicity_speeches2.tex"))
+
+rm(table)
+```
