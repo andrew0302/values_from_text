@@ -1,0 +1,188 @@
+---
+title: "MDS plotting"
+author: "andrew demetriou"
+---
+
+AIM: Produce multi-dimensional scaling plots
+
+```{r setup, include=FALSE}
+library('here')       # file logistics
+library('tidyverse')  # data logistics
+library('smacof')     # multidimensional scaling
+library('cowplot')    # merge multiple plots 
+
+values <- c("POWER", "ACHIEVEMENT", "HEDONISM",  
+            "STIMULATION", "SELF", "UNIVERSALISM", 
+            "BENEVOLENCE", "TRADITION",  
+            "CONFORMITY", "SECURITY")
+
+# remove scientific notation
+options(scipen=999)
+# make default plot theme minimal
+theme_set(theme_minimal())
+```
+
+```{r}
+# read in data
+files <- list.files(here("_data", "_participant_scores", "wave_2"))
+
+wave_2_dfs <- lapply(files, function(file){
+  readRDS(here("_data", "_participant_scores", "wave_2", file))
+})
+
+names(wave_2_dfs) <- lapply(files, str_replace, pattern = ".RDS", replacement = "")
+
+rm(files)
+```
+
+
+```{r}
+# participants first complete the SSVS about themselves
+# subset dataset by these participant self-ratings
+
+SSVS_dfs <- lapply(wave_2_dfs, function(df_list){
+  lapply(df_list, function(df){
+    df %>% 
+    select(participant_ID, 
+           # note: SSVS values are in the same order as above values
+           all_of(paste0("SSVS_", seq(1,10,1)))) %>% 
+    unique()
+  })
+})
+
+SSVS_dfs[[1]] <- bind_rows(SSVS_dfs[[1]], .id = "text") %>%
+  mutate(wave = "pilot", 
+         text = case_when(text == "lyrics" ~ "lyrics1", .default = text))
+
+SSVS_dfs[[2]] <- bind_rows(SSVS_dfs[[2]], .id = "text") %>%
+  mutate(wave = "main")
+
+SSVS_df <- bind_rows(SSVS_dfs) %>% select(wave, all_of(everything())) %>%
+  # take 10 SSVS self rating variables, make them numeric
+  mutate_at(all_of(paste0("SSVS_", seq(1,10,1))), as.numeric) %>% 
+  # then rename them to fit the naming convention
+  rename(
+    POWER = SSVS_1, 
+    ACHIEVEMENT = SSVS_2, 
+    HEDONISM = SSVS_3, 
+    STIMULATION = SSVS_4, 
+    SELF = SSVS_5, 
+    UNIVERSALISM = SSVS_6, 
+    BENEVOLENCE= SSVS_7, 
+    TRADITION = SSVS_8, 
+    CONFORMITY = SSVS_9, 
+    SECURITY = SSVS_10
+)
+
+rm(SSVS_dfs)
+```
+
+```{r}
+# estimate mean per item
+mean_dfs <- lapply(wave_2_dfs, function(df_list){
+  lapply(df_list, function(df){
+    df %>% 
+      select(item_ID, all_of(values)) %>%
+      filter(item_ID != "attention") %>%
+      pivot_longer(cols = all_of(values), names_to = 'value', values_to = 'rating') %>%
+      group_by(item_ID, value) %>%
+      mutate(rating = mean(rating, na.rm = T))  %>%
+      unique() %>% ungroup() %>%
+      pivot_wider(values_from = rating, names_from = value)
+  })
+})
+```
+
+
+```{r}
+# correlation matrix from Schwartz, 2001, Table 2 (upper triangle):
+og_correlation_matrix <- rbind(
+    c(   1,  .04, -.04, -.20, -.32, -.48,  -.11,  .01,  .09,   .50), #power
+    c( .04,    1,  .25,  .08,  .01, -.30,  -.34, -.35, -.12,  -.11), #security
+    c(-.04,  .25,    1,  .35,  .15, -.19,  -.41, -.31, -.32,  -.18), #conformity
+    c(-.20,  .08,  .35,    1,  .12, -.07,  -.31, -.19, -.42,  -.38), #tradition
+    c(-.32,  .01,  .15,  .12,    1, -.08,  -.20, -.25, -.26,  -.25), #benevolence
+    c(-.48, -.30, -.19, -.07, -.08,    1,   .12, -.02, -.01,  -.39), #universalism
+    c(-.11, -.34, -.41, -.31, -.20,  .12,     1,  .22,  .19,   .13), #self-direction
+    c( .01, -.35, -.31, -.19, -.25, -.02,   .22,    1,  .29,   .02), #stimulation
+    c( .09, -.12, -.32, -.42, -.26, -.01,   .19,  .29,    1,   .12), #hedonism
+    c( .50, -.11, -.18, -.38, -.25, -.39,   .13,  .02,  .12,     1)  #achievement 
+) %>% as.data.frame()
+
+# rename columns to fit convention
+colnames(og_correlation_matrix) <- c("power", "security", "conformity", 
+                                  "tradition", "benevolence", "universalism", 
+                                  "self", "stimulation", 
+                                  "hedonism", "achievement") %>% toupper() 
+```
+
+```{r}
+# compute mds and plot
+# input is dataframe of values scores without any IDs
+
+mds_plot <- function(correlation_matrix, title) {
+  
+  #compute distance matrix from correlation matrix
+  idiss <- sim2diss(correlation_matrix)
+  rownames(idiss) <- colnames(idiss)
+  # fit ratio mds 
+  fit_ratio <-  smacof::mds(idiss)
+  
+  # extract mds values and place in dataframe
+  mds.values <- fit_ratio$conf
+  mds.data   <- data.frame(
+    Sample = rownames(mds.values), 
+    X=mds.values[,1],
+    Y=mds.values[,2], 
+    # point stress contribution per value:
+    # the larger the value, the less certain the estimate
+    spp = fit_ratio$spp)
+
+  # plot
+  mds.data %>%
+    ggplot(aes(x=X, y=Y, label=Sample)) + 
+    # set scales of axes
+    scale_x_continuous(name="", limits=c(-1, 1)) + 
+    scale_y_continuous(name="", limits=c(-1, 1)) +
+    # map point size to stress per point
+    geom_point(aes(size = spp, color = Sample)) +
+    geom_point(shape = 1, color = "black", (aes(size = spp))) +
+    scale_color_viridis_d(option = "plasma") +
+    # place text underneath points
+    geom_text(nudge_y = -.10) +
+    # remove all plot elements
+    theme_void() +
+    # remove legend
+    theme(legend.position = "none") +
+    ggtitle(title)
+}
+```
+
+```{r}
+plot_grid(
+  og_correlation_matrix %>% mds_plot(., "Schwartz, 2001"), 
+  SSVS_df %>% select(all_of(values)) %>% cor() %>% 
+                           mds_plot(., "Our Participants' SSVS Scores"), 
+  ncol = 2
+)
+
+ggsave(here("images", "wave_2_participant_MDS.png"))
+```
+
+
+```{r}
+plot_grid(
+  og_correlation_matrix %>% mds_plot(., "Schwartz, 2001"),
+  bind_rows(mean_dfs[[2]][[1]], mean_dfs[[2]][[2]]) %>% select(all_of(values)) %>% cor(use = "complete.obs") %>% mds_plot(., "Lyrics"), 
+  bind_rows(mean_dfs[[2]][[3]], mean_dfs[[2]][[4]]) %>% select(all_of(values)) %>% cor(use = "complete.obs") %>% mds_plot(., "Speeches"), ncol = 3
+)
+
+ggsave(here("images", "wave_2_lyrics_speeches_MDS.png"), height = 5, width = 9)
+```
+
+```{r}
+plot_grid(
+  og_correlation_matrix %>% mds_plot(., "Schwartz, 2001"), 
+  bind_rows(mean_dfs[[2]][[3]], mean_dfs[[2]][[4]]) %>% select(all_of(values)) %>% cor(use = "complete.obs") %>% mds_plot(., "Speeches")
+)
+```

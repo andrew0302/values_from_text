@@ -44,7 +44,9 @@ wave_2_dfs[1:2] <- lapply(wave_2_dfs[1:2], function(df){
 
 wave_2_dfs[3:4] <- lapply(wave_2_dfs[3:4], function(df){
   df %>% rename(Spectrum = `Political spectrum (us)`) %>%
-    select(item_ID, participant_ID, Ethnicity, Spectrum, all_of(values))
+    select(item_ID, participant_ID, Ethnicity, Spectrum, all_of(values)) |>
+    # duplicate!
+    filter(!participant_ID=="c7cc0831695f2d9270cc023949d950d5")
 })
 
 wave_2_dfs <- list(
@@ -52,6 +54,8 @@ wave_2_dfs <- list(
   speeches = bind_rows(wave_2_dfs[[3]], wave_2_dfs[[4]]) 
 )
 ```
+
+
 
 
 ```{r}
@@ -116,15 +120,13 @@ make_overall_icc_df <- function(df){
 }
 ```
 
+
 ```{r}
 ethnicity_subsample_ICC_dfs <- list(
  lyrics = lapply(ethnicity_subsample_lists[['lyrics']], make_overall_icc_df) %>% bind_rows(.id = "subset"), 
  speeches = lapply(ethnicity_subsample_lists[['speeches']], make_overall_icc_df) %>% bind_rows(.id = "subset")
 )
 ```
-
-
-
 
 ```{r}
 spectrum_subsample_ICC_dfs <- lapply(spectrum_subsample_lists[['speeches']], make_overall_icc_df) %>% bind_rows(.id = "subset")

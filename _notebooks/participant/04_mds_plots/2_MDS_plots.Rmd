@@ -184,14 +184,14 @@ plot_mds_df <- function(mds.data, title, option){
 
 
 ```{r}
-p1 <- svs_mat |> mds_data() %>% plot_mds_df("SVS: Schwartz, 2001", "plasma")
-p2 <- pvq_mat |> mds_data() %>% plot_mds_df("PVQ: Schwartz, 2001", "plasma")
+p1 <- svs_mat |> mds_data() %>% plot_mds_df("SVS: Schwartz, 2001", "turbo")
+p2 <- pvq_mat |> mds_data() %>% plot_mds_df("PVQ: Schwartz, 2001", "turbo")
 p3 <- SSVS_df |>
     select(all_of(values)) %>%
     cor(use = "pairwise.complete.obs") %>%
     mds_data() %>%
     rotate_mds(degrees = 135) %>%                 
-    plot_mds_df("SSVS: Present Study", "plasma")
+    plot_mds_df("SSVS: Present Study", "turbo")
 
 (p1 | p2 | p3) +
   plot_annotation(tag_levels = "A") &

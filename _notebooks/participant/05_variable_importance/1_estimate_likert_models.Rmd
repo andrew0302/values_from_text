@@ -24,7 +24,6 @@ options(scipen = 999)
 options(contrasts = c("contr.sum", "contr.poly"))
 ```
 
-
 ```{r}
 # read in data
 path <- here("_data", "_intermediary_data")
@@ -44,21 +43,20 @@ wave_2_dfs <- lapply(wave_2_dfs, function(df){
 # model specs
 
 ```{r}
-spec_lyrics <- as.formula("rating ~ (1|participant_ID) +  (1|item_ID) + value + Ethnicity * genre")
-spec_speeches1 <- as.formula("rating ~ (1|participant_ID) +  (1|item_ID) + value + Ethnicity * party")
-spec_speeches2 <- as.formula("rating ~ (1|participant_ID) +  (1|item_ID) + value + spectrum * party")
+spec_lyrics    <- as.formula("rating ~ (1|participant_ID) + (1|item_ID) + value + Ethnicity * genre")
+spec_speeches1 <- as.formula("rating ~ (1|participant_ID) + (1|item_ID) + value + Ethnicity * party")
+spec_speeches2 <- as.formula("rating ~ (1|participant_ID) + (1|item_ID) + value + spectrum  * party")
 ```
 
 # compute models
-
 
 ```{r}
 df <- wave_2_dfs$wave_2_lyrics
 
 wave_2_lyrics_mods <- list(
-  lmer = lmer(spec_lyrics, df, REML = TRUE), 
-  clmm = clmm(spec_lyrics, df%>%mutate(rating = factor(rating, ordered = TRUE))), 
-  glmer = glmer(spec_lyrics, df%>%mutate(rating = (rating+1)/8), family=binomial()))
+  lmer  = lmer( spec_lyrics, df, REML = TRUE), 
+  clmm  = clmm( spec_lyrics, df %>% mutate(rating = factor(rating, ordered = TRUE))), 
+  glmer = glmer(spec_lyrics, df %>% mutate(rating = (rating+1)/8), family=binomial()))
 
 saveRDS(wave_2_lyrics_mods, here("_data", "_intermediary_data", "models", "wave_2_lyrics_mods.RDS"))
 ```
@@ -84,6 +82,3 @@ wave_2_speeches_spectrum_mods <- list(
 
 saveRDS(wave_2_speeches_spectrum_mods, here("_data", "_intermediary_data", "models", "wave_2_speeches_spectrum_mods.RDS"))
 ```
-
-
-

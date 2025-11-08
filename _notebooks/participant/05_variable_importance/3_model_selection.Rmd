@@ -8,10 +8,9 @@ library("lme4")         # mixed effects metric
 library("lmerTest")     # p values
 library("ordinal")      # mixed effects ordinal
 library("tidyverse")    # code logistics
-library("performance")  # model performance for lmer
 library("emmeans")      # estimated marginal means
-library("cowplot")      # merge plots
-library("patchwork")
+library("patchwork")    # merging plots
+library("performance")  # estimate pseudo R2
 
 # Schwartz value inventory
 values <- c("POWER", "ACHIEVEMENT", "HEDONISM",  
@@ -24,23 +23,14 @@ options(scipen = 999, contrasts = c("contr.sum", "contr.poly"))
 ```
 
 ```{r}
-# read in data
-wave_2_dfs <- readRDS(here("_data", "_intermediary_data", "wave_2_dfs.RDS"))
-
 # read in likert models
 wave_2_lyrics_mods <- readRDS(here("_data", "_intermediary_data", "models", "wave_2_lyrics_mods.RDS"))
 wave_2_speeches_ethnicity_mods <- readRDS(here("_data", "_intermediary_data", "models", "wave_2_speeches_ethnicity_mods.RDS"))
 wave_2_speeches_spectrum_mods <- readRDS(here("_data", "_intermediary_data", "models", "wave_2_speeches_spectrum_mods.RDS"))
-
-# read in lowres models
-wave_2_lyrics_lowres_mods  <- readRDS(here("_data", "_intermediary_data", "models", "wave_2_lyrics_lowres_mods.RDS"))
-wave_2_speeches_ethnicity_lowres_mods <- readRDS(here("_data", "_intermediary_data", "models", "wave_2_speeches_ethnicity_lowres_mods.RDS"))
-wave_2_speeches_spectrum_lowres_mods <- readRDS(here("_data", "_intermediary_data", "models", "wave_2_speeches_spectrum_lowres_mods.RDS"))
 ```
 
-
 ```{r}
-# PREDICTIONS IN SPACE FROM -1 TO 7
+# predicted values from models in the same likert scale space (-1 to 7)
 mypredict <- function(m, newdata = NULL, ...) {
   UseMethod("mypredict", m)
 }
@@ -59,89 +49,125 @@ mypredict.glmerMod <- function(m, newdata = NULL, ...) {
 ```
 
 ```{r}
-predict_by_rating <- function(df, mod){
-  df <- df %>% filter(!is.na(rating), Ethnicity != "CONSENT_REVOKED")
-  y <- df$rating
-  yhat <- mypredict(mod)
-  df %>% mutate(y=y, yhat=yhat)
-}
-```
+# add predictions from models to dataframes
+predict_by_rating <- function(mods) {
+  # collect all models
+  models <- list(
+    lmer = mods$lmer,
+    clmm = mods$clmm,
+    glmer = mods$glmer
+  )
 
-
-
-```{r}
-# COMPUTE R^2 AND BOXPLOTS OF PREDICTION BY OBSERVED RATING
-predict_by_rating <- function(df, mods){
-  
-  df <- df %>% filter(!is.na(rating), Ethnicity != "CONSENT_REVOKED")
-  
-  lmer <- mods$lmer
-  clmm <- mods$clmm
-  glmer<- mods$glmer
-  
-  yhat_dfs <- lapply(
-    c("lmer", "clmm", "glmer"), function(n) {
-      y <- df$rating
-      yhat <- mypredict(get(n)) # get predictions from fitted model using custom function
-      
-      df %>% mutate(y=y, yhat=yhat)
-    
+  # loop over model types
+  yhat_dfs <- lapply(names(models), function(n) {
+    m <- models[[n]]
+    df <- model.frame(m)
+    y <- df$rating
+    yhat <- mypredict(m, newdata = df)
+    df %>% mutate(y = y, yhat = yhat)
   })
-  
-  names(yhat_dfs) <- c("lmer", "clmm", "glmer")
+
+  names(yhat_dfs) <- names(models)
   return(yhat_dfs)
 }
 ```
 
 
+```{r}
+# add predicted values to df and save objects
+# this takes some time to run
+
+wave_2_lyrics_yhat_dfs <- predict_by_rating(wave_2_lyrics_mods)
+# rescale so y values are on a scale of -1 to 7
+wave_2_lyrics_yhat_dfs[["glmer"]] <- wave_2_lyrics_yhat_dfs[["glmer"]] |> mutate(y=y*8-1)
+
+saveRDS(wave_2_lyrics_yhat_dfs, here("_data", "_intermediary_data", "models", "wave_2_lyrics_yhat_dfs.RDS"))
+
+
+
+wave_2_speeches_ethnicity_yhat_dfs <- predict_by_rating( wave_2_speeches_ethnicity_mods)
+# rescale so y values are on a scale of -1 to 7
+wave_2_speeches_ethnicity_yhat_dfs[["glmer"]] <- wave_2_speeches_ethnicity_yhat_dfs[["glmer"]] |> mutate(y=y*8-1)
+
+saveRDS(wave_2_speeches_ethnicity_yhat_dfs, here("_data", "_intermediary_data", "models", "wave_2_speeches_ethnicity_yhat_dfs.RDS"))
+```
 
 ```{r}
-# wave_2_lyrics_yhat_dfs <- predict_by_rating(wave_2_dfs$wave_2_lyrics, wave_2_lyrics_mods)
-# saveRDS(wave_2_lyrics_yhat_dfs, here("_data", "_intermediary_data", "models", "wave_2_lyrics_yhat_dfs.RDS"))
-
+# load dataframes with predictions
 wave_2_lyrics_yhat_dfs <- readRDS(here("_data", "_intermediary_data", "models", "wave_2_lyrics_yhat_dfs.RDS"))
 
-# wave_2_speeches_ethnicity_yhat_dfs <- predict_by_rating(wave_2_dfs$wave_2_speeches, wave_2_speeches_ethnicity_mods)
-# saveRDS(wave_2_speeches_ethnicity_yhat_dfs, here("_data", "_intermediary_data", "models", "wave_2_speeches_ethnicity_yhat_dfs.RDS"))
-
 wave_2_speeches_ethnicity_yhat_dfs <- readRDS(here("_data", "_intermediary_data", "models", "wave_2_speeches_ethnicity_yhat_dfs.RDS"))
-
-# wave_2_speeches_spectrum_yhat_dfs <- predict_by_rating(wave_2_dfs$wave_2_speeches, wave_2_speeches_spectrum_mods)
-# saveRDS(wave_2_speeches_spectrum_yhat_dfs, here("_data", "_intermediary_data", "models", "wave_2_speeches_spectrum_yhat_dfs.RDS"))
-
-wave_2_speeches_spectrum_yhat_dfs <- readRDS(here("_data", "_intermediary_data", "models", "wave_2_speeches_spectrum_yhat_dfs.RDS"))
 ```
 
 ```{r}
-plot_observed_predicted <- function(df_list, column){
+# compute pseudo R2 for each model 
+# this takes some time to run
 
-  lapply(seq_along(df_list), function(df, n, i){
-    
-    y <- df[[i]]$y
-    yhat <- df[[i]]$yhat
-  
-    tss <- sum((y-mean(y))^2)
-    rss <- sum((y-yhat)^2)
-    r2 <- round(1-rss/tss, digits = 4)
-     
-    plot_1 <- df[[i]] |>
-      mutate(y = y, yhat = yhat) |>
-      ggplot(aes(as.factor(y),yhat)) +
-        geom_boxplot() +
-        geom_abline(intercept = -2, slope = 1, color = "red") +
-        scale_y_continuous(limits = c(-3, 10), n.breaks = (9))+
-        labs(title = paste(collapse=" ", c(n[[i]], r2))) +
-        theme_minimal()
-    
-    #plot_2 <- plot_1 + facet_wrap(~.data[[column]])
-    
-    #plot_grid(plot_1, plot_2)
-    
-    return(plot_1)
-    
-  }, n = names(df_list), df = df_list)
-}
+wave_2_lyrics_R2s <- list(
+  lmer = performance::r2_nakagawa(wave_2_lyrics_mods$lmer), 
+  clmm = performance::r2_nakagawa(wave_2_lyrics_mods$clmm), 
+  glmer = performance::r2_nakagawa(wave_2_lyrics_mods$glmer))
+
+saveRDS(wave_2_lyrics_R2s, here("_data", "_intermediary_data", "models", "wave_2_lyrics_R2s.RDS"))
+
+wave_2_speeches_R2s <- list(
+  lmer = performance::r2_nakagawa(wave_2_speeches_ethnicity_mods$lmer), 
+  clmm = performance::r2_nakagawa(wave_2_speeches_ethnicity_mods$clmm), 
+  glmer = performance::r2_nakagawa(wave_2_speeches_ethnicity_mods$glmer))
+
+saveRDS(wave_2_speeches_R2s, here("_data", "_intermediary_data", "models", "wave_2_speeches_R2s.RDS"))
 ```
+
+```{r}
+# plot_observed_predicted <- function(df, n){
+#   
+#    df |>
+#       ggplot(aes(as.factor(y),yhat)) +
+#         geom_boxplot() +
+#         geom_abline(intercept = -2, slope = 1, color = "red") +
+#         scale_y_continuous(
+#           limits = c(-1, 7), 
+#           n.breaks = (9), 
+#           breaks = seq(-1, 7, 1)) +
+#         labs(x = "Observed rating", y = "Predicted rating", title = paste(n)) +
+#         theme_classic()
+# }
+# 
+# 
+# plot_observed_predicted(wave_2_lyrics_yhat_dfs[[3]], "Lyrics")
+```
+
+```{r}
+plot_observed_predicted <- function(df_list, r2_list) {
+  
+  plots <- lapply(names(df_list), function(model_name) {
+    
+    df <- df_list[[model_name]]
+    
+    # Marginal R2 (variance explained by fixed effects only)
+    r2_marginal <- round(r2_list[[model_name]]$R2_marginal, 3)
+    
+    # Conditional R2 (variance explained by fixed and random effects)
+    # r2_conditional <- round(r2_list[[model_name]]$R2_conditional, 3)
+    
+    ggplot(df, aes(as.factor(y), yhat)) +
+      geom_boxplot() +
+      geom_abline(intercept = -2, slope = 1, color = "red") +
+      scale_y_continuous(
+        limits = c(-2, 9),
+        breaks = seq(-2, 9, 1)
+      ) +
+      labs(title = paste0(model_name, ":  R² = ", r2_marginal), 
+        x = "Observed rating", y = "Predicted rating") +
+      theme_minimal(base_size = 12)
+  })
+  
+  names(plots) <- names(df_list)
+  return(plots)
+}
+
+```
+
 
 ```{r}
 merge_yhat_plots <- function(yhat_plot_list, name){
@@ -166,163 +192,21 @@ merge_yhat_plots <- function(yhat_plot_list, name){
 ```
 
 ```{r}
-merge_yhat_plots(plot_observed_predicted(wave_2_lyrics_yhat_dfs, "value"), name = "Lyrics")
+wave_2_lyrics_yhat_plots <- plot_observed_predicted(
+  df_list = wave_2_lyrics_yhat_dfs,
+  r2_list = wave_2_lyrics_R2s)
 
-ggsave(here("images", "wave_2_lyrics_yhat_plots.png"))
+merge_yhat_plots(wave_2_lyrics_yhat_plots, name = "Lyrics")
+
+ggsave(here("images", "main_lyrics_yhat_plots.pdf"))
 ```
 
 ```{r}
-merge_yhat_plots(plot_observed_predicted(wave_2_speeches_ethnicity_yhat_dfs, "value"), name = "Speeches, Ethnicity")
+wave_2_speeches_ethnicity_yhat_plots <- plot_observed_predicted(
+  df_list = wave_2_speeches_ethnicity_yhat_dfs,
+  r2_list = wave_2_speeches_R2s)
 
-ggsave(here("images", "wave_2_speeches_ethnicity_yhat_plots.png"))
+merge_yhat_plots(wave_2_speeches_ethnicity_yhat_plots, name = "Speeches")
+
+ggsave(here("images", "main_speeches_yhat_plots.pdf"))
 ```
-
-```{r}
-merge_yhat_plots(plot_observed_predicted(wave_2_speeches_spectrum_yhat_dfs, "value"), name = "Speeches, Spectrum")
-ggsave(here("images", "wave_2_speeches_spectrum_yhat_plots.png"))
-```
-
-
-```{r}
-df <- wave_2_dfs$wave_2_lyrics
-mod <- wave_2_lyrics_lowres_mods$glmer
-
-df <- mod@frame
-y <- df$rating
-yhat <- predict(mod, type="response")
-
-    tss <- sum((y-mean(y))^2)
-    rss <- sum((y-yhat)^2)
-    r2 <- 1-rss/tss
-
-df %>%
-      mutate(y = rating, yhat = yhat) |>
-      ggplot(aes(as.factor(y),yhat)) +
-        geom_boxplot() +
-        geom_abline(intercept = -1, slope = 1, color = "red") +
-        labs(title = paste(collapse=" ", c("glmer", r2))) +
-        scale_y_continuous(limits = c(-.5, 1.5))+
-        theme_minimal()
-```
-
-```{r}
-mod <- wave_2_speeches_ethnicity_lowres_mods$glmer
-
-df <- mod@frame
-y <- df$rating
-yhat <- predict(mod, type="response")
-
-    tss <- sum((y-mean(y))^2)
-    rss <- sum((y-yhat)^2)
-    r2 <- 1-rss/tss
-
-df %>%
-      mutate(y = rating, yhat = yhat) |>
-      ggplot(aes(as.factor(y),yhat)) +
-        geom_boxplot() +
-        geom_abline(intercept = -1, slope = 1, color = "red") +
-        labs(title = paste(collapse=" ", c("glmer", r2))) +
-        scale_y_continuous(limits = c(-.5, 1.5))+
-        theme_minimal()
-
-mod <- wave_2_speeches_spectrum_lowres_mods$glmer
-
-df <- mod@frame
-y <- df$rating
-yhat <- predict(mod, type="response")
-
-    tss <- sum((y-mean(y))^2)
-    rss <- sum((y-yhat)^2)
-    r2 <- 1-rss/tss
-
-df %>%
-      mutate(y = rating, yhat = yhat) |>
-      ggplot(aes(as.factor(y),yhat)) +
-        geom_boxplot() +
-        geom_abline(intercept = -1, slope = 1, color = "red") +
-        labs(title = paste(collapse=" ", c("glmer", r2))) +
-        scale_y_continuous(limits = c(-.5, 1.5))+
-        theme_minimal()
-```
-
-```{r}
-mod <- wave_2_lyrics_lowres_mods$clmm
-
-df <- model.frame(mod)
-df <- df %>% mutate(y = case_when(
-  rating == "(-2,0]" ~ 1, 
-  rating == "(0,6]" ~ 2, 
-  rating == "(6,7]" ~ 3
-))
-y <- df$y
-
-yhat <- left_join(df, as.data.frame(ref_grid(mod, mode = "mean.class")))$mean.class
-
-    tss <- sum((y-mean(y))^2)
-    rss <- sum((y-yhat)^2)
-    r2 <- 1-rss/tss
-
-df %>%
-      mutate(yhat = yhat) |>
-      ggplot(aes(as.factor(y),yhat)) +
-        geom_boxplot() +
-        geom_abline(intercept = 0, slope = 1, color = "red") +
-        labs(title = paste(collapse=" ", c("clmm", r2))) +
-        scale_y_continuous(limits = c(-.5, 3.5))+
-        theme_minimal()
-```
-
-```{r}
-mod <- wave_2_speeches_ethnicity_lowres_mods$clmm
-
-df <- model.frame(mod)
-df <- df %>% mutate(y = case_when(
-  rating == "(-2,0]" ~ 1, 
-  rating == "(0,6]" ~ 2, 
-  rating == "(6,7]" ~ 3
-))
-y <- df$y
-
-yhat <- left_join(df, as.data.frame(ref_grid(mod, mode = "mean.class")))$mean.class
-
-    tss <- sum((y-mean(y))^2)
-    rss <- sum((y-yhat)^2)
-    r2 <- 1-rss/tss
-
-df %>%
-      mutate(yhat = yhat) |>
-      ggplot(aes(as.factor(y),yhat)) +
-        geom_boxplot() +
-        geom_abline(intercept = 0, slope = 1, color = "red") +
-        labs(title = paste(collapse=" ", c("clmm", r2))) +
-        scale_y_continuous(limits = c(-.5, 3.5))+
-        theme_minimal()
-```
-
-```{r}
-mod <- wave_2_speeches_spectrum_lowres_mods$clmm
-
-df <- model.frame(mod)
-df <- df %>% mutate(y = case_when(
-  rating == "(-2,0]" ~ 1, 
-  rating == "(0,6]" ~ 2, 
-  rating == "(6,7]" ~ 3
-))
-y <- df$y
-
-yhat <- left_join(df, as.data.frame(ref_grid(mod, mode = "mean.class")))$mean.class
-
-    tss <- sum((y-mean(y))^2)
-    rss <- sum((y-yhat)^2)
-    r2 <- 1-rss/tss
-
-df %>%
-      mutate(yhat = yhat) |>
-      ggplot(aes(as.factor(y),yhat)) +
-        geom_boxplot() +
-        geom_abline(intercept = 0, slope = 1, color = "red") +
-        labs(title = paste(collapse=" ", c("clmm", r2))) +
-        scale_y_continuous(limits = c(-.5, 3.5))+
-        theme_minimal()
-```
-

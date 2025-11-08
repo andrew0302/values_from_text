@@ -76,7 +76,7 @@ wave_2_dfs <- lapply(wave_2_dfs, function(df){
 ```{r}
 # import lyric data
 path <- here("_data", "_primary_data")
-lyrics_dt <- readRDS(here(path,"public_lyrics_dt.RDS"))
+lyrics_dt <- readRDS(here(path,"public_lyrics_df.RDS"))
 
 # rename columns so they match participant df
 lyrics_dt <- lyrics_dt %>% 

@@ -1,0 +1,271 @@
+## Pilot Results
+
+```{r include=FALSE}
+library('here')       # file logistics
+library("tidyverse")  # code logistics
+library("patchwork")  # merge plots
+library("gt")         # markdown
+library("rlang")
+library("ggtext")     # text plots
+```
+
+```{r include=FALSE} 
+# read in data
+file_path <- here("_data", "_intermediary_data", "bootstrapped_ICC")
+
+# summary dfs
+pilot_2_likert_summary_dfs   <- readRDS(here(file_path, "pilot_2_likert_summary_dfs.RDS"))
+
+# text type sampled by row
+pilot_2_lyrics_by_row_dfs    <- readRDS(here(file_path, "pilot_2_lyrics_by_row_dfs.RDS"))
+pilot_2_speeches1_by_row_dfs <- readRDS(here(file_path, "pilot_2_speeches1_by_row_dfs.RDS"))
+pilot_2_speeches2_by_row_dfs <- readRDS(here(file_path, "pilot_2_speeches2_by_row_dfs.RDS"))
+
+rm(file_path)
+```
+
+```{r include=FALSE}
+# apa formatting
+theme_apa <- function(base_size = 12, base_family = "sans") {
+  theme_minimal(base_size = base_size, base_family = base_family) +
+    theme(
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      axis.line = element_line(color = "black"),
+      axis.ticks = element_line(color = "black"),
+      axis.title = element_text(size = base_size, face = "plain"),
+      axis.text = element_text(size = base_size * 0.9),
+      legend.position = "none",
+      legend.title = element_text(face = "plain"))}
+```
+
+```{r include=FALSE}
+# plot ICC2k and 95% CI by value
+plot_summary_by_metric <- function(df, metric, metric_lower, metric_upper, option) {
+  
+  subsets <- as.list(df$subset%>%unique())
+  
+  lapply(subsets, function(sub){
+    df %>%
+      filter(subset == str_wrap(sub)) %>%
+      ggplot(aes(y=value, x={{metric}}, color = value)) +
+      geom_point() +
+      geom_errorbar(aes(xmin = {{metric_lower}}, xmax = {{metric_upper}})) +
+      geom_vline(xintercept = 0.75, color = "red", size = .4, linetype = "dashed" )+
+      xlim(-.5, 1) +
+      scale_color_viridis_d(option = option) +
+      theme(legend.position="none",
+            plot.title = element_text(size = 10, hjust = 0.0)) +
+      labs(x = "ICC[2,k]",y = "Value") +
+      ggtitle(label = stringr::str_wrap(sub, width = 15)) +
+      theme_apa()
+    })}
+
+# density plot of bootstrapping procedure
+plot_raters <- function(df, metric, name, option){
+  df %>%
+    ggplot(aes(x = {{metric}}, color = as.factor(n))) +
+    geom_line(stat = "density", alpha = .5, size = .75) +
+    xlim(0, 1) + ylim(0,10) +
+    scale_color_viridis_d(option = option, direction = -1) +
+    labs(color = "Rater n\n") +  
+    ylab("Density") +
+    xlab({{name}}) +
+    theme_apa() +
+    theme(legend.position = "right") +
+    guides(color = guide_legend(nrow = 3))
+  }
+```
+
+
+### Estimating the number of raters
+
+```{r warning=FALSE}
+p1 <- plot_raters(
+  pilot_2_lyrics_by_row_dfs[[1]] %>% filter(n <= 25), 
+  metric = r, "Pearson's r", option = "plasma") + 
+  geom_vline(xintercept = 0.9, color = "red", size = .4, linetype = "dashed") 
+
+p2 <- plot_raters(
+  pilot_2_lyrics_by_row_dfs[[1]] %>% filter(n <= 25), 
+  metric = ICC2k, "ICC(2,k)", option = "plasma") +
+  geom_vline(xintercept = 0.75, color = "red", size = .4, linetype = "dashed") 
+
+figure_2a <- (p1 /p2) + 
+  plot_annotation(tag_levels = 'A') +
+  plot_layout(guides = "collect") &
+  
+  theme(legend.position = "bottom",
+        plot.title = element_markdown(hjust = 0), 
+        plot.subtitle = element_markdown(hjust = 0), 
+        plot.caption = element_markdown(hjust = 0))
+
+#figure_2a
+
+p1 <- plot_raters(
+  pilot_2_speeches1_by_row_dfs[[1]] %>% filter(n >= 25), 
+  metric = r, "Pearson's r", option = "viridis") + 
+  geom_vline(xintercept = 0.9, color = "red", size = .4, linetype = "dashed")
+
+p2 <- plot_raters(
+  pilot_2_speeches1_by_row_dfs[[1]] %>% filter(n >= 25), 
+  metric = ICC2k, "ICC(2,k)", option = "viridis") +
+  geom_vline(xintercept = 0.75, color = "red", size = .4, linetype = "dashed")
+
+figure_2b <- (p1 /p2) +
+  plot_annotation(tag_levels = 'A') &
+  
+  theme(legend.position = "bottom",
+        plot.title = element_markdown(hjust = 0), 
+        plot.subtitle = element_markdown(hjust = 0), 
+        plot.caption = element_markdown(hjust = 0))
+
+#figure_2b
+
+p1 <- plot_raters(
+  pilot_2_speeches2_by_row_dfs[[1]] %>% filter(n >= 25), 
+  metric = r, "Pearson's r", option = "viridis") + 
+  geom_vline(xintercept = 0.9, color = "red", size = .4, linetype = "dashed")
+
+p2 <- plot_raters(
+  pilot_2_speeches2_by_row_dfs[[1]] %>% filter(n >= 25), 
+  metric = ICC2k, "ICC(2,k)", option = "viridis") +
+  geom_vline(xintercept = 0.75, color = "red", size = .4, linetype = "dashed")
+
+figure_2c <- (p1 /p2) +
+  plot_annotation(tag_levels = 'A') &
+  
+  theme(legend.position = "bottom",
+        plot.title = element_markdown(hjust = 0), 
+        plot.subtitle = element_markdown(hjust = 0), 
+        plot.caption = element_markdown(hjust = 0))
+
+#figure_2c
+
+right_group <- (figure_2b | figure_2c) +
+  plot_layout(guides = "collect") &
+  theme(legend.position = "bottom",
+        legend.justification = "center")
+
+
+figure <- (figure_2a| right_group) +
+  # relative size of each plot
+  plot_layout(widths = c(.8, 2)) +  
+  plot_annotation(tag_levels = 'A')
+
+figure
+
+ggsave(here("images", "pilot_reliability_by_n.pdf"),figure)
+
+rm(figure_2a, figure_2b, figure_2c, figure)
+```
+
+
+### Exploring annotator sample strata
+
+
+```{r include=FALSE}
+# compute plots
+pilot_2_lyrics_agreement_plots <- plot_summary_by_metric(
+  pilot_2_likert_summary_dfs[[1]], 
+  ICC2k, ICC2k_lower, ICC2k_upper, 
+  option = "plasma")
+
+pilot_2_speeches1_agreement_plots <- plot_summary_by_metric(
+  pilot_2_likert_summary_dfs[[2]], 
+  ICC2k, ICC2k_lower, ICC2k_upper, 
+  option="viridis")
+
+pilot_2_speeches2_agreement_plots <- plot_summary_by_metric(
+  pilot_2_likert_summary_dfs[[3]], 
+  ICC2k, ICC2k_lower, ICC2k_upper, 
+  option = "viridis")
+```
+
+```{r include=FALSE}
+p1 <- pilot_2_lyrics_agreement_plots[[1]] 
+
+p1 <- p1 + 
+  ggtitle("Overall") +
+  theme(plot.title = element_markdown(hjust = 0), 
+        plot.subtitle = element_markdown(hjust = 0), 
+        plot.caption = element_markdown(hjust = 0))
+
+p1_1 <- pilot_2_lyrics_agreement_plots[[2]]
+p1_2 <- pilot_2_lyrics_agreement_plots[[3]]
+p1_3 <- pilot_2_lyrics_agreement_plots[[4]]
+p1_4 <- pilot_2_lyrics_agreement_plots[[5]]
+
+
+p2 <- (p1_1 | p1_2) / (p1_3 | p1_4) +
+  
+  theme(plot.title = element_markdown(hjust = 0), 
+        plot.subtitle = element_markdown(hjust = 0), 
+        plot.caption = element_markdown(hjust = 0))
+
+figure <- p1 / p2
+
+figure
+
+ggsave(here("images", "pilot_lyrics_reliability_by_value.pdf"), height=8.5)
+```
+
+```{r}
+p1 <- pilot_2_speeches1_agreement_plots[[1]]+ggtitle("")
+
+p1 <- p1 + 
+  ggtitle("Overall") +
+  theme(plot.title = element_markdown(hjust = 0), 
+        plot.subtitle = element_markdown(hjust = 0), 
+        plot.caption = element_markdown(hjust = 0))
+
+p1_1 <- pilot_2_speeches1_agreement_plots[[2]]
+p1_2 <- pilot_2_speeches1_agreement_plots[[3]]
+p1_3 <- pilot_2_speeches1_agreement_plots[[4]]
+p1_4 <- pilot_2_speeches1_agreement_plots[[5]]
+
+
+p2 <- (p1_1 | p1_2) / (p1_3 | p1_4) +
+  
+  theme(plot.title = element_markdown(hjust = 0), 
+        plot.subtitle = element_markdown(hjust = 0), 
+        plot.caption = element_markdown(hjust = 0))
+
+figure <- p1 / p2
+
+figure
+
+ggsave(here("images", "pilot_speeches1_reliability_by_value.pdf"), height=8.5)
+```
+
+```{r}
+p1 <- pilot_2_speeches2_agreement_plots[[1]]+ggtitle("")
+
+p1 <- p1 + 
+  ggtitle("Overall") +
+  theme(plot.title = element_markdown(hjust = 0), 
+        plot.subtitle = element_markdown(hjust = 0), 
+        plot.caption = element_markdown(hjust = 0))
+
+p1_1 <- pilot_2_speeches2_agreement_plots[[2]]
+p1_2 <- pilot_2_speeches2_agreement_plots[[3]]
+p1_3 <- pilot_2_speeches2_agreement_plots[[4]]
+p1_4 <- patchwork::plot_spacer()
+
+p2 <- ((p1_1 / p1_2) | (p1_3 / p1_4)) +
+  
+  theme(plot.title = element_markdown(hjust = 0), 
+        plot.subtitle = element_markdown(hjust = 0), 
+        plot.caption = element_markdown(hjust = 0))
+
+figure <- p1 / p2
+figure
+
+ggsave(here("images", "pilot_speeches2_reliability_by_value.pdf"), height=8.5)
+```
+
+
+
+
+
+
