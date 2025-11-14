@@ -11,6 +11,7 @@ library("tidyverse")    # code logistics
 library("emmeans")      # estimated marginal means
 library("patchwork")    # merging plots
 library("performance")  # estimate pseudo R2
+library("gt")           # latex table
 
 # Schwartz value inventory
 values <- c("POWER", "ACHIEVEMENT", "HEDONISM",  
@@ -119,23 +120,38 @@ saveRDS(wave_2_speeches_R2s, here("_data", "_intermediary_data", "models", "wave
 ```
 
 ```{r}
-# plot_observed_predicted <- function(df, n){
-#   
-#    df |>
-#       ggplot(aes(as.factor(y),yhat)) +
-#         geom_boxplot() +
-#         geom_abline(intercept = -2, slope = 1, color = "red") +
-#         scale_y_continuous(
-#           limits = c(-1, 7), 
-#           n.breaks = (9), 
-#           breaks = seq(-1, 7, 1)) +
-#         labs(x = "Observed rating", y = "Predicted rating", title = paste(n)) +
-#         theme_classic()
-# }
-# 
-# 
-# plot_observed_predicted(wave_2_lyrics_yhat_dfs[[3]], "Lyrics")
+wave_2_lyrics_R2s  <- readRDS(here("_data", "_intermediary_data", "models", "wave_2_lyrics_R2s.RDS"))
+
+wave_2_speeches_R2s  <- readRDS(here("_data", "_intermediary_data", "models", "wave_2_speeches_R2s.RDS"))
 ```
+
+```{r}
+r2_gt <- bind_rows(
+
+  wave_2_lyrics_R2s |> 
+    bind_rows(.id = "model") |>
+    mutate(text = "lyrics"),
+  
+  wave_2_speeches_R2s |>
+    bind_rows(.id = "model") |>
+    mutate(text = "speeches")) |>
+  
+  
+  gt(groupname_col = "text", rowname_col = "model") |>
+  
+  tab_header(
+    title = md("$R^2$ by Model, by Text Type")) |>
+  fmt_number(columns = c(R2_marginal, R2_conditional), decimals = 3) |>
+  cols_label(
+    R2_marginal = md("$R^2_{marginal}$"),
+    R2_conditional = md("$R^2_{conditional}$")
+  )
+
+
+gtsave(r2_gt, here("tables", "main_r2_table.tex"), as_latex = TRUE)
+
+```
+
 
 ```{r}
 plot_observed_predicted <- function(df_list, r2_list) {
@@ -157,7 +173,9 @@ plot_observed_predicted <- function(df_list, r2_list) {
         limits = c(-2, 9),
         breaks = seq(-2, 9, 1)
       ) +
-      labs(title = paste0(model_name, ":  R² = ", r2_marginal), 
+      labs(
+        #title = paste0(model_name, ":  R² = ", r2_marginal), 
+        title = model_name, 
         x = "Observed rating", y = "Predicted rating") +
       theme_minimal(base_size = 12)
   })

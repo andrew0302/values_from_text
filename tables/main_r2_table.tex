@@ -1,0 +1,24 @@
+\begin{table}[t]
+\caption*{
+{\large \(R^2\) by Model, by Text Type}
+} 
+\fontsize{12.0pt}{14.4pt}\selectfont
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}l|rr}
+\toprule
+ & \(R^2_{conditional}\) & \(R^2_{marginal}\) \\ 
+\midrule\addlinespace[2.5pt]
+\multicolumn{3}{l}{lyrics} \\[2.5pt] 
+\midrule\addlinespace[2.5pt]
+lmer & 0.238 & 0.078 \\ 
+clmm & 0.273 & 0.068 \\ 
+glmer & 0.230 & 0.069 \\ 
+\midrule\addlinespace[2.5pt]
+\multicolumn{3}{l}{speeches} \\[2.5pt] 
+\midrule\addlinespace[2.5pt]
+lmer & 0.273 & 0.106 \\ 
+clmm & 0.322 & 0.096 \\ 
+glmer & 0.275 & 0.105 \\ 
+\bottomrule
+\end{tabular*}
+\end{table}
+

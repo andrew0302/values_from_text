@@ -160,7 +160,6 @@ emm_options(rg.limit = 15000000)
 wave_2_lyrics_ethnicity_curve_df <- run_spec_curve(lyrics_ethnicity_specs, df = wave_2_dfs$wave_2_lyrics)
 
 saveRDS(wave_2_lyrics_ethnicity_curve_df, file = here("_data", "_intermediary_data", "spec_curves", "wave_2_lyrics_ethnicity_curve_df.RDS"))
-
 ```
 
 

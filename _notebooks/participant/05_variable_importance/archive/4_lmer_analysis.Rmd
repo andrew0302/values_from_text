@@ -1,0 +1,192 @@
+---
+title: "R Notebook"
+---
+
+```{r}
+library("here")         # file logistics
+library("lme4")         # mixed effects metric
+library("lmerTest")     # p values
+library("tidyverse")    # code logistics
+library("broom.mixed")  # model outputs as data frames
+library("emmeans")      # estimated marginal means
+#library("cowplot")      # merge plots
+library("patchwork")    # merge plots
+library("report")       # apa reporting
+library("papaja")
+
+# TO "CENTER" CATEGORICAL PREDICTORS, set the coding to contr.sum (deviations from the average)
+options(scipen = 999, contrasts = c("contr.sum", "contr.poly"))
+```
+
+
+```{r}
+# read in data
+wave_2_dfs <- readRDS(here("_data", "_intermediary_data", "wave_2_dfs.RDS"))
+```
+
+```{r}
+lyrics_mod <- lmer(rating ~ value * Ethnicity + (1|item_ID) + (1 | participant_ID), 
+  data = wave_2_dfs$wave_2_lyrics)
+
+anova <- anova(lyrics_mod, type = "II")
+anova
+#report(anova)
+
+speeches1_mod <- lmer(rating ~ value * Ethnicity + (1|item_ID) + (1 | participant_ID), 
+  data = wave_2_dfs$wave_2_speeches)
+
+anova <- anova(speeches1_mod, type = "II")
+anova
+#report(anova)
+
+speeches2_mod <- lmer(rating ~ value * spectrum + (1|item_ID) + (1 | participant_ID), 
+  data = wave_2_dfs$wave_2_speeches)
+
+anova <- anova(speeches2_mod, type = "II")
+anova
+#report(anova)
+```
+
+
+-
+```{r}
+# lyrics by ethnicity
+p1 <- plot(emmeans(lyrics_mod, ~Ethnicity) , comparisons = TRUE) + 
+  ggtitle("Lyrics") +
+  scale_x_continuous(limits = c(3.3, 4.7)) +
+  theme_classic() +
+  xlab("") +
+  theme(plot.margin = margin(10, 10, 10, 40))
+
+p2 <- plot(emmeans(speeches1_mod, ~Ethnicity) , comparisons = TRUE) + 
+  ggtitle("Speeches")+
+  scale_x_continuous(limits = c(3.3, 4.7)) +
+  theme_classic()+
+  xlab("") +
+  theme(plot.margin = margin(10, 10, 10, 40))
+
+p3 <- plot(emmeans(speeches2_mod, ~spectrum) , comparisons = TRUE) + 
+  ggtitle("Speeches")+
+  scale_x_continuous(limits = c(3.3, 4.7)) +
+  theme_classic()+
+  ylab("Political\nSpectrum") +
+  xlab("Estimated Marginal Mean") +
+  theme(plot.margin = margin(10, 10, 10, 40))
+
+(p1 / p2 / p3) +
+  plot_layout(guides = "collect") +
+  plot_annotation(tag_levels = "A")
+
+ggsave(here("images", "main_emmeans_text_by_ethnicity_spectrum.pdf"))
+```
+
+```{r}
+labeller_value <- labeller(value = function(x) gsub("value: ", "", x))
+
+p1 <- plot(emmeans(lyrics_mod , ~Ethnicity|value), comparisons =T) +
+  theme_classic() + facet_wrap(~value, labeller = labeller_value, ncol = 2) +
+  ggtitle("Lyrics") + xlab("Estimated Marginal Mean")
+
+p2 <- plot(emmeans(speeches1_mod , ~Ethnicity|value), comparisons =T) +
+    theme_classic() + facet_wrap(~value, labeller = labeller_value, ncol = 2) +
+  ggtitle("Speeches") + xlab("Estimated Marginal Mean")
+
+p3 <- plot(emmeans(speeches2_mod , ~spectrum|value), comparisons =T) +
+    theme_classic() + facet_wrap(~value, labeller = labeller_value, ncol = 2) +
+  ggtitle("Speeches") + xlab("Estimated Marginal Mean") + ylab("Political Spectrum")
+
+p1
+ggsave(here("images", "main_lyrics_by_ethnicity_value.pdf"))
+
+(p2 | p3) + plot_annotation(tag_levels = "A")
+ggsave(here("images", "main_speeches_by_ethnicity_spectrum_by_value.pdf"))
+```
+
+```{r}
+model <- lmer(rating ~ value * Ethnicity * spectrum + (1|item_ID) + (1 | participant_ID), 
+  data = wave_2_dfs$wave_2_speeches)
+
+anova(model, type = "II")
+```
+
+
+```{r}
+plot(emmeans(model, ~ Ethnicity | spectrum ), comparisons = TRUE) + 
+  facet_wrap(~spectrum, labeller = labeller_value, ncol = 1) +
+  theme_classic()
+
+ggsave(here("images", "main_speeches_by_ethnicity_spectrum.pdf"))
+```
+
+
+```{r}
+# wave_2_speeches_ethnicity_mods <- readRDS(here("_data", "_intermediary_data", "models", "wave_2_speeches_ethnicity_mods.RDS"))
+# 
+# # run models of subsets by factor to visualize interactions
+# run_subset_mods <- function(df, factor, formula){
+#   
+#   factors <- df %>% select(factor)
+#   colnames(factors) <- "column"
+#   factors <- factors$column %>% unique() %>% as.character() %>% as.list(.)
+#   
+#   mods <- lapply(factors, function(factor){
+#     lmer(formula, df%>%filter(party==factor), REML = TRUE)}
+#     )}
+# 
+# wave_2_speeches_ethnicity_mods$lmer %>% 
+#   tidy() %>% filter(grepl("Ethnicity", term) & p.value < .05)
+# 
+# spec_speeches_ethnicity <- as.formula("rating ~ Ethnicity * value + (1|participant_ID)+(1|item_ID)")
+# 
+# mods <- run_subset_mods(
+#   df = wave_2_dfs$wave_2_speeches,
+#   factor = "party",
+#   formula = spec_speeches_ethnicity)
+# 
+# 
+# plot(emmeans(mods[[1]], ~Ethnicity|value), comparisons = T) +
+#   theme_classic() + facet_wrap(~value, labeller = labeller_value, ncol = 2) +
+#   xlab("Estimated Marginal Mean") + 
+#   ggtitle("Democratic")
+# plot(emmeans(mods[[2]], ~Ethnicity|value), comparisons = T) + 
+#   theme_classic() + facet_wrap(~value, labeller = labeller_value, ncol = 2) +
+#   xlab("Estimated Marginal Mean") + 
+#   ggtitle("Republican")
+```
+
+```{r}
+# wave_2_speeches_spectrum_mods <- readRDS(here("_data", "_intermediary_data", "models", "wave_2_speeches_spectrum_mods.RDS"))
+# 
+# # run models of subsets by factor to visualize interactions
+# run_subset_mods <- function(df, factor, formula){
+#   
+#   factors <- df %>% select(factor)
+#   colnames(factors) <- "column"
+#   factors <- factors$column %>% unique() %>% as.character() %>% as.list(.)
+#   
+#   mods <- lapply(factors, function(factor){
+#     lmer(formula, df%>%filter(party==factor), REML = TRUE)
+#   })
+# }
+# 
+# wave_2_speeches_ethnicity_mods$lmer %>% 
+#   tidy() %>% filter(grepl("spectrum", term) & p.value < .05)
+# 
+# spec_speeches_spectrum <- as.formula("rating ~ spectrum * value + (1|participant_ID)+(1|item_ID)")
+# 
+# mods <- run_subset_mods(
+#   df = wave_2_dfs$wave_2_speeches,
+#   factor = "party",
+#   formula = spec_speeches_spectrum)
+# 
+# 
+# plot(emmeans(mods[[1]], ~spectrum|value), comparisons = T) +
+#   theme_classic() + facet_wrap(~value, labeller = labeller_value, ncol = 2) +
+#   xlab("Estimated Marginal Mean") + 
+#   ggtitle("Democratic")
+# 
+# plot(emmeans(mods[[2]], ~spectrum|value), comparisons = T) + 
+#   theme_classic() + facet_wrap(~value, labeller = labeller_value, ncol = 2) +
+#   xlab("Estimated Marginal Mean") + 
+#   ggtitle("Republican")
+```
