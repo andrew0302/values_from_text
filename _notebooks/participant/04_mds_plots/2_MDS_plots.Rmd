@@ -205,7 +205,7 @@ p1 <- bind_rows(mean_dfs[[1]], mean_dfs[[2]]) %>%
   select(all_of(values)) %>% 
   cor(use = "complete.obs") |> 
   mds_data() %>% rotate_mds(degrees = -45) %>%  
-  plot_mds_df("Lyrics", "magma")
+  plot_mds_df("Lyrics", "plasma")
 
 p2 <- bind_rows(mean_dfs[[3]], mean_dfs[[4]]) %>% 
   select(all_of(values)) %>% 

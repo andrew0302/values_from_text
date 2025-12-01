@@ -9,214 +9,482 @@ library("lmerTest")     # p values
 library("tidyverse")    # code logistics
 library("broom.mixed")  # model outputs as data frames
 library("emmeans")      # estimated marginal means
-library("cowplot")      # merge plots
-library("specr")        # specification curves
 library("patchwork")    # merge plots
+library("report")       # apa reporting
+library("gt")           # latex tables
 
 # TO "CENTER" CATEGORICAL PREDICTORS, set the coding to contr.sum (deviations from the average)
 options(scipen = 999, contrasts = c("contr.sum", "contr.poly"))
+path <- here("_data", "_intermediary_data", "models")
 ```
 
 
 ```{r}
 # read in data
 wave_2_dfs <- readRDS(here("_data", "_intermediary_data", "wave_2_dfs.RDS"))
+
+df <- bind_rows(wave_2_dfs$wave_2_lyrics |> 
+                  mutate(text = "Lyrics") |>
+                  select(participant_ID, item_ID, value, rating, text), 
+                wave_2_dfs$wave_2_speeches |> 
+                  mutate(text = "Speeches") |>
+                  select(participant_ID, item_ID, value, rating, text))
+
+df <- df |> mutate(value = as.factor(value), text = as.factor(text))
 ```
 
 ```{r}
-lyrics_mod <- lmer(rating ~ value * Ethnicity + (1|item_ID) + (1 | participant_ID), 
-  data = wave_2_dfs$wave_2_lyrics)
+# do values on different text types differ?
+#text_mod <- lmer(rating ~ value * text + (1|item_ID) + (1|participant_ID), data = df, REML=T)
+#saveRDS(text_mod, here(path, "wave_2_text_mod.RDS"))
 
-anova(lyrics_mod, type = "II")
+text_mod <- readRDS(here(path, "wave_2_text_mod.RDS"))
+anova <- anova(text_mod)
+report(anova)
+```
 
-speeches1_mod <- lmer(rating ~ value * Ethnicity + (1|item_ID) + (1 | participant_ID), 
-  data = wave_2_dfs$wave_2_speeches)
 
-anova(speeches1_mod, type = "II")
+```{r}
+# turn into a table for appendix
+emm <- emmeans(text_mod, ~ text | value, lmer.df = "asymptotic")
+contrast_emm <- contrast(emm, method = "pairwise", by = "value", adjust = "bonferroni")
+contrast_ci <- confint(contrast_emm, level = 0.95)
+contrast_tbl <- merge(contrast_ci, contrast_emm|>as.data.frame())
 
-speeches2_mod <- lmer(rating ~ value * spectrum + (1|item_ID) + (1 | participant_ID), 
-  data = wave_2_dfs$wave_2_speeches)
+contrast_tbl <- contrast_tbl |>
+  rename(
+    Value       = value,
+    Comparison  = contrast,
+    Estimate    = estimate,
+    SE          = SE,
+    DF          = df,
+    `z-ratio`   = z.ratio,
+    `p-value`   = p.value,
+    `CI lower`  = asymp.LCL,
+    `CI upper`  = asymp.UCL) |>
+  
+  mutate(`p-value` = sprintf("%.4f", `p-value`))
 
-anova(speeches2_mod, type = "II")
+#contrast_tbl
+```
+
+```{r}
+# Note: results are Lyrics - Speeches. 
+# Thus, a negative number indicates that 
+# the EMM for lyrics was lower than the EMM 
+# for speeches etc.
+
+gt_contrast <- contrast_tbl |>
+  
+  select(-Comparison) |>
+
+  gt() |>
+  
+  tab_style(
+    style = cell_text(align = "center"),
+    locations = cells_row_groups()) |>
+  
+  fmt_number(
+    columns = c(Estimate, SE, `z-ratio`, `CI lower`, `CI upper`),
+    decimals = 3)
+
+gt_contrast
+
+gtsave(gt_contrast, here("tables", "main_emmeans_text_by_value.tex"))
+```
+
+
+```{r}
+plot <- plot(emm) + 
+  facet_wrap(~value, ncol = 2) + 
+  ylab("Text Type") + xlab("Estimated Marginal Mean") +
+  theme_classic()
+
+ggsave(here("images", "main_emmeans_text_by_value.PDF"), height = 5)
+```
+
+
+```{r}
+# lyrics_mod_1 <- lmer(rating ~ value + Ethnicity * genre + (1|item_ID) + (1 | participant_ID), 
+#   data = wave_2_dfs$wave_2_lyrics, REML = F)
+#   
+# lyrics_mod_2 <- lmer(rating ~ value * Ethnicity * genre + (1|item_ID) + (1 | participant_ID), 
+#   data = wave_2_dfs$wave_2_lyrics, REML = F)
+# 
+# anova <- anova(lyrics_mod_1, lyrics_mod_2)
+# anova
+
+#saveRDS(anova, here(path, "wave_2_lyrics_mods_anova.RDS"))
+
+anova <- readRDS(here(path, "wave_2_lyrics_mods_anova.RDS"))
+anova
+```
+
+```{r}
+# lyrics_mod_1 <- lmer(rating ~ value + Ethnicity * genre + (1|item_ID) + (1 | participant_ID), 
+#   data = wave_2_dfs$wave_2_lyrics, REML = T)
+# saveRDS(lyrics_mod_1, here(path, "wave_2_lyrics_mod_1.RDS"))
+
+lyrics_mod_1 <- readRDS(here(path, "wave_2_lyrics_mod_1.RDS"))
+
+# anova <- anova(lyrics_mod_1, type = "III")
+# saveRDS(anova, here(path, "wave_2_lyrics_mod_1_anova.RDS"))
+# 
+anova <- readRDS(here(path, "wave_2_lyrics_mod_1_anova.RDS"))
+report(anova)
+```
+
+```{r}
+#lyrics_mod_2 <- lmer(rating ~ value * Ethnicity * genre + (1|item_ID) + (1 | participant_ID),
+#  data = wave_2_dfs$wave_2_lyrics, REML = T)
+# saveRDS(lyrics_mod_2, here(path, "wave_2_lyrics_mod_2.RDS"))
+
+lyrics_mod_2 <- readRDS(here(path, "wave_2_lyrics_mod_2.RDS"))
+# 
+# anova <- anova(lyrics_mod_2, type = "III")
+# saveRDS(anova, here(path, "wave_2_lyrics_mod_2_anova.RDS"))
+
+anova <- readRDS(here(path, "wave_2_lyrics_mod_2_anova.RDS"))
+
+report(anova)
+```
+
+
+```{r}
+# Ethnicity Mods
+speeches1a_mod <- lmer(rating ~ value + Ethnicity * party + (1|item_ID) + (1 | participant_ID), 
+  data = wave_2_dfs$wave_2_speeches, REML = F)
+
+speeches2a_mod <- lmer(rating ~ value * Ethnicity * party + (1|item_ID) + (1 | participant_ID), 
+  data = wave_2_dfs$wave_2_speeches, REML = F)
+
+# Spectrum Mods
+speeches1b_mod <- lmer(rating ~ value + spectrum * party + (1|item_ID) + (1 | participant_ID), 
+  data = wave_2_dfs$wave_2_speeches, REML = F)
+
+speeches2b_mod <- lmer(rating ~ value * spectrum * party + (1|item_ID) + (1 | participant_ID), 
+  data = wave_2_dfs$wave_2_speeches, REML = F)
+
+# Combined Mods
+speeches3_mod <- lmer(rating ~ value * Ethnicity * spectrum + party + (1|item_ID) + (1 | participant_ID), 
+  data = wave_2_dfs$wave_2_speeches, REML = F)
+
+speeches4_mod <- lmer(rating ~ value * Ethnicity * spectrum * party + (1|item_ID) + (1 | participant_ID), 
+  data = wave_2_dfs$wave_2_speeches, REML = F)
+
+speeches_a_mods <- list(
+  speeches1a_mod = speeches1a_mod, 
+  speeches2a_mod = speeches2a_mod,
+  speeches3_mod  = speeches3_mod, 
+  speeches4_mod  = speeches4_mod)
+
+speeches_b_mods <- list(
+  speeches1b_mod = speeches1b_mod, 
+  speeches2b_mod = speeches2b_mod, 
+  speeches3_mod  = speeches3_mod, 
+  speeches4_mod  = speeches4_mod) 
+
+saveRDS(speeches_a_mods, here(path, "speeches_a_mods.RDS"))
+saveRDS(speeches_b_mods, here(path, "speeches_b_mods.RDS"))
+```
+
+
+```{r}
+# take sequential series of models, 
+# extract fit indices, 
+# compare each model to previous in series
+
+model_comparison_table <- function(model_list) {
+  
+  # Ensure named list
+  if (is.null(names(model_list))) {
+    names(model_list) <- paste0("mod", seq_along(model_list))
+  }
+  
+  n_models <- length(model_list)
+  
+  # 1. Pseudo R2 (Nakagawa)
+  r2_df <- purrr::map_df(model_list, ~ as.data.frame(performance::r2_nakagawa(.x)))
+  
+  # 2. AIC
+  aic_vals <- sapply(model_list, AIC)
+  
+  # 3. Formulas
+  formulas <- purrr::map_chr(model_list, ~ paste(deparse(formula(.x)), collapse = " "))
+  
+  # 4. Sequential LRT
+  lrt_chisq <- numeric(n_models)
+  lrt_df    <- numeric(n_models)
+  raw_p     <- numeric(n_models)
+  
+  # first is always NA, as there is nothing to compare it to
+  lrt_chisq[1] <- NA
+  lrt_df[1]    <- NA
+  raw_p[1]     <- NA
+  
+  for (i in 2:n_models) {
+    # anova for previous model and current model
+    a <- suppressWarnings(anova(model_list[[i-1]], model_list[[i]]))
+    lrt_chisq[i] <- a$Chisq[2]
+    lrt_df[i]    <- a$Df[2]
+    raw_p[i]     <- a$`Pr(>Chisq)`[2]
+  }
+  
+  # 5. Format p-values
+  format_p <- function(p) {
+    if (is.na(p)) return(NA_character_)
+    if (p < 0.0001) return("< .0001")
+    if (p < 0.001)  return("< .001")
+    if (p < 0.01)   return(sprintf("= %.3f", p))
+    return(sprintf("= %.3f", p))
+  }
+  
+  LRT_p <- vapply(raw_p, format_p, FUN.VALUE = character(1))
+  
+  # 6. ΔAIC relative to previous model
+  delta_prev <- c(NA, diff(aic_vals))
+  
+  tibble::tibble(
+    Model           = names(model_list),
+    Specification   = formulas,
+    AIC             = aic_vals,
+    Delta_AIC_prev  = delta_prev,
+    R2_marginal     = r2_df$R2_marginal,
+    R2_conditional  = r2_df$R2_conditional,
+    LRT_chisq       = lrt_chisq,
+    LRT_df          = lrt_df,
+    LRT_p           = LRT_p
+  )
+}
+
+```
+
+
+```{r}
+speech_tbls <- bind_rows(
+  model_comparison_table(speeches_a_mods) |> mutate(Group = "Ethnicity Models"), 
+  model_comparison_table(speeches_b_mods) |> mutate(Group = "Spectrum Models")) |>
+  
+  mutate(Model = gsub("_mod", "", Model))
+
+speech_tbl <- speech_tbls |>select(-Specification) |>
+
+  gt(groupname_col = "Group") |>
+  
+  cols_label(
+    Model           = "Model",
+    AIC             = "AIC",
+    Delta_AIC_prev  = html("$\\Delta$AIC"),
+    R2_marginal     = html("$R^2_m$"),
+    R2_conditional  = html("$R^2_c$"),
+    LRT_chisq       = html("$\\chi^2$"),
+    LRT_df          = html("df"),
+    LRT_p           = html("p")
+  ) |>
+  
+  fmt_number(
+    columns = c(AIC, Delta_AIC_prev, R2_marginal, R2_conditional, LRT_chisq),
+    decimals = 3) |>
+  
+  tab_header(title = "Model Comparisons: Ethnicity, and Political Spectrum")
+
+speech_tbl
+```
+
+```{r}
+extract_spec_pretty <- function(model) {
+  
+  # 1. Get raw formula string without R's line breaks
+  f_raw <- paste(deparse(model@call$formula, width.cutoff = 500), collapse = " ")
+  
+  # 2. Normalize spacing
+  f_raw <- gsub("\\s+", " ", f_raw)
+  
+  # 3. Split into fixed and random parts
+  #    This finds the first "(" that starts a random-effect term.
+  split_pos <- regexpr("\\(1 \\|", f_raw)
+  
+  if (split_pos == -1) {
+    # No random effects
+    fixed <- f_raw
+    random <- ""
+  } else {
+    fixed  <- trimws(substr(f_raw, 1, split_pos - 1))
+    random <- trimws(substr(f_raw, split_pos, nchar(f_raw)))
+  }
+  
+  # 4. Clean random effects:
+  #    remove internal newlines, enforce single-line spacing
+  random <- gsub("\\s*\\+\\s*", " + ", random)
+  random <- gsub("\\s+", " ", random)
+  
+  # 5. Rebuild the final pretty spec:
+  pretty <- paste0(fixed, "<br>", random)
+  
+  html(pretty)
+}
+
+
+speeches_a_specs <- tibble(
+  Group = "Ethnicity Models",
+  Model = names(speeches_a_mods),
+  Specification = purrr::map(speeches_a_mods, extract_spec_pretty)
+)
+
+speeches_b_specs <- tibble(
+  Group = "Political Spectrum Models",
+  Model = names(speeches_b_mods),
+  Specification = purrr::map(speeches_b_mods, extract_spec_pretty)
+)
+
+spec_table <- bind_rows(speeches_a_specs, speeches_b_specs) |> mutate(Model = gsub("_mod", "", Model))
+
+gt_specs <- spec_table |>
+  gt(groupname_col = "Group") |>
+  cols_width(
+    Model ~ px(150),
+    Specification ~ px(400)   # adjust width as needed
+  ) |>
+  cols_align("left", columns = Specification) |>
+  tab_style(
+    style = cell_text(weight = "bold", align = "center"),
+    locations = cells_row_groups()
+  ) |>
+  tab_header(
+    title = "Models Specifications: Ethnicity, and Political Spectrum"
+  )
+
+
+gt_specs
 ```
 
 
 
+
+
+
+
 ```{r}
-emm <- emmeans(lyrics_mod, ~Ethnicity)
-pd  <- plot(emm, comparisons = TRUE, plotit = FALSE)
+# speeches4_mod <- lmer(rating ~ value * Ethnicity * spectrum * party + (1|item_ID) + (1 | participant_ID), 
+#   data = wave_2_dfs$wave_2_speeches, REML = T)
+# 
+# saveRDS(speeches4_mod, here(path, "wave_2_speeches4_mod.RDS"))
 
-pd_df <- as.data.frame(pd) %>%
-  mutate(x = as.numeric(Ethnicity))
+speeches4_mod <- readRDS(here(path, "wave_2_speeches4_mod.RDS"))
+anova <- anova(speeches4_mod, type = "III")
+report(anova)
+```
 
-arrow_df <- pd_df %>%
-  mutate(
-    # arrows pointing from the mean to the limits
-    start_left  = the.emmean,
-    end_left    = lcmpl,
-    
-    start_right = the.emmean,
-    end_right   = rcmpl
-  ) %>%
-  
-  # pivot into long form so each arrow becomes 1 row
-  pivot_longer(
-    cols = c(start_left, end_left, start_right, end_right),
-    names_to = c(".value", "side"),
-    names_pattern = "(start|end)_(left|right)"
-  ) %>%
-  
-  # keep only rows where both ends exist
-  filter(!is.na(start) & !is.na(end))
 
-ggplot(pd_df, aes(x = x, y = the.emmean)) +
-  geom_pointrange(
-    aes(ymin = asymp.LCL, ymax = asymp.UCL),
-    size = 0.6
-  ) +
-  geom_segment(
-    data = arrow_df,
-    aes(
-      x = x, xend = x,
-      y = start, yend = end,
-      group = interaction(Ethnicity, side)
-    ),
-    arrow = arrow(length = unit(0.15, "cm")),
-    linewidth = 0.8,
-    colour = "red"
-  ) +
-  scale_x_continuous(breaks = pd_df$x, labels = pd_df$Ethnicity) +
+
+
+
+```{r}
+p1 <- plot(emmeans(lyrics_mod_2, ~Ethnicity) , comparisons = TRUE) + 
+  ggtitle("Lyrics") +
+  scale_x_continuous(limits = c(3.3, 4.7)) +
+  theme_classic() +
+  xlab("") +
+  theme(plot.margin = margin(10, 10, 10, 40))
+
+p2 <- plot(emmeans(speeches4_mod, ~Ethnicity) , comparisons = TRUE) + 
+  ggtitle("Speeches")+
+  scale_x_continuous(limits = c(3.3, 4.7)) +
+  theme_classic()+
+  xlab("") +
+  theme(plot.margin = margin(10, 10, 10, 40))
+
+p3 <- plot(emmeans(speeches4_mod, ~spectrum) , comparisons = TRUE) + 
+  ggtitle("Speeches")+
+  scale_x_continuous(limits = c(3.3, 4.7)) +
+  theme_classic()+
+  ylab("Political\nSpectrum") +
+  xlab("Estimated Marginal Mean") +
+  theme(plot.margin = margin(10, 10, 10, 40))
+
+(p1 / p2 / p3) +
+  plot_layout(guides = "collect") +
+  plot_annotation(tag_levels = "A")
+
+ggsave(here("images", "main_emmeans_text_by_ethnicity_spectrum.pdf"))
+```
+
+```{r}
+labeller_value <- labeller(value = function(x) gsub("value: ", "", x))
+
+p1 <- plot(emmeans(lyrics_mod_2 , ~Ethnicity|value), comparisons =T) +
+  theme_classic() + facet_wrap(~value, labeller = labeller_value, ncol = 2) +
+  ggtitle("Lyrics") + xlab("Estimated Marginal Mean")
+
+p2 <- plot(emmeans(speeches4_mod , ~Ethnicity|value), comparisons =T) +
+    theme_classic() + facet_wrap(~value, labeller = labeller_value, ncol = 2) +
+  ggtitle("Speeches") + xlab("Estimated Marginal Mean")
+
+p3 <- plot(emmeans(speeches4_mod , ~spectrum|value), comparisons =T) +
+    theme_classic() + facet_wrap(~value, labeller = labeller_value, ncol = 2) +
+  ggtitle("Speeches") + xlab("Estimated Marginal Mean") + ylab("Political Spectrum")
+
+p1
+ggsave(here("images", "main_emmeans_lyrics_by_ethnicity_value.pdf"))
+
+(p2 | p3) + plot_annotation(tag_levels = "A")
+ggsave(here("images", "main_emmeans_speeches_by_ethnicity_spectrum_by_value.pdf"))
+```
+
+```{r}
+# model <- lmer(rating ~ value * Ethnicity * spectrum + (1|item_ID) + (1 | participant_ID), 
+#   data = wave_2_dfs$wave_2_speeches)
+# 
+# anova(model, type = "II")
+```
+
+
+```{r}
+plot(emmeans(speeches4_mod, ~ Ethnicity | spectrum ), comparisons = TRUE) + 
+  facet_wrap(~spectrum, labeller = labeller_value, ncol = 1) +
+  theme_classic()
+
+ggsave(here("images", "main_emmeans_speeches_by_ethnicity_spectrum.pdf"))
+```
+
+
+
+
+```{r}
+plot(emmeans(speeches4_mod, ~ spectrum | Ethnicity ), comparisons = TRUE) + 
+  facet_wrap(~Ethnicity, labeller = labeller_value, ncol = 1) +
+  theme_classic()
+
+ggsave(here("images", "main_emmeans_spectrum_by_ethnicity_spectrum.pdf"))
+```
+
+```{r}
+plot(emmeans(speeches4_mod, ~ spectrum | party ), comparisons = TRUE) +
+  facet_wrap(~party, labeller = labeller_value, ncol = 1) +
+  theme_classic()
+```
+
+```{r}
+plot(emmeans(speeches4_mod, ~ Ethnicity | party ), comparisons = TRUE) +
+  facet_wrap(~party, labeller = labeller_value, ncol = 1) +
+  theme_classic()
+```
+
+```{r}
+plot(emmeans(speeches4_mod, ~ spectrum * Ethnicity | party ), comparisons = TRUE) +
+  facet_wrap(~party, labeller = labeller_value, ncol = 1) +
   theme_classic()
 ```
 
 
-```{r}
-# lyrics by ethnicity
-p1 <- plot(emmeans(lyrics_mod, ~Ethnicity) , comparisons = TRUE) + 
-  ggtitle("lyrics") +
-  theme_minimal()
-
-p2 <- plot(emmeans(speeches1_mod, ~Ethnicity) , comparisons = TRUE) + 
-  ggtitle("speeches")+
-  theme_minimal()
-
-p3 <- plot(emmeans(speeches2_mod, ~spectrum) , comparisons = TRUE) + 
-  ggtitle("speeches")+
-  theme_minimal()
-
-plot_grid(p1, p2, p3, ncol=1)
-```
 
 ```{r}
-plot(emmeans(lyrics_mod , ~Ethnicity|value), comparisons =T) +
-  theme_minimal()
+plot(emmeans(speeches4_mod, ~  Ethnicity * spectrum |  value, at = list(party = "Democratic")), comparisons = TRUE) + 
+  facet_wrap(~value, labeller = labeller_value, ncol = 2) +
+  theme_classic()
 
-plot(emmeans(speeches1_mod , ~Ethnicity|value), comparisons =T) +
-  theme_minimal()
-
-plot(emmeans(speeches2_mod , ~spectrum|value), comparisons =T) +
-  theme_minimal()
+plot(emmeans(speeches4_mod, ~  Ethnicity * spectrum |  value, at = list(party = "Republican")), comparisons = TRUE) + 
+  facet_wrap(~value, labeller = labeller_value, ncol = 2) +
+  theme_classic()
 ```
 
-
-```{r}
-print("wave 2 lyrics")
-anova(wave_2_lyrics_mods$lmer, type = "II")
-
-print("wave 2 speeches ethnicity")
-anova(wave_2_speeches_ethnicity_mods$lmer, type = "II")
-
-print("wave 2 speeches spectrum")
-anova(wave_2_speeches_spectrum_mods$lmer, type = "II")
-```
-
-
-
-
-
-
-
-```{r}
-# run models of subsets by factor to visualize interactions
-run_subset_mods <- function(df, factor, formula){
-  
-  factors <- df %>% select(factor)
-  colnames(factors) <- "column"
-  factors <- factors$column %>% unique() %>% as.character() %>% as.list(.)
-  
-  mods <- lapply(factors, function(factor){
-    lmer(formula, df%>%filter(genre==factor), REML = TRUE)
-  })
-}
-
-wave_2_lyrics_mods$lmer %>% 
-  tidy() %>% filter(grepl("Ethnicity", term) & p.value < .05)
-
-spec_lyrics_ethnicity <- as.formula("rating ~ Ethnicity * value + (1|participant_ID)+(1|item_ID)")
-
-mods <- run_subset_mods(
-  df = wave_2_dfs$wave_2_lyrics,
-  factor = "genre",
-  formula = spec_lyrics_ethnicity)
-
-plot(emmeans(mods[[21]], ~Ethnicity|value), comparisons = T) + ggtitle("genre 9")
-plot(emmeans(mods[[9]], ~Ethnicity|value), comparisons = T) + ggtitle("genre 11")
-plot(emmeans(mods[[1]], ~Ethnicity|value), comparisons = T) + ggtitle("genre 19")
-plot(emmeans(mods[[11]], ~Ethnicity|value), comparisons = T) + ggtitle("genre 23")
-```
-
-```{r}
-# run models of subsets by factor to visualize interactions
-run_subset_mods <- function(df, factor, formula){
-  
-  factors <- df %>% select(factor)
-  colnames(factors) <- "column"
-  factors <- factors$column %>% unique() %>% as.character() %>% as.list(.)
-  
-  mods <- lapply(factors, function(factor){
-    lmer(formula, df%>%filter(party==factor), REML = TRUE)
-  })
-}
-
-wave_2_speeches_ethnicity_mods$lmer %>% 
-  tidy() %>% filter(grepl("Ethnicity", term) & p.value < .05)
-
-spec_speeches_ethnicity <- as.formula("rating ~ Ethnicity * value + (1|participant_ID)+(1|item_ID)")
-
-mods <- run_subset_mods(
-  df = wave_2_dfs$wave_2_speeches,
-  factor = "party",
-  formula = spec_speeches_ethnicity)
-
-
-plot(emmeans(mods[[1]], ~Ethnicity|value), comparisons = T) + ggtitle("Democratic")
-plot(emmeans(mods[[2]], ~Ethnicity|value), comparisons = T) + ggtitle("Republican")
-```
-
-```{r}
-# run models of subsets by factor to visualize interactions
-run_subset_mods <- function(df, factor, formula){
-  
-  factors <- df %>% select(factor)
-  colnames(factors) <- "column"
-  factors <- factors$column %>% unique() %>% as.character() %>% as.list(.)
-  
-  mods <- lapply(factors, function(factor){
-    lmer(formula, df%>%filter(party==factor), REML = TRUE)
-  })
-}
-
-wave_2_speeches_ethnicity_mods$lmer %>% 
-  tidy() %>% filter(grepl("spectrum", term) & p.value < .05)
-
-spec_speeches_spectrum <- as.formula("rating ~ spectrum * value + (1|participant_ID)+(1|item_ID)")
-
-mods <- run_subset_mods(
-  df = wave_2_dfs$wave_2_speeches,
-  factor = "party",
-  formula = spec_speeches_spectrum)
-
-
-plot(emmeans(mods[[1]], ~spectrum|value), comparisons = T) + ggtitle("Democratic")
-plot(emmeans(mods[[2]], ~spectrum|value), comparisons = T) + ggtitle("Republican")
-```

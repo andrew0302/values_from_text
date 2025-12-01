@@ -1,0 +1,274 @@
+
+
+```{r, include=FALSE}
+library("here")       # file logistics
+library("tidyverse")  # code logistics
+library("gt")         # rendering tables
+library("patchwork")  # merging plots
+library("rlang")      # language tools
+library("ggtext")     # text plots
+library("ggridges")   # joy plots
+library("viridisLite")# color pallette
+library("lme4")       # linear mixed models
+library("lmerTest")   # p values for mixed models
+library("emmeans")    # estimated marginal means
+library("TOSTER")     # equivalence tests
+
+colors_1 <- viridisLite::plasma(2)
+colors_2 <- viridisLite::viridis(2)
+
+# no scientific notation
+options(scipen = 999)
+```
+
+```{r}
+wave_2_dfs <- readRDS(file = here("_data", "_participant_scores", "wave_2", "wave_2_dfs.RDS"))
+
+plot_dfs <- lapply(wave_2_dfs, function(df){
+  
+  df %>% filter(!item_ID == "attention") |>
+    mutate(c = case_when(
+    c == "Completely Confident" ~ 5, 
+    c == "Somewhat Confident" ~ 4, 
+    c == "Neither Confident nor Unconfident" ~ 3, 
+    c == "Somewhat Unconfident" ~ 2, 
+    c == "Completely Unconfident" ~ 1
+  ))
+})
+
+plot_dfs <- lapply(plot_dfs, function(df){
+  
+  df %>% filter(!item_ID == "attention") |> 
+    mutate(subjective = case_when(
+    `subjective` == "Completely subjective" ~ 7, 
+    `subjective` == "Very subjective" ~ 6, 
+    `subjective` == "Somewhat subjective" ~ 5, 
+    `subjective` == "Neither subjective nor objective" ~ 4, 
+    `subjective` == "Somewhat objective" ~ 3, 
+    `subjective` == "Very objective" ~ 2, 
+    `subjective` == "Completely objective" ~ 1
+  ))
+})
+
+
+
+plot_df <- plot_dfs |> bind_rows(.id = "study") |>
+  
+  mutate(study = case_when(
+    study == "lyrics1" | study == "lyrics2" ~ "Lyrics", 
+    study == "speeches1" | study == "speeches2" ~ "Speeches")) |>
+  
+  select(study, c, subjective, participant_ID, item_ID)
+```
+
+```{r}
+plots <- lapply(names(plot_dfs), function(name) {
+  df <- plot_dfs[[name]] |> select(participant_ID, c) |> unique()
+  ggplot(df, aes(x = c)) +
+    geom_histogram(bins = 5, fill = colors_2[[1]]) +
+    theme_classic() +
+    labs(title = name) +
+    scale_y_continuous(limits = c(0, 550)) +
+    xlab("Confidence") + ylab("Count")
+})
+names(plots) <- names(plot_dfs)
+
+
+p1 <- plots[['lyrics1']]
+p2 <- plots[['lyrics2']]
+p3 <- plots[['speeches1']]
+p4 <- plots[['speeches2']]
+
+main_confidence_plot <- (p1 | p2 | p3 | p4) 
+
+#main_confidence_plot
+```
+
+```{r}
+plots <- lapply(names(plot_dfs), function(name) {
+  df <- plot_dfs[[name]] |> 
+    select(participant_ID, subjective) |> 
+    unique()
+  
+  ggplot(df, aes(x = subjective)) +
+    geom_histogram(bins = 7, fill = colors_2[[2]]) +
+    theme_classic() +
+    labs(title = name) +
+    scale_y_continuous(limits = c(0, 200)) +
+    xlab("Subjectivity") + ylab("Count")
+})
+names(plots) <- names(plot_dfs)
+
+
+p1 <- plots[['lyrics1']]
+p2 <- plots[['lyrics2']]
+p3 <- plots[['speeches1']]
+p4 <- plots[['speeches2']]
+
+main_subjectivity_plot <- (p1 | p2 | p3 | p4)
+
+#main_subjectivity_plot
+```
+
+
+```{r include = F}
+# subjectivity missing for a couple participant rows
+
+df <- plot_dfs[[3]]
+
+df$s_na <- is.na(df$subjective)
+
+df <- df |> filter(s_na == T)
+
+df
+```
+
+```{r}
+(main_confidence_plot / main_subjectivity_plot) + 
+  plot_annotation(tag_levels = "A")
+
+ggsave(here("images", "main_confidence_subjectivity.pdf"))
+```
+
+
+
+```{r}
+# Prepare dataset
+subjective_df <- plot_df |> 
+  select(participant_ID, subjective, study) |> 
+  filter(!is.na(subjective)) |> 
+  distinct()
+
+# Overall summary
+overall_stats <- subjective_df |>
+  summarise(
+    median_value = median(subjective, na.rm = TRUE),
+    pct_over_4   = sum(subjective >= 5, na.rm = TRUE) / sum(!is.na(subjective)) * 100
+  )
+
+# Group medians (lyrics vs speeches)
+group_medians <- subjective_df |>
+  group_by(study) |>
+  summarise(
+    median_subjective = median(subjective, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Wilcoxon rank–sum test
+wtest <- wilcox.test(subjective ~ study, data = subjective_df, exact = FALSE)
+W_stat <- wtest$statistic
+p_val  <- wtest$p.value
+
+p_clean <- if (p_val < 0.0001) {
+  "$p < .0001$"
+} else {
+  sprintf("$p = %.3f$", p_val)
+}
+
+# Extract medians for sentence
+median_lyrics   <- group_medians$median_subjective[group_medians$study == "Lyrics"]
+median_speeches <- group_medians$median_subjective[group_medians$study == "Speeches"]
+
+# Combined LaTeX sentence
+latex_sentence <- sprintf(
+  "Participants rated the task as moderately subjective overall (median = %s), with %.1f\\%% of responses falling on the subjective side of the scale. Subjectivity ratings differed by text type: lyrics had a median rating of %s, while speeches had a median of %s. A Wilcoxon rank--sum test confirmed this difference ($W = %s$, %s).",
+  overall_stats$median_value,
+  overall_stats$pct_over_4,
+  median_lyrics,
+  median_speeches,
+  W_stat,
+  p_clean
+)
+
+# Output
+list(
+  overall_stats = overall_stats,
+  group_medians = group_medians,
+  test = wtest,
+  latex_sentence = latex_sentence
+)
+```
+
+
+
+```{r}
+stats <- plot_df |>
+    select(participant_ID, c) |>
+    summarise(
+      median_value = median(c, na.rm = TRUE),
+      pct_over_4   = sum(c >= 4, na.rm = TRUE) / sum(!is.na(c)) * 100
+    )
+  
+  latex_sentence <- sprintf(
+    "Participants reported a median confidence rating of %s, and %.1f\\%% of all ratings were above the scale midpoint.",
+    stats$median_value, stats$pct_over_4
+  )
+  
+  list(
+    summary = stats,
+    latex_sentence = latex_sentence
+  )
+  
+latex_sentence
+```
+
+```{r}
+# Prepare data
+  conf_df <- plot_df |>
+    dplyr::select(participant_ID, item_ID, c, study) |>
+    dplyr::filter(!is.na(c))
+  
+  # Fit cross-classified mixed model
+  conf_model <- lmer(
+    c ~ study + 
+      (1 | participant_ID) + 
+      (1 | item_ID),
+    data = conf_df
+  )
+  
+  # ANOVA on fixed effect
+  a <- anova(conf_model)
+  
+  # Extract test statistic + p-value
+  F_val <- a$`F value`[1]
+  p_val <- a$`Pr(>F)`[1]
+  
+  # Format p-value for LaTeX
+  p_clean <- if (p_val < 0.0001) {
+    "$p < .0001$"
+  } else {
+    sprintf("$p = %.3f$", p_val)
+  }
+  
+  # Direction (optional but informative)
+  group_medians <- conf_df |>
+    dplyr::group_by(study) |>
+    dplyr::summarise(median_conf = median(c), .groups = "drop")
+  
+  s1 <- group_medians$study[1]
+  s2 <- group_medians$study[2]
+  
+  m1 <- group_medians$median_conf[1]
+  m2 <- group_medians$median_conf[2]
+  
+  # Build a LaTeX sentence that adapts to significance
+  if (p_val < 0.05) {
+    latex_sentence <- sprintf(
+      "A cross-classified mixed-effects model tested whether confidence ratings differed by text type, including random intercepts for participants and items. Confidence differed significantly between %s (median = %s) and %s (median = %s; $F = %.2f$, %s).",
+      s1, m1, s2, m2, F_val, p_clean
+    )
+  } else {
+    latex_sentence <- sprintf(
+      "A cross-classified mixed-effects model tested whether confidence ratings differed by text type, including random intercepts for participants and items. Confidence did not differ significantly between %s (median = %s) and %s (median = %s; $F = %.2f$, %s).",
+      s1, m1, s2, m2, F_val, p_clean
+    )
+  }
+  
+  list(
+    model = conf_model,
+    anova = a,
+    group_medians = group_medians,
+    latex_sentence = latex_sentence
+  )
+```
+

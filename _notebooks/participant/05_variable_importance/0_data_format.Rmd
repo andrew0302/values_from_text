@@ -72,7 +72,6 @@ wave_2_dfs <- lapply(wave_2_dfs, function(df){
 })
 ```
 
-
 ```{r}
 # import lyric data
 path <- here("_data", "_primary_data")
@@ -84,9 +83,7 @@ lyrics_dt <- lyrics_dt %>%
   select(item_ID, lyrics_topic, 
          artist_playlist_frequency_bin, artist_topic, 
          release_year_bin)
-```
 
-```{r}
 # merge lyrics metadata
 wave_2_dfs[1] <- lapply(wave_2_dfs[1], function(df){
   df <- merge(df, lyrics_dt, by = "item_ID", all.x = T, all.y = F)
@@ -103,9 +100,7 @@ speech_df <- speech_df %>% rename(item_ID = id) %>%
   mutate(url = gsub("https://www.presidency.ucsb.edu/documents/", "", url))
 
 rm(path)
-```
 
-```{r}
 # merge speeches metadata
 wave_2_dfs[2] <- lapply(wave_2_dfs[2], function(df){
   df <- merge(df, speech_df, by = "item_ID", all.x = T, all.y = F)
@@ -217,7 +212,6 @@ wave_2_dfs[2] <- lapply(wave_2_dfs[2], function(df){
 
 wave_2_dfs[[2]] <- wave_2_dfs[[2]] %>% rename(spectrum = `Political spectrum (us)`)
 ```
-
 
 ```{r}
 path <- here("_data", "_intermediary_data")
