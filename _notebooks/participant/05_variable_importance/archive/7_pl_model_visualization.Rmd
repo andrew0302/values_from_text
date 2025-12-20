@@ -1,0 +1,51 @@
+---
+title: "R Notebook"
+---
+
+```{r}
+library("here")             # file logistics
+library("tidyverse")        # code logistics
+library("viridis")
+library("emmeans")          # estimated marginal means
+library("PlackettLuce")     # rank aggregation
+library("patchwork")        # merge plots
+
+options(scipen = 999)
+```
+
+```{r}
+lyrics_pl   <- readRDS(here("_data", "_intermediary_data", "models", "lyrics_pl_df.RDS"))
+speeches_pl <- readRDS(here("_data", "_intermediary_data", "models", "speeches_pl_df.RDS"))
+```
+
+```{r}
+plot_df <- lyrics_pl |>
+  filter(!str_detect(value, "tie"))|>
+  mutate(value = reorder(value, worth)) 
+
+ggplot(plot_df, aes(x = worth, y = value, fill = value)) +
+  geom_boxplot(outlier.alpha = 0.2) +
+  scale_fill_viridis_d(option = "magma") +
+  labs(
+    x = "Observed rank position",
+    y = NULL) +
+  theme_classic() +
+  theme(legend.position = "None")
+```
+
+```{r}
+plot_df <- speeches_pl |>
+  filter(!str_detect(value, "tie"))|>
+  mutate(value = reorder(value, worth)) 
+
+ggplot(plot_df, aes(x = worth, y = value, fill = value)) +
+  geom_boxplot(outlier.alpha = 0.2) +
+  #facet_wrap(~Ethnicity * spectrum, ncol = 3) +
+  scale_fill_viridis_d(option = "D") +
+  labs(
+    x = "Observed rank position",
+    y = NULL) +
+  theme_classic() +
+  theme(legend.position = "None")
+```
+

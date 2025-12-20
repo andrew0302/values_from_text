@@ -1,0 +1,114 @@
+---
+title: "R Notebook"
+---
+
+```{r}
+library("here")         # file logistics
+library("lme4")         # mixed effects metric
+library("lmerTest")     # p values
+library("tidyverse")    # code logistics
+library("broom.mixed")  # model outputs as data frames
+library("emmeans")      # estimated marginal means
+library("cowplot")      # merge plots
+library("specr")        # specification curves
+library("patchwork")    # merge plots
+
+# TO "CENTER" CATEGORICAL PREDICTORS, set the coding to contr.sum (deviations from the average)
+options(scipen = 999, contrasts = c("contr.sum", "contr.poly"))
+```
+
+
+```{r}
+# read in data
+wave_2_dfs <- readRDS(here("_data", "_intermediary_data", "wave_2_dfs.RDS"))
+
+# read in models
+wave_2_lyrics_mods <- readRDS(here("_data", "_intermediary_data", "models", "wave_2_lyrics_mods.RDS"))
+wave_2_speeches_ethnicity_mods <- readRDS(here("_data", "_intermediary_data", "models", "wave_2_speeches_ethnicity_mods.RDS"))
+wave_2_speeches_spectrum_mods <- readRDS(here("_data", "_intermediary_data", "models", "wave_2_speeches_spectrum_mods.RDS"))
+```
+
+```{r}
+# read in spec curve
+
+wave_2_lyrics_ethnicity_curve_df <- readRDS(here("_data", "_intermediary_data", "spec_curves", "wave_2_lyrics_ethnicity_curve_df.RDS"))
+
+wave_2_speeches_ethnicity_curve_df <- readRDS(here("_data", "_intermediary_data", "spec_curves", "wave_2_speeches_ethnicity_curve_df.RDS"))
+
+wave_2_speeches_spectrum_curve_df <- readRDS(here("_data", "_intermediary_data", "spec_curves", "wave_2_speeches_spectrum_curve_df.RDS"))
+```
+
+```{r}
+plot_spec_curve_ethnicity <- function(spec_curve_df, var, option){
+  
+  spec_curve_df <- spec_curve_df %>%
+    arrange(desc(AIC)) %>% 
+    mutate(num = rep(1:(nrow(spec_curve_df)/4), each = 4))
+  
+  p1 <- spec_curve_df %>%
+    ggplot(aes(x=num, y = emmean, 
+               fill = Ethnicity)) +
+      #geom_point(size = 2, aes(color = Ethnicity)) +
+      geom_ribbon(aes(ymin = asymp.LCL, ymax = asymp.UCL), alpha = .6) +
+      scale_fill_viridis_d(option = option) +
+      scale_color_viridis_d(option = option) +
+      theme_minimal()
+  
+  specs_long <- spec_curve_df %>% select(value:num, AIC) %>%
+    pivot_longer(cols = !c(num, AIC), names_to = 'variable', values_drop_na = FALSE) %>%
+    mutate(value = replace_na(value, ""))
+  
+  p2 <- specs_long %>% 
+    ggplot(aes(num, variable, color = AIC)) +
+      geom_text(aes(label = value)) +
+    scale_color_viridis_c(option = option, direction=-1) +
+    theme_minimal()
+  
+  p1/p2 + plot_layout(heights = c(4,3), guides = "collect")
+
+}
+```
+
+```{r}
+plot_spec_curve_ethnicity(wave_2_speeches_ethnicity_curve_df, option = "D")
+ggsave(here("images", "main_speeches_ethnicity_curve.pdf"))
+
+plot_spec_curve_ethnicity(wave_2_lyrics_ethnicity_curve_df, option = "inferno")
+ggsave(here("images", "main_lyrics_ethnicity_curve.pdf"))
+```
+
+```{r}
+plot_spec_curve_spectrum <- function(spec_curve_df, var, option){
+  
+  spec_curve_df <- spec_curve_df %>%
+    arrange(desc(AIC)) %>% 
+    mutate(num = rep(1:(nrow(spec_curve_df)/4), each = 4))
+  
+  p1 <- spec_curve_df %>%
+    ggplot(aes(x=num, y = emmean, 
+               fill = spectrum)) +
+      #geom_point(size = 2, aes(color = spectrum)) +
+      geom_ribbon(aes(ymin = asymp.LCL, ymax = asymp.UCL), alpha = .6) +
+      scale_fill_viridis_d(option = option) +
+      scale_color_viridis_d(option = option) +
+      theme_minimal()
+  
+  specs_long <- spec_curve_df %>% select(value:num, AIC) %>%
+    pivot_longer(cols = !c(num, AIC), names_to = 'variable', values_drop_na = FALSE) %>%
+    mutate(value = replace_na(value, ""))
+  
+  p2 <- specs_long %>% 
+    ggplot(aes(num, variable, color = AIC)) +
+      geom_text(aes(label = value)) +
+    scale_color_viridis_c(option = option, direction=-1) +
+    theme_minimal()
+  
+  p1/p2 + plot_layout(heights = c(4,3), guides = "collect")
+
+}
+```
+
+```{r}
+plot_spec_curve_spectrum(wave_2_speeches_spectrum_curve_df, option = "D")
+ggsave(here("images", "main_speeches_spectrum_curve.pdf"))
+```

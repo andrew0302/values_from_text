@@ -1,0 +1,28 @@
+\begin{table}[t]
+\caption*{
+{\large Type III ANOVA on model: lyrics2}
+} 
+\fontsize{12.0pt}{14.4pt}\selectfont
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lccc}
+\toprule
+Effect & \(F\) & \(p\) & \(\eta^2_{partial}\) \\ 
+\midrule\addlinespace[2.5pt]
+\multicolumn{4}{l}{{Main Effects}} \\[2.5pt] 
+\midrule\addlinespace[2.5pt]
+value & F(9, 81497) = 629.16 & p < .0001 & 0.065 \\ 
+Ethnicity & F(3,   877) = 1.30 & p = 0.273 & 0.004 \\ 
+genre & F(24,   782) = 2.97 & p < .0001 & 0.083 \\ 
+\midrule\addlinespace[2.5pt]
+\multicolumn{4}{l}{{Two-Way Interactions}} \\[2.5pt] 
+\midrule\addlinespace[2.5pt]
+value:Ethnicity & F(27, 81445) = 3.20 & p < .0001 & 0.001 \\ 
+value:genre & F(216, 81488) = 13.83 & p < .0001 & 0.035 \\ 
+Ethnicity:genre & F(72, 80596) = 1.63 & p < .001 & 0.001 \\ 
+\midrule\addlinespace[2.5pt]
+\multicolumn{4}{l}{{Three-Way Interactions}} \\[2.5pt] 
+\midrule\addlinespace[2.5pt]
+value:Ethnicity:genre & F(648, 81430) = 1.00 & p = 0.505 & 0.008 \\ 
+\bottomrule
+\end{tabular*}
+\end{table}
+

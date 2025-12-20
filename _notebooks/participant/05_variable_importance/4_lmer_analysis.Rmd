@@ -12,6 +12,7 @@ library("emmeans")      # estimated marginal means
 library("patchwork")    # merge plots
 library("report")       # apa reporting
 library("gt")           # latex tables
+library("effectsize")   # partial eta sq calculations
 
 # TO "CENTER" CATEGORICAL PREDICTORS, set the coding to contr.sum (deviations from the average)
 options(scipen = 999, contrasts = c("contr.sum", "contr.poly"))
@@ -22,6 +23,7 @@ path <- here("_data", "_intermediary_data", "models")
 ```{r}
 # read in data
 wave_2_dfs <- readRDS(here("_data", "_intermediary_data", "wave_2_dfs.RDS"))
+lyrics_df <- readRDS(here("_data", "_primary_data", "lyrics_df.RDS"))
 
 df <- bind_rows(wave_2_dfs$wave_2_lyrics |> 
                   mutate(text = "Lyrics") |>
@@ -31,353 +33,168 @@ df <- bind_rows(wave_2_dfs$wave_2_lyrics |>
                   select(participant_ID, item_ID, value, rating, text))
 
 df <- df |> mutate(value = as.factor(value), text = as.factor(text))
-```
 
-```{r}
-# do values on different text types differ?
-#text_mod <- lmer(rating ~ value * text + (1|item_ID) + (1|participant_ID), data = df, REML=T)
-#saveRDS(text_mod, here(path, "wave_2_text_mod.RDS"))
-
-text_mod <- readRDS(here(path, "wave_2_text_mod.RDS"))
-anova <- anova(text_mod)
-report(anova)
+genre_df <- merge(wave_2_dfs$wave_2_lyrics |> 
+                    select(item_ID, participant_ID, genre), 
+                  lyrics_df |> select(item_ID, artist_topic_bin_labels), 
+                  by = "item_ID") |>
+  select(genre, artist_topic_bin_labels) |> unique()
 ```
 
 
 ```{r}
-# turn into a table for appendix
-emm <- emmeans(text_mod, ~ text | value, lmer.df = "asymptotic")
-contrast_emm <- contrast(emm, method = "pairwise", by = "value", adjust = "bonferroni")
-contrast_ci <- confint(contrast_emm, level = 0.95)
-contrast_tbl <- merge(contrast_ci, contrast_emm|>as.data.frame())
+build_anova_gt <- function(anova_obj,
+                           eta_df,
+                           title = "Type III ANOVA Results") {
 
-contrast_tbl <- contrast_tbl |>
-  rename(
-    Value       = value,
-    Comparison  = contrast,
-    Estimate    = estimate,
-    SE          = SE,
-    DF          = df,
-    `z-ratio`   = z.ratio,
-    `p-value`   = p.value,
-    `CI lower`  = asymp.LCL,
-    `CI upper`  = asymp.UCL) |>
-  
-  mutate(`p-value` = sprintf("%.4f", `p-value`))
+  # Format ANOVA table
+  anova_df <- anova_obj |>
+    as.data.frame() |>
+    tibble::rownames_to_column("Effect") |>
+    mutate(Effect = trimws(Effect))
 
-#contrast_tbl
-```
+  # Format eta_df
+  eta_df <- eta_df |>
+    select(Effect, Eta2_partial) |>
+    mutate(Effect = trimws(Effect)) |>
+    distinct()
 
-```{r}
-# Note: results are Lyrics - Speeches. 
-# Thus, a negative number indicates that 
-# the EMM for lyrics was lower than the EMM 
-# for speeches etc.
+  # 3. Join
+  df <- left_join(anova_df, eta_df, by = "Effect")
 
-gt_contrast <- contrast_tbl |>
-  
-  select(-Comparison) |>
+  # 4. Format p-values
+  df <- df |>
+    mutate(
+      p_fmt = case_when(
+        is.na(`Pr(>F)`)  ~ NA_character_,
+        `Pr(>F)` < .0001 ~ "p < .0001",
+        `Pr(>F)` < .001  ~ "p < .001",
+        TRUE             ~ sprintf("p = %.3f", `Pr(>F)`)
+      ),
 
-  gt() |>
-  
+      F_fmt = sprintf("F(%d, %s) = %.2f",
+                      NumDF,
+                      format(round(DenDF), scientific = FALSE),
+                      `F value`),
+
+      eta_fmt = sprintf("%.3f", Eta2_partial)
+    )
+
+  # 5. Group effects
+  df <- df |>
+    mutate(
+      Group = case_when(
+        !str_detect(Effect, ":") ~ "Main Effects",
+        str_count(Effect, ":") == 1 ~ "Two-Way Interactions",
+        str_count(Effect, ":") == 2 ~ "Three-Way Interactions",
+        TRUE ~ "Four-Way Interactions"
+      )
+    )
+
+  # 6. Build gt table
+  gt_tbl <- df |>
+    select(Group, Effect, F_fmt, p_fmt, eta_fmt) |>      # CI removed
+    gt(groupname_col = "Group") |>
+    cols_label(
+      Effect  = "Effect",
+      F_fmt   = md("$F$"),
+      p_fmt   = md("$p$"),
+      eta_fmt = md("$\\eta^2_{partial}$")
+    ) |>
+    cols_align("center", columns = c(F_fmt, p_fmt, eta_fmt)) |>
+    
   tab_style(
     style = cell_text(align = "center"),
-    locations = cells_row_groups()) |>
-  
-  fmt_number(
-    columns = c(Estimate, SE, `z-ratio`, `CI lower`, `CI upper`),
-    decimals = 3)
-
-gt_contrast
-
-gtsave(gt_contrast, here("tables", "main_emmeans_text_by_value.tex"))
-```
-
-
-```{r}
-plot <- plot(emm) + 
-  facet_wrap(~value, ncol = 2) + 
-  ylab("Text Type") + xlab("Estimated Marginal Mean") +
-  theme_classic()
-
-ggsave(here("images", "main_emmeans_text_by_value.PDF"), height = 5)
-```
-
-
-```{r}
-# lyrics_mod_1 <- lmer(rating ~ value + Ethnicity * genre + (1|item_ID) + (1 | participant_ID), 
-#   data = wave_2_dfs$wave_2_lyrics, REML = F)
-#   
-# lyrics_mod_2 <- lmer(rating ~ value * Ethnicity * genre + (1|item_ID) + (1 | participant_ID), 
-#   data = wave_2_dfs$wave_2_lyrics, REML = F)
-# 
-# anova <- anova(lyrics_mod_1, lyrics_mod_2)
-# anova
-
-#saveRDS(anova, here(path, "wave_2_lyrics_mods_anova.RDS"))
-
-anova <- readRDS(here(path, "wave_2_lyrics_mods_anova.RDS"))
-anova
-```
-
-```{r}
-# lyrics_mod_1 <- lmer(rating ~ value + Ethnicity * genre + (1|item_ID) + (1 | participant_ID), 
-#   data = wave_2_dfs$wave_2_lyrics, REML = T)
-# saveRDS(lyrics_mod_1, here(path, "wave_2_lyrics_mod_1.RDS"))
-
-lyrics_mod_1 <- readRDS(here(path, "wave_2_lyrics_mod_1.RDS"))
-
-# anova <- anova(lyrics_mod_1, type = "III")
-# saveRDS(anova, here(path, "wave_2_lyrics_mod_1_anova.RDS"))
-# 
-anova <- readRDS(here(path, "wave_2_lyrics_mod_1_anova.RDS"))
-report(anova)
-```
-
-```{r}
-#lyrics_mod_2 <- lmer(rating ~ value * Ethnicity * genre + (1|item_ID) + (1 | participant_ID),
-#  data = wave_2_dfs$wave_2_lyrics, REML = T)
-# saveRDS(lyrics_mod_2, here(path, "wave_2_lyrics_mod_2.RDS"))
-
-lyrics_mod_2 <- readRDS(here(path, "wave_2_lyrics_mod_2.RDS"))
-# 
-# anova <- anova(lyrics_mod_2, type = "III")
-# saveRDS(anova, here(path, "wave_2_lyrics_mod_2_anova.RDS"))
-
-anova <- readRDS(here(path, "wave_2_lyrics_mod_2_anova.RDS"))
-
-report(anova)
-```
-
-
-```{r}
-# Ethnicity Mods
-speeches1a_mod <- lmer(rating ~ value + Ethnicity * party + (1|item_ID) + (1 | participant_ID), 
-  data = wave_2_dfs$wave_2_speeches, REML = F)
-
-speeches2a_mod <- lmer(rating ~ value * Ethnicity * party + (1|item_ID) + (1 | participant_ID), 
-  data = wave_2_dfs$wave_2_speeches, REML = F)
-
-# Spectrum Mods
-speeches1b_mod <- lmer(rating ~ value + spectrum * party + (1|item_ID) + (1 | participant_ID), 
-  data = wave_2_dfs$wave_2_speeches, REML = F)
-
-speeches2b_mod <- lmer(rating ~ value * spectrum * party + (1|item_ID) + (1 | participant_ID), 
-  data = wave_2_dfs$wave_2_speeches, REML = F)
-
-# Combined Mods
-speeches3_mod <- lmer(rating ~ value * Ethnicity * spectrum + party + (1|item_ID) + (1 | participant_ID), 
-  data = wave_2_dfs$wave_2_speeches, REML = F)
-
-speeches4_mod <- lmer(rating ~ value * Ethnicity * spectrum * party + (1|item_ID) + (1 | participant_ID), 
-  data = wave_2_dfs$wave_2_speeches, REML = F)
-
-speeches_a_mods <- list(
-  speeches1a_mod = speeches1a_mod, 
-  speeches2a_mod = speeches2a_mod,
-  speeches3_mod  = speeches3_mod, 
-  speeches4_mod  = speeches4_mod)
-
-speeches_b_mods <- list(
-  speeches1b_mod = speeches1b_mod, 
-  speeches2b_mod = speeches2b_mod, 
-  speeches3_mod  = speeches3_mod, 
-  speeches4_mod  = speeches4_mod) 
-
-saveRDS(speeches_a_mods, here(path, "speeches_a_mods.RDS"))
-saveRDS(speeches_b_mods, here(path, "speeches_b_mods.RDS"))
-```
-
-
-```{r}
-# take sequential series of models, 
-# extract fit indices, 
-# compare each model to previous in series
-
-model_comparison_table <- function(model_list) {
-  
-  # Ensure named list
-  if (is.null(names(model_list))) {
-    names(model_list) <- paste0("mod", seq_along(model_list))
-  }
-  
-  n_models <- length(model_list)
-  
-  # 1. Pseudo R2 (Nakagawa)
-  r2_df <- purrr::map_df(model_list, ~ as.data.frame(performance::r2_nakagawa(.x)))
-  
-  # 2. AIC
-  aic_vals <- sapply(model_list, AIC)
-  
-  # 3. Formulas
-  formulas <- purrr::map_chr(model_list, ~ paste(deparse(formula(.x)), collapse = " "))
-  
-  # 4. Sequential LRT
-  lrt_chisq <- numeric(n_models)
-  lrt_df    <- numeric(n_models)
-  raw_p     <- numeric(n_models)
-  
-  # first is always NA, as there is nothing to compare it to
-  lrt_chisq[1] <- NA
-  lrt_df[1]    <- NA
-  raw_p[1]     <- NA
-  
-  for (i in 2:n_models) {
-    # anova for previous model and current model
-    a <- suppressWarnings(anova(model_list[[i-1]], model_list[[i]]))
-    lrt_chisq[i] <- a$Chisq[2]
-    lrt_df[i]    <- a$Df[2]
-    raw_p[i]     <- a$`Pr(>Chisq)`[2]
-  }
-  
-  # 5. Format p-values
-  format_p <- function(p) {
-    if (is.na(p)) return(NA_character_)
-    if (p < 0.0001) return("< .0001")
-    if (p < 0.001)  return("< .001")
-    if (p < 0.01)   return(sprintf("= %.3f", p))
-    return(sprintf("= %.3f", p))
-  }
-  
-  LRT_p <- vapply(raw_p, format_p, FUN.VALUE = character(1))
-  
-  # 6. ΔAIC relative to previous model
-  delta_prev <- c(NA, diff(aic_vals))
-  
-  tibble::tibble(
-    Model           = names(model_list),
-    Specification   = formulas,
-    AIC             = aic_vals,
-    Delta_AIC_prev  = delta_prev,
-    R2_marginal     = r2_df$R2_marginal,
-    R2_conditional  = r2_df$R2_conditional,
-    LRT_chisq       = lrt_chisq,
-    LRT_df          = lrt_df,
-    LRT_p           = LRT_p
-  )
-}
-
-```
-
-
-```{r}
-speech_tbls <- bind_rows(
-  model_comparison_table(speeches_a_mods) |> mutate(Group = "Ethnicity Models"), 
-  model_comparison_table(speeches_b_mods) |> mutate(Group = "Spectrum Models")) |>
-  
-  mutate(Model = gsub("_mod", "", Model))
-
-speech_tbl <- speech_tbls |>select(-Specification) |>
-
-  gt(groupname_col = "Group") |>
-  
-  cols_label(
-    Model           = "Model",
-    AIC             = "AIC",
-    Delta_AIC_prev  = html("$\\Delta$AIC"),
-    R2_marginal     = html("$R^2_m$"),
-    R2_conditional  = html("$R^2_c$"),
-    LRT_chisq       = html("$\\chi^2$"),
-    LRT_df          = html("df"),
-    LRT_p           = html("p")
-  ) |>
-  
-  fmt_number(
-    columns = c(AIC, Delta_AIC_prev, R2_marginal, R2_conditional, LRT_chisq),
-    decimals = 3) |>
-  
-  tab_header(title = "Model Comparisons: Ethnicity, and Political Spectrum")
-
-speech_tbl
-```
-
-```{r}
-extract_spec_pretty <- function(model) {
-  
-  # 1. Get raw formula string without R's line breaks
-  f_raw <- paste(deparse(model@call$formula, width.cutoff = 500), collapse = " ")
-  
-  # 2. Normalize spacing
-  f_raw <- gsub("\\s+", " ", f_raw)
-  
-  # 3. Split into fixed and random parts
-  #    This finds the first "(" that starts a random-effect term.
-  split_pos <- regexpr("\\(1 \\|", f_raw)
-  
-  if (split_pos == -1) {
-    # No random effects
-    fixed <- f_raw
-    random <- ""
-  } else {
-    fixed  <- trimws(substr(f_raw, 1, split_pos - 1))
-    random <- trimws(substr(f_raw, split_pos, nchar(f_raw)))
-  }
-  
-  # 4. Clean random effects:
-  #    remove internal newlines, enforce single-line spacing
-  random <- gsub("\\s*\\+\\s*", " + ", random)
-  random <- gsub("\\s+", " ", random)
-  
-  # 5. Rebuild the final pretty spec:
-  pretty <- paste0(fixed, "<br>", random)
-  
-  html(pretty)
-}
-
-
-speeches_a_specs <- tibble(
-  Group = "Ethnicity Models",
-  Model = names(speeches_a_mods),
-  Specification = purrr::map(speeches_a_mods, extract_spec_pretty)
-)
-
-speeches_b_specs <- tibble(
-  Group = "Political Spectrum Models",
-  Model = names(speeches_b_mods),
-  Specification = purrr::map(speeches_b_mods, extract_spec_pretty)
-)
-
-spec_table <- bind_rows(speeches_a_specs, speeches_b_specs) |> mutate(Model = gsub("_mod", "", Model))
-
-gt_specs <- spec_table |>
-  gt(groupname_col = "Group") |>
-  cols_width(
-    Model ~ px(150),
-    Specification ~ px(400)   # adjust width as needed
-  ) |>
-  cols_align("left", columns = Specification) |>
-  tab_style(
-    style = cell_text(weight = "bold", align = "center"),
     locations = cells_row_groups()
   ) |>
-  tab_header(
-    title = "Models Specifications: Ethnicity, and Political Spectrum"
-  )
+    
+    
+  tab_header(title = title)
 
-
-gt_specs
+  gt_tbl
+}
 ```
 
 
+# tables
 
+```{r}
+lyrics_mod_1 <- readRDS(here(path, "wave_2_lyrics_mod_1.RDS"))
+anova <- readRDS(here(path, "wave_2_lyrics_mod_1_anova.RDS"))
+anova
 
+eta_df <- readRDS(here(path, "wave_2_lyrics1_eta_df.RDS"))
 
+tbl<- build_anova_gt(anova_obj=anova,eta_df=eta_df,title = "Type III ANOVA on model: lyrics1")
+tbl
+
+gtsave(tbl, here("tables", "wave_2_lyrics_mod_1_anova.tex"))
+```
+
+```{r}
+lyrics_mod_2 <- readRDS(here(path, "wave_2_lyrics_mod_2.RDS"))
+anova <- readRDS(here(path, "wave_2_lyrics_mod_2_anova.RDS"))
+eta_df <- readRDS(here(path, "wave_2_lyrics2_eta_df.RDS"))
+
+tbl<- build_anova_gt(anova_obj=anova,eta_df=eta_df,title = "Type III ANOVA on model: lyrics2")
+tbl
+
+gtsave(tbl, here("tables", "wave_2_lyrics_mod_2_anova.tex"))
+```
 
 
 ```{r}
-# speeches4_mod <- lmer(rating ~ value * Ethnicity * spectrum * party + (1|item_ID) + (1 | participant_ID), 
-#   data = wave_2_dfs$wave_2_speeches, REML = T)
-# 
-# saveRDS(speeches4_mod, here(path, "wave_2_speeches4_mod.RDS"))
+speeches_a_mods <- readRDS(here(path, "speeches_a_mods.RDS"))
+speeches_b_mods <- readRDS(here(path, "speeches_b_mods.RDS"))
+```
 
+```{r}
+speeches1a_mod <- speeches_a_mods[["speeches1a_mod"]]
+
+anova <- anova(speeches1a_mod)
+
+eta_df <- eta_squared(speeches1a_mod, partial = TRUE, ci = 0.95)
+eta_df <- eta_df |>
+  select(Parameter, Eta2_partial, CI_low, CI_high) |>
+  rename(Effect = Parameter)
+
+tbl<- build_anova_gt(anova_obj=anova, eta_df=eta_df, title = "Type III ANOVA on model: speeches1a")
+tbl
+
+gtsave(tbl, here("tables", "wave_2_speeches_mod_1a_anova.tex"))
+```
+
+```{r}
+speeches1b_mod <- speeches_b_mods[["speeches1b_mod"]]
+
+anova <- anova(speeches1b_mod)
+
+eta_df <- eta_squared(speeches1b_mod, partial = TRUE, ci = 0.95)
+eta_df <- eta_df |>
+  select(Parameter, Eta2_partial, CI_low, CI_high) |>
+  rename(Effect = Parameter)
+
+tbl<- build_anova_gt(anova_obj=anova, eta_df=eta_df, title = "Type III ANOVA on model: speeches1b")
+tbl
+
+gtsave(tbl, here("tables", "wave_2_speeches_mod_1b_anova.tex"))
+```
+
+
+```{r}
 speeches4_mod <- readRDS(here(path, "wave_2_speeches4_mod.RDS"))
-anova <- anova(speeches4_mod, type = "III")
-report(anova)
+anova <- readRDS(here(path, "wave_2_speeches4_mod_anova.RDS"))
+eta_df <- readRDS(here(path, "wave_2_speech4_eta_df.RDS"))
+
+tbl<- build_anova_gt(anova_obj=anova, eta_df=eta_df, title = "Type III ANOVA on model: speeches4")
+tbl
+
+gtsave(tbl, here("tables", "wave_2_speeches_mod_4_anova.tex"))
 ```
 
 
 
-
+# estimated marginal mean plots
 
 ```{r}
 p1 <- plot(emmeans(lyrics_mod_2, ~Ethnicity) , comparisons = TRUE) + 
@@ -410,6 +227,156 @@ ggsave(here("images", "main_emmeans_text_by_ethnicity_spectrum.pdf"))
 ```
 
 ```{r}
+apa_emm_pairs <- function(model, specs, digits = 2) {
+  
+  # Compute EMMs + pairwise contrasts
+  cmp <- emmeans::emmeans(
+      model, specs, 
+      lmer.df = "satterthwaite",
+      lmerTest.limit = 300210
+    ) |>
+    emmeans::contrast("pairwise", adjust = "tukey") |>
+    broom::tidy()
+  
+  # Format + compute Cohen's d
+  result <- cmp |>
+    dplyr::mutate(
+      df  = round(df, 1),
+      est = sprintf(paste0("%.", digits, "f"), estimate),
+      se  = sprintf(paste0("%.", digits, "f"), std.error),
+      t   = sprintf(paste0("%.", digits, "f"), statistic),
+      
+      # APA p-value
+      p   = dplyr::case_when(
+        adj.p.value < .001 ~ "< .001",
+        TRUE ~ sprintf("= %.3f", adj.p.value)
+      ),
+      
+      # Cohen's d approximation
+      d_value = statistic / sqrt(df),
+      d_fmt   = sprintf(paste0("%.", digits, "f"), d_value),
+      
+      # Full APA sentence
+      apa = sprintf(
+        "%s: difference = %s, SE = %s, t(%s) = %s, p %s, d = %s.",
+        contrast, est, se, df, t, p, d_fmt
+      )
+    ) |>
+    dplyr::pull(apa)
+  
+  return(result)
+}
+apa_emm_pairs(speeches4_mod,specs = ~ Ethnicity)
+```
+
+```{r}
+# emm <- emmeans(lyrics_mod_2, ~Ethnicity | genre)
+#     
+# contrasts <- emmeans::contrast(emm, "pairwise", adjust = "tukey") |>
+#     broom::tidy()
+# 
+# contrasts <- merge(contrasts, genre_df, by= "genre")
+#contrasts |> filter(adj.p.value < .05) |> select(contrast, estimate, adj.p.value, artist_topic_bin_labels)
+
+digits = 3
+resid_sd <- sigma(lyrics_mod_2)
+
+
+  result <- contrasts |>
+    
+    filter(adj.p.value < .05) |>
+    
+    dplyr::mutate(
+      df  = round(df, 1),
+      est = sprintf(paste0("%.", digits, "f"), estimate),
+      se  = sprintf(paste0("%.", digits, "f"), std.error),
+      t   = sprintf(paste0("%.", digits, "f"), statistic),
+      
+      # APA p-value
+      p   = dplyr::case_when(
+        adj.p.value < .001 ~ "< .001",
+        TRUE ~ sprintf("= %.3f", adj.p.value)
+      ),
+      
+      # Cohen's d approximation
+      d = estimate / resid_sd,
+      d_fmt = sprintf("%.2f", d), 
+
+      
+      
+      
+      # Full APA sentence
+      apa = sprintf(
+      "[%s] %s: difference = %s, SE = %s, t(%s) = %s, p %s, d = %s.",
+      artist_topic_bin_labels,  # 1
+      contrast,             # 2
+      est,                  # 3
+      se,                   # 4
+      df,                   # 5
+      t,                    # 6
+      p,                    # 7
+      d_fmt                 # 8
+    )
+  ) |>
+  dplyr::pull(apa)
+  
+  result
+```
+
+```{r}
+#emm <- emmeans(lyrics_mod_2, ~Ethnicity | value)
+
+contrasts <- emmeans::contrast(emm, "pairwise", adjust = "tukey") |>
+    broom::tidy()
+
+contrasts |> filter(adj.p.value < .05) |> select(contrast, value, estimate, adj.p.value)
+
+result <- contrasts |>
+  
+  filter(adj.p.value < .05) |>
+  
+  dplyr::mutate(
+    df  = round(df, 1),
+    est = sprintf(paste0("%.", digits, "f"), estimate),
+    se  = sprintf(paste0("%.", digits, "f"), std.error),
+    t   = sprintf(paste0("%.", digits, "f"), statistic),
+    
+    # APA p-value
+    p   = dplyr::case_when(
+      adj.p.value < .001 ~ "< .001",
+      TRUE ~ sprintf("= %.3f", adj.p.value)
+    ),
+    
+    # Cohen's d approximation
+    d = estimate / resid_sd,
+    d_fmt = sprintf("%.2f", d),
+    
+    # NEW APA sentence grouped by value
+    apa = sprintf(
+      "[%s] %s: difference = %s, SE = %s, t(%s) = %s, p %s, d = %s.",
+      value,        # 1 — the SCHWARTZ VALUE label
+      contrast,     # 2 — ethnicity comparison
+      est,          # 3
+      se,           # 4
+      df,           # 5
+      t,            # 6
+      p,            # 7
+      d_fmt         # 8
+    )
+  ) |>
+  dplyr::pull(apa)
+
+result
+
+```
+
+
+```{r}
+apa_emm_pairs(speeches4_mod,specs = ~ spectrum)
+```
+
+
+```{r}
 labeller_value <- labeller(value = function(x) gsub("value: ", "", x))
 
 p1 <- plot(emmeans(lyrics_mod_2 , ~Ethnicity|value), comparisons =T) +
@@ -431,60 +398,358 @@ ggsave(here("images", "main_emmeans_lyrics_by_ethnicity_value.pdf"))
 ggsave(here("images", "main_emmeans_speeches_by_ethnicity_spectrum_by_value.pdf"))
 ```
 
+
 ```{r}
-# model <- lmer(rating ~ value * Ethnicity * spectrum + (1|item_ID) + (1 | participant_ID), 
-#   data = wave_2_dfs$wave_2_speeches)
-# 
-# anova(model, type = "II")
+apa_emm_ethnicity_by_spectrum <- function(model, sig_only = FALSE) {
+  
+  # 1. Compute emmeans by Ethnicity within Spectrum
+  cmp <- emmeans::emmeans(
+    model,
+    specs = ~ Ethnicity | spectrum,
+    lmer.df = "satterthwaite",
+    lmerTest.limit = 300000,
+    pbkrtest.limit = 300000
+  ) |>
+    emmeans::contrast("pairwise", adjust = "tukey") |>
+    broom::tidy()
+  
+  # 3. APA-format p-values
+  cmp <- cmp |>
+    dplyr::mutate(
+      df = round(df, 1),
+      SE = std.error,
+      p_fmt = dplyr::case_when(
+        adj.p.value < .0001 ~ "< .0001",
+        adj.p.value < .001  ~ "< .001",
+        TRUE ~ sprintf("= %.3f", adj.p.value)
+      ),
+      t_fmt = sprintf("t(%s) = %.2f", df, statistic)
+    )
+  
+  # 4. Optionally keep only significant comparisons
+  if (sig_only) {
+    cmp <- cmp |> dplyr::filter(adj.p.value < .05)
+  }
+  
+  # 5. Clean output
+  cmp |>
+    dplyr::transmute(
+      spectrum,
+      Contrast = contrast,
+      Estimate = round(estimate, 2),
+      SE = round(SE, 2),
+      t = t_fmt,
+      p = p_fmt, 
+      d = sprintf("%.2f", statistic / sqrt(df)) 
+    )
+}
+
+apa_ethspec <- apa_emm_ethnicity_by_spectrum(speeches4_mod, sig_only = TRUE)
+apa_ethspec
+```
+
+```{r}
+print_apa_comparisons <- function(df) {
+  
+  df$Contrast_clean <- gsub("[()]", "", df$Contrast)
+  
+  apply(df, 1, function(row) {
+    sprintf(
+      "For %s participants, %s showed a difference of %.2f (SE = %.2f), %s, p %s, d = %.2f.",
+      row[["spectrum"]],
+      row[["Contrast_clean"]],
+      as.numeric(row[["Estimate"]]),
+      as.numeric(row[["SE"]]),
+      row[["t"]],
+      row[["p"]],
+      as.numeric(row[["d"]])
+    )
+  }) |> 
+    paste(collapse = "\n")
+}
+cat(print_apa_comparisons(apa_ethspec))
+
 ```
 
 
 ```{r}
-plot(emmeans(speeches4_mod, ~ Ethnicity | spectrum ), comparisons = TRUE) + 
+apa_emm_ethnicity_by_spectrum <- function(model, sig_only = FALSE) {
+
+  # 1. Compute emmeans contrasts
+  cmp <- emmeans::emmeans(
+    model,
+    specs = ~ Ethnicity | spectrum,
+    lmer.df = "satterthwaite",
+    lmerTest.limit = 300000,
+    pbkrtest.limit = 300000) |>
+    
+    emmeans::contrast("pairwise", adjust = "tukey") |>
+    broom::tidy()
+
+  # 2. Keep only contrasts involving Black
+  cmp <- cmp |>
+    dplyr::filter(stringr::str_detect(contrast, "Black/African American"))
+
+  # 3. Reorder contrasts so Black is always first
+  reorder_black <- function(x) {
+    parts <- strsplit(x, " - ")[[1]]
+    g1 <- parts[1]
+    g2 <- parts[2]
+
+    # If both are Black → remove later by filtering
+    if (g1 == "Black/African American" && g2 == "Black/African American") {
+      return(NA_character_)
+    }
+
+    # Correct order
+    if (g1 == "Black/African American") {
+      return(x)
+    }
+
+    # Otherwise if Black is in group2, flip to group1
+    paste0("Black/African American - ", g1)
+  }
+
+  cmp <- cmp |> 
+    dplyr::mutate(
+      new_contrast = purrr::map_chr(contrast, reorder_black),
+      flipped = new_contrast != contrast & !is.na(new_contrast),
+      estimate = ifelse(flipped, -estimate, estimate),
+      statistic = ifelse(flipped, -statistic, statistic),
+      contrast = new_contrast) |>
+      
+      dplyr::filter(!is.na(contrast))
+
+  # 4. Format APA stats
+  cmp <- cmp |> 
+    dplyr::mutate(
+      
+      # round degrees of freedom to single decimal
+      df = round(df, 1),
+      SE = std.error,
+      
+      p_fmt = dplyr::case_when(
+        adj.p.value < .0001 ~ "< .0001",
+        adj.p.value < .001  ~ "< .001",
+        TRUE ~ sprintf("= %.3f", adj.p.value)),
+      
+        t_fmt = sprintf("t(%s) = %.2f", df, statistic),
+        d = sprintf("%.2f", statistic / sqrt(df)))
+
+  # focus on significant results only?
+  if (sig_only) {cmp <- cmp |> dplyr::filter(adj.p.value < .05)}
+
+  # 5. Clean final output
+  cmp |>
+    dplyr::transmute(
+      spectrum,
+      Contrast = contrast,
+      Estimate = round(estimate, 2),
+      SE = round(SE, 2),
+      t = t_fmt,
+      p = p_fmt,
+      d)}
+
+model = speeches4_mod
+apa_ethspec <- apa_emm_ethnicity_by_spectrum(speeches4_mod, sig_only = TRUE)
+apa_ethspec
+```
+
+
+```{r}
+p1 <- plot(emmeans(speeches4_mod, ~ Ethnicity | spectrum ), comparisons = TRUE) + 
   facet_wrap(~spectrum, labeller = labeller_value, ncol = 1) +
+  ylab("Ethnicity") + xlab("Estimated Marginal Mean") +
   theme_classic()
 
-ggsave(here("images", "main_emmeans_speeches_by_ethnicity_spectrum.pdf"))
+#ggsave(here("images", "main_emmeans_speeches_by_ethnicity_spectrum.pdf"))
+
+# p2 <- plot(emmeans(speeches4_mod, ~ spectrum | Ethnicity ), comparisons = TRUE) + 
+#   facet_wrap(~Ethnicity, labeller = labeller_value, ncol = 1) +
+#   ylab("Political Spectrum") + xlab("Estimated Marginal Mean") +
+#   theme_classic()
+# 
+# 
+# 
+# (p1 | p2) + plot_annotation(tag_levels = "A")
+
+p1
+
+ggsave(here("images", "main_emmeans_speeches_by_ethnicity.pdf"))
 ```
 
-
-
-
 ```{r}
-plot(emmeans(speeches4_mod, ~ spectrum | Ethnicity ), comparisons = TRUE) + 
-  facet_wrap(~Ethnicity, labeller = labeller_value, ncol = 1) +
-  theme_classic()
-
-ggsave(here("images", "main_emmeans_spectrum_by_ethnicity_spectrum.pdf"))
-```
-
-```{r}
-plot(emmeans(speeches4_mod, ~ spectrum | party ), comparisons = TRUE) +
+p1 <- plot(emmeans(speeches4_mod, ~ spectrum | party ), comparisons = TRUE) +
   facet_wrap(~party, labeller = labeller_value, ncol = 1) +
   theme_classic()
-```
 
-```{r}
-plot(emmeans(speeches4_mod, ~ Ethnicity | party ), comparisons = TRUE) +
+
+p2 <- plot(emmeans(speeches4_mod, ~ Ethnicity | party ), comparisons = TRUE) +
   facet_wrap(~party, labeller = labeller_value, ncol = 1) +
   theme_classic()
+
+(p1 / p2)
+
+#ggsave(here("images", "main_emmeans_spectrum_ethnicity_by_party.pdf"))
 ```
 
 ```{r}
-plot(emmeans(speeches4_mod, ~ spectrum * Ethnicity | party ), comparisons = TRUE) +
-  facet_wrap(~party, labeller = labeller_value, ncol = 1) +
-  theme_classic()
+emm <- emmeans(speeches4_mod, ~  Ethnicity * spectrum |  party)
+
+plot(emm, comparisons = TRUE) +
+  theme_classic() +
+  xlab("Estimated marginal mean") + ylab("Participant Characteristic")
+
+ggsave(here("images", "main_emmeans_spectrum_ethnicity_by_party.pdf"))
 ```
 
 
+```{r}
+specs = ~ Ethnicity | value * spectrum
+model <- speeches4_mod
+
+cmp <- emmeans::emmeans(
+  model,
+  specs = ~ Ethnicity | value * spectrum,
+  lmer.df = "satterthwaite",
+  lmerTest.limit = 300000,
+  pbkrtest.limit = 300000) |>
+  
+  emmeans::contrast("pairwise", adjust = "tukey") |>
+  broom::tidy() |>
+  dplyr::filter(adj.p.value < .05) |>
+  
+  dplyr::mutate(
+    df  = round(df, 1),
+    SE  = std.error,
+    adj.p.value = dplyr::case_when(
+      adj.p.value < .0001 ~ "< .0001",
+      adj.p.value < .001  ~ "< .001",
+      TRUE ~ sprintf("= %.3f", adj.p.value)))
+
+
+put_black_first <- function(cmp_df, black_label = "(Black/African American)") {
+  
+  cmp_df |>
+    dplyr::group_by(value, spectrum) |>
+    tidyr::separate(
+      contrast,
+      into = c("g1", "g2"),
+      sep = " - ",
+      remove = FALSE) |>
+    
+    dplyr::mutate(
+      flip = g2 == black_label,
+      g1_new = dplyr::if_else(flip, g2, g1),
+      g2_new = dplyr::if_else(flip, g1, g2),
+      estimate  = dplyr::if_else(flip, -estimate, estimate),
+      statistic = dplyr::if_else(flip, -statistic, statistic),
+      contrast  = paste0(g1_new, " - ", g2_new)) |>
+    
+    dplyr::ungroup() |>
+    dplyr::select(-g1, -g2, -g1_new, -g2_new, -flip)
+}
+
+cmp_fixed <- put_black_first(cmp)
+
+contrasts_gt <- function(df, title = "Pairwise Comparisons") {
+  df |>
+    dplyr::mutate(
+      contrast = contrast |>
+        stringr::str_replace_all("\\(", "") |>
+        stringr::str_replace_all("\\)", "")
+    ) |>
+    dplyr::transmute(
+      Value    = value,
+      Spectrum = spectrum,
+      Contrast = contrast,
+      Estimate = round(estimate, 2),
+      SE       = round(SE, 2),
+      Statistic = sprintf("t(%s) = %.2f", df, round(statistic, 2)),
+      `p-value` = adj.p.value
+    ) |>
+    gt::gt() |>
+    gt::tab_header(title = title) |>
+    gt::cols_align(
+      align = "center",
+      columns = c(Estimate, SE, Statistic, `p-value`)
+    ) |>
+    gt::tab_options(
+      table.font.size = 12,
+      data_row.padding = px(4)
+    )
+}
+
+gt_contrast_table <- contrasts_gt(
+  cmp_fixed,
+  title = "Significant Contrasts: Ethnicity and Political Leaning by Value"
+)
+
+gt_contrast_table
+gtsave(gt_contrast_table, here("tables", "wave_2_speeches_ethnicity_value_contrasts.tex"))
+```
 
 ```{r}
-plot(emmeans(speeches4_mod, ~  Ethnicity * spectrum |  value, at = list(party = "Democratic")), comparisons = TRUE) + 
-  facet_wrap(~value, labeller = labeller_value, ncol = 2) +
-  theme_classic()
+apa_emm_ethnicity_by_value <- function(model, sig_only = FALSE) {
+  
+  # 1. Compute emmeans by Ethnicity within Value
+  cmp <- emmeans::emmeans(
+    model,
+    specs = ~ Ethnicity | value,
+    lmer.df = "satterthwaite",
+    lmerTest.limit = 300000,
+    pbkrtest.limit = 300000
+  ) |>
+    emmeans::contrast("pairwise", adjust = "tukey") |>
+    broom::tidy()
+  
+  # 2. Format stats
+  cmp <- cmp |>
+    dplyr::mutate(
+      df = round(df, 1),
+      SE = std.error,
+      p_fmt = dplyr::case_when(
+        adj.p.value < .0001 ~ "< .0001",
+        adj.p.value < .001  ~ "< .001",
+        TRUE ~ sprintf("= %.3f", adj.p.value)
+      ),
+      t_fmt = sprintf("t(%s) = %.2f", df, statistic),
+      d = statistic / sqrt(df)
+    )
+  
+  # 3. Filter sig if requested
+  if (sig_only) {
+    cmp <- cmp |> dplyr::filter(adj.p.value < .05)
+  }
+  
+  # 4. Clean and return
+  cmp |> 
+    dplyr::transmute(
+      value,
+      Contrast = contrast,
+      Estimate = round(estimate, 2),
+      SE = round(SE, 2),
+      t = t_fmt,
+      p = p_fmt,
+      d = sprintf("%.2f", d)
+    )
+}
 
-plot(emmeans(speeches4_mod, ~  Ethnicity * spectrum |  value, at = list(party = "Republican")), comparisons = TRUE) + 
-  facet_wrap(~value, labeller = labeller_value, ncol = 2) +
-  theme_classic()
+apa_print_pairs_by_value <- function(df) {
+  
+  df |> 
+    dplyr::mutate(
+      sentence = sprintf(
+        "[%s] %s: difference = %.2f, SE = %.2f, %s, p %s, d = %.2f.",
+        value, Contrast, Estimate, SE, t, p, as.numeric(d)
+      )
+    ) |> 
+    dplyr::pull(sentence) |> 
+    paste(collapse = "\n")
+}
+
+eth_by_val <- apa_emm_ethnicity_by_value(speeches4_mod, sig_only = TRUE)
+
+cat(apa_print_pairs_by_value(eth_by_val))
 ```
 
