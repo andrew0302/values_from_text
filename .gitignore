@@ -34,3 +34,4 @@ rsconnect/
 /.quarto/
 .DS_Store
 .Renviron
+.claude/
