@@ -131,64 +131,73 @@ ggsave(here("images", "main_confidence_subjectivity.pdf"))
 ```
 
 
-
 ```{r}
-# Prepare dataset
-subjective_df <- plot_df |> 
-  select(participant_ID, subjective, study) |> 
-  filter(!is.na(subjective)) |> 
-  distinct()
+# Prepare data
+subjective_df <- plot_df |>
+  dplyr::select(participant_ID, item_ID, subjective, study) |>
+  dplyr::filter(!is.na(subjective))
 
 # Overall summary
 overall_stats <- subjective_df |>
-  summarise(
+  dplyr::summarise(
     median_value = median(subjective, na.rm = TRUE),
     pct_over_4   = sum(subjective >= 5, na.rm = TRUE) / sum(!is.na(subjective)) * 100
   )
 
-# Group medians (lyrics vs speeches)
-group_medians <- subjective_df |>
-  group_by(study) |>
-  summarise(
-    median_subjective = median(subjective, na.rm = TRUE),
-    .groups = "drop"
-  )
+# Fit cross-classified mixed model
+subj_model <- lmer(
+  subjective ~ study +
+    (1 | participant_ID) +
+    (1 | item_ID),
+  data = subjective_df
+)
 
-# Wilcoxon rank–sum test
-wtest <- wilcox.test(subjective ~ study, data = subjective_df, exact = FALSE)
-W_stat <- wtest$statistic
-p_val  <- wtest$p.value
+# ANOVA on fixed effect
+a <- anova(subj_model)
 
+# Extract test statistic + p-value
+F_val <- a$`F value`[1]
+p_val <- a$`Pr(>F)`[1]
+
+# Format p-value for LaTeX
 p_clean <- if (p_val < 0.0001) {
   "$p < .0001$"
 } else {
   sprintf("$p = %.3f$", p_val)
 }
 
-# Extract medians for sentence
+# Group medians
+group_medians <- subjective_df |>
+  dplyr::group_by(study) |>
+  dplyr::summarise(median_subjective = median(subjective, na.rm = TRUE), .groups = "drop")
+
 median_lyrics   <- group_medians$median_subjective[group_medians$study == "Lyrics"]
 median_speeches <- group_medians$median_subjective[group_medians$study == "Speeches"]
 
-# Combined LaTeX sentence
-latex_sentence <- sprintf(
-  "Participants rated the task as moderately subjective overall (median = %s), with %.1f\\%% of responses falling on the subjective side of the scale. Subjectivity ratings differed by text type: lyrics had a median rating of %s, while speeches had a median of %s. A Wilcoxon rank--sum test confirmed this difference ($W = %s$, %s).",
-  overall_stats$median_value,
-  overall_stats$pct_over_4,
-  median_lyrics,
-  median_speeches,
-  W_stat,
-  p_clean
-)
+# Build LaTeX sentence
+if (p_val < 0.05) {
+  latex_sentence <- sprintf(
+    "Participants rated the task as moderately subjective overall (median = %s), with %.1f\\%% of responses falling on the subjective side of the scale. A cross-classified mixed-effects model revealed a significant difference by text type: lyrics had a median rating of %s, while speeches had a median of %s ($F = %.2f$, %s).",
+    overall_stats$median_value, overall_stats$pct_over_4,
+    median_lyrics, median_speeches, F_val, p_clean
+  )
+} else {
+  latex_sentence <- sprintf(
+    "Participants rated the task as moderately subjective overall (median = %s), with %.1f\\%% of responses falling on the subjective side of the scale. A cross-classified mixed-effects model found no significant difference by text type: lyrics had a median rating of %s, while speeches had a median of %s ($F = %.2f$, %s).",
+    overall_stats$median_value, overall_stats$pct_over_4,
+    median_lyrics, median_speeches, F_val, p_clean
+  )
+}
 
 # Output
 list(
+  model         = subj_model,
+  anova         = a,
   overall_stats = overall_stats,
   group_medians = group_medians,
-  test = wtest,
   latex_sentence = latex_sentence
 )
 ```
-
 
 
 ```{r}

@@ -41,6 +41,88 @@ genre_df <- merge(wave_2_dfs$wave_2_lyrics |>
   select(genre, artist_topic_bin_labels) |> unique()
 ```
 
+```{r}
+speeches_dfs <- wave_2_dfs[["wave_2_speeches"]]
+
+# --- Subgroup deviation from overall sample ---
+
+# Overall mean per value
+overall_profile <- speeches_dfs |>
+  group_by(value) |>
+  summarise(overall_mean = mean(rating, na.rm = TRUE), .groups = "drop")
+
+# Subgroup means per value (Ethnicity x Spectrum)
+subgroup_profiles <- speeches_dfs |>
+  filter(!is.na(rating)) |>
+  group_by(Ethnicity, spectrum, value) |>
+  summarise(subgroup_mean = mean(rating, na.rm = TRUE), .groups = "drop")
+
+# Join and compute deviation metrics per subgroup
+subgroup_summary <- subgroup_profiles |>
+  left_join(overall_profile, by = "value") |>
+  group_by(Ethnicity, spectrum) |>
+  summarise(
+    MAD        = mean(abs(subgroup_mean - overall_mean)),
+    r_pearson  = cor(subgroup_mean, overall_mean),
+    r_spearman = cor(subgroup_mean, overall_mean, method = "spearman"),
+    .groups    = "drop"
+  ) |>
+  arrange(desc(MAD))
+
+# Mean rating per speech x value, for overall sample
+overall_item_profile <- speeches_dfs |>
+  filter(!is.na(rating)) |>
+  group_by(item_ID, value) |>
+  summarise(overall_mean = mean(rating, na.rm = TRUE), .groups = "drop")
+
+# Mean rating per speech x value, per subgroup
+subgroup_item_profiles <- speeches_dfs |>
+  filter(!is.na(rating)) |>
+  group_by(Ethnicity, spectrum, item_ID, value) |>
+  summarise(subgroup_mean = mean(rating, na.rm = TRUE), .groups = "drop")
+
+# Join and correlate across item x value combinations
+subgroup_summary <- subgroup_item_profiles |>
+  left_join(overall_item_profile, by = c("item_ID", "value")) |>
+  group_by(Ethnicity, spectrum) |>
+  summarise(
+    n_obs      = n(),   # number of item x value cells
+    MAD        = mean(abs(subgroup_mean - overall_mean)),
+    r_pearson  = cor(subgroup_mean, overall_mean),
+    r_spearman = cor(subgroup_mean, overall_mean, method = "spearman"),
+    .groups    = "drop"
+  ) |>
+  arrange(desc(MAD))
+
+subgroup_profiles <- speeches_dfs |>
+  filter(!is.na(rating)) |>
+  group_by(Ethnicity, spectrum, value) |>
+  summarise(subgroup_mean = mean(rating, na.rm = TRUE), .groups = "drop")
+
+# GT table
+subgroup_summary |>
+  gt() |>
+  cols_label(
+    Ethnicity  = "Ethnicity",
+    spectrum   = "Political Spectrum",
+    MAD        = md("MAD"),
+    r_pearson  = md("*r* (Pearson)"),
+    r_spearman = md("*r* (Spearman)")
+  ) |>
+  fmt_number(columns = c(MAD, r_pearson, r_spearman), decimals = 3) |>
+  tab_header(
+    title    = "Subgroup Deviation from Overall Sample Value Profiles",
+    subtitle = "Mean Absolute Deviation and profile correlations per Ethnicity × Political Spectrum subgroup"
+  ) |>
+  tab_footnote(
+    footnote = "MAD = mean absolute deviation from overall sample mean per value (rating scale units). 
+                Pearson r and Spearman ρ reflect agreement between subgroup and overall value profiles.",
+    locations = cells_column_labels(columns = MAD)
+  ) |>
+  cols_align("center", columns = c(MAD, r_pearson, r_spearman)) |>
+  tab_options(table.font.size = 12, data_row.padding = px(4))
+```
+
 
 ```{r}
 build_anova_gt <- function(anova_obj,
