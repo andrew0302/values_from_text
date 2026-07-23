@@ -10,16 +10,14 @@ Model & Specification \\
 \multicolumn{2}{l}{{\bfseries Ethnicity Models}} \\[2.5pt] 
 \midrule\addlinespace[2.5pt]
 speeches1a & rating ~ value + Ethnicity * party +<br>(1 | item_ID) + (1 | participant_ID) \\ 
-speeches2a & rating ~ value * Ethnicity * party +<br>(1 | item_ID) + (1 | participant_ID) \\ 
-speeches3 & rating ~ value * Ethnicity * spectrum + party +<br>(1 | item_ID) + (1 | participant_ID) \\ 
-speeches4 & rating ~ value * Ethnicity * spectrum * party +<br>(1 | item_ID) + (1 | participant_ID) \\ 
+rung2 & rating ~ (value + Ethnicity + spectrum + party)^3 +<br>(1 | item_ID) + (1 | participant_ID) \\ 
+rung1 & rating ~ value * Ethnicity * spectrum * party +<br>(1 | item_ID) + (1 | participant_ID) \\ 
 \midrule\addlinespace[2.5pt]
 \multicolumn{2}{l}{{\bfseries Political Spectrum Models}} \\[2.5pt] 
 \midrule\addlinespace[2.5pt]
 speeches1b & rating ~ value + spectrum * party +<br>(1 | item_ID) + (1 | participant_ID) \\ 
-speeches2b & rating ~ value * spectrum * party +<br>(1 | item_ID) + (1 | participant_ID) \\ 
-speeches3 & rating ~ value * Ethnicity * spectrum + party +<br>(1 | item_ID) + (1 | participant_ID) \\ 
-speeches4 & rating ~ value * Ethnicity * spectrum * party +<br>(1 | item_ID) + (1 | participant_ID) \\ 
+rung2 & rating ~ (value + Ethnicity + spectrum + party)^3 +<br>(1 | item_ID) + (1 | participant_ID) \\ 
+rung1 & rating ~ value * Ethnicity * spectrum * party +<br>(1 | item_ID) + (1 | participant_ID) \\ 
 \bottomrule
 \end{tabular*}
 \end{table}

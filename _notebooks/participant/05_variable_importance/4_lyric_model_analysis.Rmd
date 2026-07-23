@@ -1,0 +1,239 @@
+---
+title: "R Notebook"
+---
+
+```{r}
+library("here")         # file logistics
+library("lme4")         # mixed effects metric
+library("lmerTest")     # p values
+library("tidyverse")    # code logistics
+library("emmeans")      # estimated marginal means
+library("gt")           # latex tables
+
+# TO "CENTER" CATEGORICAL PREDICTORS, set the coding to contr.sum (deviations from the average)
+options(scipen = 999, contrasts = c("contr.sum", "contr.poly"))
+path <- here("_data", "_intermediary_data", "models")
+```
+
+
+```{r}
+# read in data
+wave_2_dfs <- readRDS(here("_data", "_intermediary_data", "wave_2_dfs.RDS"))
+lyrics_df <- readRDS(here("_data", "_primary_data", "lyrics_df.RDS"))
+
+genre_df <- merge(wave_2_dfs$wave_2_lyrics |>
+                    select(item_ID, participant_ID, genre),
+                  lyrics_df |> select(item_ID, artist_topic_bin_labels),
+                  by = "item_ID") |>
+  select(genre, artist_topic_bin_labels) |> unique()
+```
+
+```{r}
+build_anova_gt <- function(anova_obj,
+                           eta_df,
+                           title = "Type III ANOVA Results") {
+
+  # Format ANOVA table
+  anova_df <- anova_obj |>
+    as.data.frame() |>
+    tibble::rownames_to_column("Effect") |>
+    mutate(Effect = trimws(Effect))
+
+  # Format eta_df
+  eta_df <- eta_df |>
+    select(Effect, Eta2_partial) |>
+    mutate(Effect = trimws(Effect)) |>
+    distinct()
+
+  # 3. Join
+  df <- left_join(anova_df, eta_df, by = "Effect")
+
+  # 4. Format p-values
+  df <- df |>
+    mutate(
+      p_fmt = case_when(
+        is.na(`Pr(>F)`)  ~ NA_character_,
+        `Pr(>F)` < .0001 ~ "p < .0001",
+        `Pr(>F)` < .001  ~ "p < .001",
+        TRUE             ~ sprintf("p = %.3f", `Pr(>F)`)
+      ),
+
+      F_fmt = sprintf("F(%d, %s) = %.2f",
+                      NumDF,
+                      format(round(DenDF), scientific = FALSE),
+                      `F value`),
+
+      eta_fmt = sprintf("%.3f", Eta2_partial)
+    )
+
+  # 5. Group effects
+  df <- df |>
+    mutate(
+      Group = case_when(
+        !str_detect(Effect, ":") ~ "Main Effects",
+        str_count(Effect, ":") == 1 ~ "Two-Way Interactions",
+        str_count(Effect, ":") == 2 ~ "Three-Way Interactions",
+        TRUE ~ "Four-Way Interactions"
+      )
+    )
+
+  # 6. Build gt table
+  gt_tbl <- df |>
+    select(Group, Effect, F_fmt, p_fmt, eta_fmt) |>      # CI removed
+    gt(groupname_col = "Group") |>
+    cols_label(
+      Effect  = "Effect",
+      F_fmt   = md("$F$"),
+      p_fmt   = md("$p$"),
+      eta_fmt = md("$\\eta^2_{partial}$")
+    ) |>
+    cols_align("center", columns = c(F_fmt, p_fmt, eta_fmt)) |>
+    tab_style(
+    style = cell_text(align = "center"),
+    locations = cells_row_groups()
+  ) |>
+  tab_header(title = title)
+
+  gt_tbl
+}
+```
+
+
+# tables
+
+```{r}
+lyrics_mod_1 <- readRDS(here(path, "wave_2_lyrics_mod_1.RDS"))
+anova <- readRDS(here(path, "wave_2_lyrics_mod_1_anova.RDS"))
+anova
+
+eta_df <- readRDS(here(path, "wave_2_lyrics1_eta_df.RDS"))
+
+tbl<- build_anova_gt(anova_obj=anova,eta_df=eta_df,title = "Type III ANOVA on model: lyrics1")
+tbl
+
+gtsave(tbl, here("tables", "wave_2_lyrics_mod_1_anova.tex"))
+```
+
+```{r}
+lyrics_mod_2 <- readRDS(here(path, "wave_2_lyrics_mod_2.RDS"))
+anova <- readRDS(here(path, "wave_2_lyrics_mod_2_anova.RDS"))
+eta_df <- readRDS(here(path, "wave_2_lyrics2_eta_df.RDS"))
+
+tbl<- build_anova_gt(anova_obj=anova,eta_df=eta_df,title = "Type III ANOVA on model: lyrics2")
+tbl
+
+gtsave(tbl, here("tables", "wave_2_lyrics_mod_2_anova.tex"))
+```
+
+
+# estimated marginal mean plots
+
+```{r}
+emm <- emmeans(lyrics_mod_2, ~Ethnicity | genre)
+
+contrasts <- emmeans::contrast(emm, "pairwise", adjust = "tukey") |>
+    broom::tidy()
+
+contrasts <- merge(contrasts, genre_df, by= "genre")
+contrasts |> filter(adj.p.value < .05) |> select(contrast, estimate, adj.p.value, artist_topic_bin_labels)
+
+digits = 3
+resid_sd <- sigma(lyrics_mod_2)
+
+
+  result <- contrasts |>
+
+    filter(adj.p.value < .05) |>
+
+    dplyr::mutate(
+      df  = round(df, 1),
+      est = sprintf(paste0("%.", digits, "f"), estimate),
+      se  = sprintf(paste0("%.", digits, "f"), std.error),
+      t   = sprintf(paste0("%.", digits, "f"), statistic),
+
+      # APA p-value
+      p   = dplyr::case_when(
+        adj.p.value < .001 ~ "< .001",
+        TRUE ~ sprintf("= %.3f", adj.p.value)
+      ),
+
+      # Cohen's d approximation
+      d = estimate / resid_sd,
+      d_fmt = sprintf("%.2f", d),
+
+      # Full APA sentence
+      apa = sprintf(
+      "[%s] %s: difference = %s, SE = %s, t(%s) = %s, p %s, d = %s.",
+      artist_topic_bin_labels,  # 1
+      contrast,             # 2
+      est,                  # 3
+      se,                   # 4
+      df,                   # 5
+      t,                    # 6
+      p,                    # 7
+      d_fmt                 # 8
+    )
+  ) |>
+  dplyr::pull(apa)
+
+  result
+```
+
+```{r}
+emm <- emmeans(lyrics_mod_2, ~Ethnicity | value)
+
+contrasts <- emmeans::contrast(emm, "pairwise", adjust = "tukey") |>
+    broom::tidy()
+
+contrasts |> 
+  #filter(adj.p.value < .05) |> 
+  select(contrast, value, estimate, adj.p.value)
+
+result <- contrasts |>
+
+  #filter(adj.p.value < .05) |>
+
+  dplyr::mutate(
+    df  = round(df, 1),
+    est = sprintf(paste0("%.", digits, "f"), estimate),
+    se  = sprintf(paste0("%.", digits, "f"), std.error),
+    t   = sprintf(paste0("%.", digits, "f"), statistic),
+
+    # APA p-value
+    p   = dplyr::case_when(
+      adj.p.value < .001 ~ "< .001",
+      TRUE ~ sprintf("= %.3f", adj.p.value)
+    ),
+
+    # Cohen's d approximation
+    d = estimate / resid_sd,
+    d_fmt = sprintf("%.2f", d),
+
+    # NEW APA sentence grouped by value
+    apa = sprintf(
+      "[%s] %s: difference = %s, SE = %s, t(%s) = %s, p %s, d = %s.",
+      value,        # 1 — the SCHWARTZ VALUE label
+      contrast,     # 2 — ethnicity comparison
+      est,          # 3
+      se,           # 4
+      df,           # 5
+      t,            # 6
+      p,            # 7
+      d_fmt         # 8
+    )
+  ) |>
+  dplyr::pull(apa)
+
+result
+```
+
+```{r}
+labeller_value <- labeller(value = function(x) gsub("value: ", "", x))
+
+p1 <- plot(emmeans(lyrics_mod_2 , ~Ethnicity|value), comparisons =T) +
+  theme_classic() + facet_wrap(~value, labeller = labeller_value, ncol = 2) +
+  ggtitle("Lyrics") + xlab("Estimated Marginal Mean")
+
+p1
+ggsave(here("images", "main_emmeans_lyrics_by_ethnicity_value.pdf"))
+```

@@ -1,0 +1,97 @@
+---
+title: "R Notebook"
+---
+
+```{r}
+library("here")         # file logistics
+library("lme4")         # mixed effects metric
+library("lmerTest")     # p values
+library("tidyverse")    # code logistics
+library("broom.mixed")  # model outputs as data frames
+library("emmeans")      # estimated marginal means
+library("patchwork")    # merge plots
+library("report")       # apa reporting
+library("gt")           # latex tables
+library("effectsize")   # partial eta sq calculations
+
+# TO "CENTER" CATEGORICAL PREDICTORS, set the coding to contr.sum (deviations from the average)
+options(scipen = 999, contrasts = c("contr.sum", "contr.poly"))
+path <- here("_data", "_intermediary_data", "models")
+```
+
+
+```{r}
+# read in data
+wave_2_dfs <- readRDS(here("_data", "_intermediary_data", "wave_2_dfs.RDS"))
+```
+
+# lyrics: model selection
+
+```{r}
+# lyrics_mod_1 <- lmer(rating ~ value + Ethnicity * genre + (1|item_ID) + (1 | participant_ID),
+#   data = wave_2_dfs$wave_2_lyrics, REML = F)
+#
+# lyrics_mod_2 <- lmer(rating ~ value * Ethnicity * genre + (1|item_ID) + (1 | participant_ID),
+#   data = wave_2_dfs$wave_2_lyrics, REML = F)
+#
+# anova <- anova(lyrics_mod_1, lyrics_mod_2)
+# anova
+
+#saveRDS(anova, here(path, "wave_2_lyrics_mods_anova.RDS"))
+
+anova <- readRDS(here(path, "wave_2_lyrics_mods_anova.RDS"))
+anova
+```
+
+## two models in multi-verse
+
+estimate and report on:
+
+lyrics1: pre-registered model
+lyrics2: best fitting model
+
+```{r}
+# lyrics_mod_1 <- lmer(rating ~ value + Ethnicity * genre + (1|item_ID) + (1 | participant_ID),
+#   data = wave_2_dfs$wave_2_lyrics, REML = T)
+# saveRDS(lyrics_mod_1, here(path, "wave_2_lyrics_mod_1.RDS"))
+
+lyrics_mod_1 <- readRDS(here(path, "wave_2_lyrics_mod_1.RDS"))
+
+# anova <- anova(lyrics_mod_1, type = "III")
+# saveRDS(anova, here(path, "wave_2_lyrics_mod_1_anova.RDS"))
+#
+anova <- readRDS(here(path, "wave_2_lyrics_mod_1_anova.RDS"))
+anova
+
+# eta_df <- eta_squared(lyrics_mod_1, partial = TRUE, ci = 0.95)
+# eta_df <- eta_df |>
+#   select(Parameter, Eta2_partial, CI_low, CI_high) |>
+#   rename(Effect = Parameter)
+# saveRDS(eta_df, here(path, "wave_2_lyrics1_eta_df.RDS"))
+eta_df <- readRDS(here(path, "wave_2_lyrics1_eta_df.RDS"))
+eta_df
+```
+
+```{r}
+#lyrics_mod_2 <- lmer(rating ~ value * Ethnicity * genre + (1|item_ID) + (1 | participant_ID),
+#  data = wave_2_dfs$wave_2_lyrics, REML = T)
+# saveRDS(lyrics_mod_2, here(path, "wave_2_lyrics_mod_2.RDS"))
+
+lyrics_mod_2 <- readRDS(here(path, "wave_2_lyrics_mod_2.RDS"))
+#
+# anova <- anova(lyrics_mod_2, type = "III")
+# saveRDS(anova, here(path, "wave_2_lyrics_mod_2_anova.RDS"))
+
+anova <- readRDS(here(path, "wave_2_lyrics_mod_2_anova.RDS"))
+anova
+
+# estimate effect size
+# eta_df <- eta_squared(lyrics_mod_2 , partial = TRUE, ci = 0.95)
+# eta_df <- eta_df |>
+#   select(Parameter, Eta2_partial, CI_low, CI_high) |>
+#   rename(Effect = Parameter)
+# saveRDS(eta_df, here(path, "wave_2_lyrics2_eta_df.RDS"))
+
+eta_df <- readRDS(here(path, "wave_2_lyrics2_eta_df.RDS"))
+eta_df
+```
