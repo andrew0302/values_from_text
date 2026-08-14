@@ -269,36 +269,6 @@ summarize_ratings(speeches_df)
 ```
 
 ```{r}
-plot_miss <- function(df){
-  df |>
-    gg_miss_var(show_pct=T) + 
-    scale_y_continuous(limits = c(0, 50)) +
-    xlab("Schwartz Value") +
-    theme_classic()
-}
-
-
-p1 <- lyrics_df |>
-  select(item_ID, participant_ID, value, rating) |>
-  pivot_wider(names_from = value, values_from = rating) |>
-  select(-item_ID, -participant_ID) |>
-  plot_miss() + ylab("% NA")
-
-p2 <- speeches_df |>
-  select(item_ID, participant_ID, value, rating) |>
-  pivot_wider(names_from = value, values_from = rating) |>
-  select(-item_ID, -participant_ID) |>
-  plot_miss() + xlab("") + ylab("% NA")
-
-na_plot <- (p1 | p2) + plot_annotation(tag_levels = "A")
-na_plot
-
-#ggsave(here("images", "main_missingness_by_text.pdf"))
-ggsave(here("images", "main_missingness_by_text.pdf"), width = 8, height = 4)
-```
-
-
-```{r}
 plot_value_histograms_with_na <- function(df, text_label, option) {
   
   df <- df |> mutate(

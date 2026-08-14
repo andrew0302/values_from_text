@@ -15,7 +15,7 @@ library("gt")           # latex tables
 library("effectsize")   # partial eta sq calculations
 
 # TO "CENTER" CATEGORICAL PREDICTORS, set the coding to contr.sum (deviations from the average)
-options(scipen = 999, contrasts = c("contr.sum", "contr.poly"))
+#options(scipen = 999, contrasts = c("contr.sum", "contr.poly"))
 path <- here("_data", "_intermediary_data", "models")
 ```
 
@@ -261,6 +261,7 @@ cat(paste0(
 # row against the row directly above it (model_comparison_table() does i-1 -> i,
 # not first-row -> i), so the bottom row of each group is the rung2 -> rung1
 # (four-way) test and is identical in both groups.
+
 speeches_a_mods_final <- list(
   speeches1a_mod = speeches1a_mod,
   rung2_mod      = rung2_mod,

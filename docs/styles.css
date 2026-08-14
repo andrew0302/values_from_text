@@ -1,7 +1,0 @@
-/* Force wrapping inside gt table cells and headers */
-.gt_table .gt_row, 
-.gt_table .gt_col_heading {
-  white-space: normal !important;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-}

@@ -34,5 +34,8 @@ rsconnect/
 /.quarto/
 .DS_Store
 .Renviron
+
+#agentic shit
 .claude/
 _tex/
+_briefs/
