@@ -1,0 +1,19 @@
+\begin{table}[t]
+\caption*{
+{\large Table B: Combined Model Convergence Ladder} \\ 
+{\small speeches\_3a selected; speeches\_3b rejected on convergence grounds}
+} 
+\fontsize{12.0pt}{14.4pt}\selectfont
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lrrrrrrl}
+\toprule
+Model & AIC & $\Delta$AIC & $R^2_m$ & $R^2_c$ & $\chi^2$ & df & p \\ 
+\midrule\addlinespace[2.5pt]
+speeches\_3a & 445,929.779 & NA & 0.115 & 0.278 & NA & NA & NA \\ 
+speeches\_3b & 445,991.053 & 61.274 & 0.116 & 0.278 & 46.726 & 54 & = 0.748 \\ 
+\bottomrule
+\end{tabular*}
+\begin{minipage}{\linewidth}
+speeches\_3b (full four-way interaction) produced convergence warnings across all optimizers and was rejected on those grounds. The LRT confirms the four-way interaction also provides no meaningful improvement in fit (p = .748, ΔAIC = +61.3). speeches\_3a (all three-way interactions) converged cleanly and is the selected model.\\
+\end{minipage}
+\end{table}
+

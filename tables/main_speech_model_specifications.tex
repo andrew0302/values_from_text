@@ -1,23 +1,26 @@
 \begin{table}[t]
 \caption*{
-{\large Models Specifications: Ethnicity, and Political Spectrum}
+{\large Model Specifications}
 } 
 \fontsize{12.0pt}{14.4pt}\selectfont
-\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}p{\dimexpr 112.50pt -2\tabcolsep-1.5\arrayrulewidth}>{\raggedright\arraybackslash}p{\dimexpr 300.00pt -2\tabcolsep-1.5\arrayrulewidth}}
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}p{\dimexpr 165.00pt -2\tabcolsep-1.5\arrayrulewidth}>{\raggedright\arraybackslash}p{\dimexpr 300.00pt -2\tabcolsep-1.5\arrayrulewidth}}
 \toprule
 Model & Specification \\ 
 \midrule\addlinespace[2.5pt]
 \multicolumn{2}{l}{{\bfseries Ethnicity Models}} \\[2.5pt] 
 \midrule\addlinespace[2.5pt]
-speeches1a & rating ~ value + Ethnicity * party +<br>(1 | item_ID) + (1 | participant_ID) \\ 
-rung2 & rating ~ (value + Ethnicity + spectrum + party)^3 +<br>(1 | item_ID) + (1 | participant_ID) \\ 
-rung1 & rating ~ value * Ethnicity * spectrum * party +<br>(1 | item_ID) + (1 | participant_ID) \\ 
+speeches\_1a & rating ~ value + Ethnicity * party +<br>(1 | item_ID) + (1 | participant_ID) \\ 
+speeches\_2a & rating ~ value * Ethnicity * party +<br>(1 | item_ID) + (1 | participant_ID) \\ 
 \midrule\addlinespace[2.5pt]
-\multicolumn{2}{l}{{\bfseries Political Spectrum Models}} \\[2.5pt] 
+\multicolumn{2}{l}{{\bfseries Spectrum Models}} \\[2.5pt] 
 \midrule\addlinespace[2.5pt]
-speeches1b & rating ~ value + spectrum * party +<br>(1 | item_ID) + (1 | participant_ID) \\ 
-rung2 & rating ~ (value + Ethnicity + spectrum + party)^3 +<br>(1 | item_ID) + (1 | participant_ID) \\ 
-rung1 & rating ~ value * Ethnicity * spectrum * party +<br>(1 | item_ID) + (1 | participant_ID) \\ 
+speeches\_1b & rating ~ value + spectrum * party +<br>(1 | item_ID) + (1 | participant_ID) \\ 
+speeches\_2b & rating ~ value * spectrum * party +<br>(1 | item_ID) + (1 | participant_ID) \\ 
+\midrule\addlinespace[2.5pt]
+\multicolumn{2}{l}{{\bfseries Combined Models}} \\[2.5pt] 
+\midrule\addlinespace[2.5pt]
+speeches\_3a & rating ~ (value + Ethnicity + spectrum + party)^3 +<br>(1 | item_ID) + (1 | participant_ID) \\ 
+speeches\_3b & rating ~ value * Ethnicity * spectrum * party +<br>(1 | item_ID) + (1 | participant_ID) \\ 
 \bottomrule
 \end{tabular*}
 \end{table}

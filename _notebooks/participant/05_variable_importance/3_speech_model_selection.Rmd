@@ -14,352 +14,295 @@ library("report")       # apa reporting
 library("gt")           # latex tables
 library("effectsize")   # partial eta sq calculations
 
-# TO "CENTER" CATEGORICAL PREDICTORS, set the coding to contr.sum (deviations from the average)
-#options(scipen = 999, contrasts = c("contr.sum", "contr.poly"))
+# center categorical predictors: contr.sum recodes to deviations from the average
+options(scipen = 999, contrasts = c("contr.sum", "contr.poly"))
 path <- here("_data", "_intermediary_data", "models")
-```
 
-
-```{r}
 # read in data
 wave_2_dfs <- readRDS(here("_data", "_intermediary_data", "wave_2_dfs.RDS"))
 ```
 
 # speeches: model selection
 
+## Models:
+
+ speeches_1a  pre-registered, ethnicity annotator trait
+              rating ~ value + Ethnicity * party
+ speeches_1b  pre-registered, spectrum annotator trait
+              rating ~ value + spectrum * party
+ speeches_2a  best-fitting, ethnicity annotator trait
+              rating ~ value * Ethnicity * party
+ speeches_2b  best-fitting, spectrum annotator trait
+              rating ~ value * spectrum * party
+ speeches_3a  combined model, all three-way interactions (SELECTED)
+              rating ~ (value + Ethnicity + spectrum + party)^3
+ speeches_3b  combined model, full four-way interaction (REJECTED — four-way adds no fit)
+              rating ~ value * Ethnicity * spectrum * party
+
+ Both combined models converge. speeches_3a is selected on parsimony: the
+ four-way interaction in speeches_3b provides no improvement in fit
+ (LRT p = .748, ΔAIC = +61.3 against speeches_3a).
+
+
+## Pre-registered and best-fitting models
+
 ```{r}
-# # Ethnicity Mods
-# speeches1a_mod <- lmer(rating ~ value + Ethnicity * party + (1|item_ID) + (1 | participant_ID),
-#   data = wave_2_dfs$wave_2_speeches, REML = F)
-#
-# speeches2a_mod <- lmer(rating ~ value * Ethnicity * party + (1|item_ID) + (1 | participant_ID),
-#   data = wave_2_dfs$wave_2_speeches, REML = F)
-#
-# # Spectrum Mods
-# speeches1b_mod <- lmer(rating ~ value + spectrum * party + (1|item_ID) + (1 | participant_ID),
-#   data = wave_2_dfs$wave_2_speeches, REML = F)
-#
-# speeches2b_mod <- lmer(rating ~ value * spectrum * party + (1|item_ID) + (1 | participant_ID),
-#   data = wave_2_dfs$wave_2_speeches, REML = F)
-#
-# # Combined Mods
-# speeches3_mod <- lmer(rating ~ value * Ethnicity * spectrum + party + (1|item_ID) + (1 | participant_ID),
-#   data = wave_2_dfs$wave_2_speeches, REML = F)
-#
-# speeches4_mod <- lmer(rating ~ value * Ethnicity * spectrum * party + (1|item_ID) + (1 | participant_ID),
-#   data = wave_2_dfs$wave_2_speeches, REML = F)
-#
-# speeches_a_mods <- list(
-#   speeches1a_mod = speeches1a_mod,
-#   speeches2a_mod = speeches2a_mod,
-#   speeches3_mod  = speeches3_mod,
-#   speeches4_mod  = speeches4_mod)
-#
-# speeches_b_mods <- list(
-#   speeches1b_mod = speeches1b_mod,
-#   speeches2b_mod = speeches2b_mod,
-#   speeches3_mod  = speeches3_mod,
-#   speeches4_mod  = speeches4_mod)
-#
-# saveRDS(speeches_a_mods, here(path, "speeches_a_mods.RDS"))
-# saveRDS(speeches_b_mods, here(path, "speeches_b_mods.RDS"))
+# --- speeches_1a: pre-registered, ethnicity ---
+# speeches_1a <- lmer(
+#   rating ~ value + Ethnicity * party + (1|item_ID) + (1|participant_ID),
+#   data = wave_2_dfs$wave_2_speeches, REML = FALSE)
+# saveRDS(speeches_1a, here(path, "wave_2_speeches_1a_mod.RDS"))
+speeches_1a <- readRDS(here(path, "wave_2_speeches_1a_mod.RDS"))
+
+# --- speeches_2a: value * ethnicity ---
+# speeches_2a <- lmer(
+#   rating ~ value * Ethnicity * party + (1|item_ID) + (1|participant_ID),
+#   data = wave_2_dfs$wave_2_speeches, REML = FALSE)
+# saveRDS(speeches_2a, here(path, "wave_2_speeches_2a_mod.RDS"))
+speeches_2a <- readRDS(here(path, "wave_2_speeches_2a_mod.RDS"))
+
+# --- speeches_1b: pre-registered, spectrum ---
+# speeches_1b <- lmer(
+#   rating ~ value + spectrum * party + (1|item_ID) + (1|participant_ID),
+#   data = wave_2_dfs$wave_2_speeches, REML = FALSE)
+# saveRDS(speeches_1b, here(path, "wave_2_speeches_1b_mod.RDS"))
+speeches_1b <- readRDS(here(path, "wave_2_speeches_1b_mod.RDS"))
+
+# --- speeches_2b: value * spectrum ---
+# speeches_2b <- lmer(
+#   rating ~ value * spectrum * party + (1|item_ID) + (1|participant_ID),
+#   data = wave_2_dfs$wave_2_speeches, REML = FALSE)
+# saveRDS(speeches_2b, here(path, "wave_2_speeches_2b_mod.RDS"))
+speeches_2b <- readRDS(here(path, "wave_2_speeches_2b_mod.RDS"))
+```
+
+## Combined models
+
+Roles: `Ethnicity` = annotator trait, `spectrum` = annotator trait, `party` = speaker trait.
+Both combined models converge cleanly. Selection rests on fit and parsimony (LRT/AIC),
+not convergence: speeches_3a is preferred because the four-way interaction in
+speeches_3b adds no improvement in fit.
+
+```{r}
+# --- speeches_3b: full four-way interaction ---
+# speeches_3b <- lmer(
+#   rating ~ value * Ethnicity * spectrum * party + (1|item_ID) + (1|participant_ID),
+#   data = wave_2_dfs$wave_2_speeches, REML = FALSE)
+# saveRDS(speeches_3b, here(path, "wave_2_speeches_3b_mod.RDS"))
+speeches_3b <- readRDS(here(path, "wave_2_speeches_3b_mod.RDS"))
 ```
 
 ```{r}
-speeches_a_mods <- readRDS(here(path, "speeches_a_mods.RDS"))
-speeches_b_mods <- readRDS(here(path, "speeches_b_mods.RDS"))
-
-speeches1a_mod <- speeches_a_mods[["speeches1a_mod"]]
-speeches1b_mod <- speeches_b_mods[["speeches1b_mod"]]
+# --- speeches_3a: all three-way interactions (SELECTED) ---
+# speeches_3a <- lmer(
+#   rating ~ (value + Ethnicity + spectrum + party)^3 + (1|item_ID) + (1|participant_ID),
+#   data = wave_2_dfs$wave_2_speeches, REML = FALSE)
+# saveRDS(speeches_3a, here(path, "wave_2_speeches_3a_mod.RDS"))
+speeches_3a <- readRDS(here(path, "wave_2_speeches_3a_mod.RDS"))
 ```
 
-## helpers
+```{r}
+# --- Indirection object ---
+selected_mod  <- speeches_3a
+selected_name <- "speeches_3a"
+```
+
+## Helpers
 
 ```{r}
-# take sequential series of models,
-# extract fit indices,
-# compare each model to previous in series
-
-model_comparison_table <- function(model_list) {
-
-  # Ensure named list
-  if (is.null(names(model_list))) {
-    names(model_list) <- paste0("mod", seq_along(model_list))
-  }
-
-  n_models <- length(model_list)
-
-  # 1. Pseudo R2 (Nakagawa)
-  r2_df <- purrr::map_df(model_list, ~ as.data.frame(performance::r2_nakagawa(.x)))
-
-  # 2. AIC
-  aic_vals <- sapply(model_list, AIC)
-
-  # 3. Formulas
-  formulas <- purrr::map_chr(model_list, ~ paste(deparse(formula(.x)), collapse = " "))
-
-  # 4. Sequential LRT
-  lrt_chisq <- numeric(n_models)
-  lrt_df    <- numeric(n_models)
-  raw_p     <- numeric(n_models)
-
-  # first is always NA, as there is nothing to compare it to
-  lrt_chisq[1] <- NA
-  lrt_df[1]    <- NA
-  raw_p[1]     <- NA
-
-  for (i in 2:n_models) {
-    # anova for previous model and current model
-    a <- suppressWarnings(anova(model_list[[i-1]], model_list[[i]]))
-    lrt_chisq[i] <- a$Chisq[2]
-    lrt_df[i]    <- a$Df[2]
-    raw_p[i]     <- a$`Pr(>Chisq)`[2]
-  }
-
-  # 5. Format p-values
-  format_p <- function(p) {
-    if (is.na(p)) return(NA_character_)
-    if (p < 0.0001) return("< .0001")
-    if (p < 0.001)  return("< .001")
-    if (p < 0.01)   return(sprintf("= %.3f", p))
-    return(sprintf("= %.3f", p))
-  }
-
-  LRT_p <- vapply(raw_p, format_p, FUN.VALUE = character(1))
-
-  # 6. ΔAIC relative to previous model
-  delta_prev <- c(NA, diff(aic_vals))
-
+# Nakagawa pseudo-R2 and AIC for a single model, as a one-row tibble.
+model_fit_row <- function(model, name) {
+  r2 <- as.data.frame(performance::r2_nakagawa(model))
   tibble::tibble(
-    Model           = names(model_list),
-    Specification   = formulas,
-    AIC             = aic_vals,
-    Delta_AIC_prev  = delta_prev,
-    R2_marginal     = r2_df$R2_marginal,
-    R2_conditional  = r2_df$R2_conditional,
-    LRT_chisq       = lrt_chisq,
-    LRT_df          = lrt_df,
-    LRT_p           = LRT_p
-  )
+    Model          = name,
+    AIC            = AIC(model),
+    R2_marginal    = r2$R2_marginal,
+    R2_conditional = r2$R2_conditional)
 }
 
+# LRT of a larger model against a reference (nested) model.
+# Returns chisq, df, and formatted p for the larger model.
+lrt_row <- function(reference, larger) {
+  a <- suppressWarnings(anova(reference, larger))
+  p <- a$`Pr(>Chisq)`[2]
+  p_fmt <- if (is.na(p)) NA_character_
+           else if (p < 0.0001) "< .0001"
+           else if (p < 0.001)  "< .001"
+           else sprintf("= %.3f", p)
+  tibble::tibble(
+    LRT_chisq = a$Chisq[2],
+    LRT_df    = a$Df[2],
+    LRT_p     = p_fmt)
+}
 ```
 
 ```{r}
 extract_spec_pretty <- function(model) {
-
-  # 1. Get raw formula string without R's line breaks
-  f_raw <- paste(deparse(model@call$formula, width.cutoff = 500), collapse = " ")
-
-  # 2. Normalize spacing
-  f_raw <- gsub("\\s+", " ", f_raw)
-
-  # 3. Split into fixed and random parts
-  #    This finds the first "(" that starts a random-effect term.
+  f_raw     <- paste(deparse(model@call$formula, width.cutoff = 500), collapse = " ")
+  f_raw     <- gsub("\\s+", " ", f_raw)
   split_pos <- regexpr("\\(1 \\|", f_raw)
-
   if (split_pos == -1) {
-    # No random effects
-    fixed <- f_raw
-    random <- ""
+    fixed <- f_raw; random <- ""
   } else {
     fixed  <- trimws(substr(f_raw, 1, split_pos - 1))
     random <- trimws(substr(f_raw, split_pos, nchar(f_raw)))
   }
-
-  # 4. Clean random effects:
-  #    remove internal newlines, enforce single-line spacing
   random <- gsub("\\s*\\+\\s*", " + ", random)
   random <- gsub("\\s+", " ", random)
-
-  # 5. Rebuild the final pretty spec:
-  pretty <- paste0(fixed, "<br>", random)
-
-  html(pretty)
+  html(paste0(fixed, "<br>", random))
 }
 ```
 
-## combined model: convergence ladder
+## Model comparison table
 
-Roles: `Ethnicity` = annotator trait, `spectrum` = annotator trait, `party` = speaker trait.
+Three sections:
 
-Interpret the highest rung that fits. Descend only on convergence failure, never on non-significance.
+- **Ethnicity Models:** speeches_2a tested against speeches_1a (sequential LRT).
+- **Spectrum Models:** speeches_2b tested against speeches_1b (sequential LRT).
+- **Combined Model:** speeches_3a tested against BOTH best-fitting models
+  (vs speeches_2a and vs speeches_2b — shown as separate rows, since these are
+  different nested comparisons), then speeches_3b tested against speeches_3a to
+  show the four-way interaction adds no fit.
 
-### rung 1
-
-```{r}
-# rung1_mod <- lmer(rating ~ value * Ethnicity * spectrum * party + (1|item_ID) + (1 | participant_ID),
-#   data = wave_2_dfs$wave_2_speeches, REML = FALSE)
-# saveRDS(rung1_mod, here(path, "wave_2_speeches_rung1_mod.RDS"))
-
-# after first run, comment the fit/save and switch to readRDS
-rung1_mod <- readRDS(here(path, "wave_2_speeches_rung1_mod.RDS"))
-
-rung1_mod@optinfo$conv$lme4
-```
+ΔAIC in each row is relative to the model that row is tested against.
 
 ```{r}
-# On a convergence warning for rung1_mod, do NOT drop terms.
-# Retry optimizers in this order first: allFit(), then bobyqa, then Nelder_Mead, then more iterations.
+# --- Ethnicity group: 1a -> 2a ---
+eth_rows <- bind_rows(
+  bind_cols(
+    model_fit_row(speeches_1a, "speeches_1a"),
+    tibble::tibble(Delta_AIC = NA_real_, LRT_chisq = NA_real_, LRT_df = NA_real_, LRT_p = NA_character_),
+    tibble::tibble(Tested_against = NA_character_)),
+  bind_cols(
+    model_fit_row(speeches_2a, "speeches_2a"),
+    tibble::tibble(Delta_AIC = AIC(speeches_2a) - AIC(speeches_1a)),
+    lrt_row(speeches_1a, speeches_2a),
+    tibble::tibble(Tested_against = "speeches_1a"))) |>
+  mutate(Group = "Ethnicity Models")
 
-# rung1_allfit <- allFit(rung1_mod)
-# summary(rung1_allfit)
-#
-# rung1_mod_bobyqa <- update(rung1_mod, control = lmerControl(optimizer = "bobyqa"))
-# rung1_mod_nm     <- update(rung1_mod, control = lmerControl(optimizer = "Nelder_Mead"))
-# rung1_mod_iter   <- update(rung1_mod, control = lmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)))
-```
+# --- Spectrum group: 1b -> 2b ---
+spec_rows <- bind_rows(
+  bind_cols(
+    model_fit_row(speeches_1b, "speeches_1b"),
+    tibble::tibble(Delta_AIC = NA_real_, LRT_chisq = NA_real_, LRT_df = NA_real_, LRT_p = NA_character_),
+    tibble::tibble(Tested_against = NA_character_)),
+  bind_cols(
+    model_fit_row(speeches_2b, "speeches_2b"),
+    tibble::tibble(Delta_AIC = AIC(speeches_2b) - AIC(speeches_1b)),
+    lrt_row(speeches_1b, speeches_2b),
+    tibble::tibble(Tested_against = "speeches_1b"))) |>
+  mutate(Group = "Spectrum Models")
 
-### rung 2 (fallback — four-way interaction dropped)
+# --- Combined section: 3a vs 2a, 3a vs 2b, 3b vs 3a ---
+combined_rows <- bind_rows(
+  bind_cols(
+    model_fit_row(speeches_3a, "speeches_3a"),
+    tibble::tibble(Delta_AIC = AIC(speeches_3a) - AIC(speeches_2a)),
+    lrt_row(speeches_2a, speeches_3a),
+    tibble::tibble(Tested_against = "speeches_2a")),
+  bind_cols(
+    model_fit_row(speeches_3a, "speeches_3a"),
+    tibble::tibble(Delta_AIC = AIC(speeches_3a) - AIC(speeches_2b)),
+    lrt_row(speeches_2b, speeches_3a),
+    tibble::tibble(Tested_against = "speeches_2b")),
+  bind_cols(
+    model_fit_row(speeches_3b, "speeches_3b"),
+    tibble::tibble(Delta_AIC = AIC(speeches_3b) - AIC(speeches_3a)),
+    lrt_row(speeches_3a, speeches_3b),
+    tibble::tibble(Tested_against = "speeches_3a"))) |>
+  mutate(Group = "Combined Model")
 
-```{r}
-# rung2_mod <- lmer(rating ~ (value + Ethnicity + spectrum + party)^3 + (1|item_ID) + (1 | participant_ID),
-#   data = wave_2_dfs$wave_2_speeches, REML = FALSE)
-# saveRDS(rung2_mod, here(path, "wave_2_speeches_rung2_mod.RDS"))
-#
-rung2_mod <- readRDS(here(path, "wave_2_speeches_rung2_mod.RDS"))
-rung2_mod@optinfo$conv$lme4
-```
+comparison_data <- bind_rows(eth_rows, spec_rows, combined_rows) |>
+  select(Group, Model, Tested_against, AIC, Delta_AIC,
+         R2_marginal, R2_conditional, LRT_chisq, LRT_df, LRT_p)
 
-### rung 3 (fallback — Ethnicity:spectrum:party also dropped)
-
-```{r}
-# rung3_mod <- lmer(rating ~ value*Ethnicity*spectrum + value*Ethnicity*party + value*spectrum*party +
-#     (1|item_ID) + (1 | participant_ID),
-#   data = wave_2_dfs$wave_2_speeches, REML = FALSE)
-# saveRDS(rung3_mod, here(path, "wave_2_speeches_rung3_mod.RDS"))
-#
-# rung3_mod <- readRDS(here(path, "wave_2_speeches_rung3_mod.RDS"))
-# rung3_mod@optinfo$conv$lme4
-```
-
-### select rung
-
-```{r}
-# set this to whichever rung converged; everything below follows automatically
-selected_mod <- rung2_mod   # rung2_mod / rung3_mod
-selected_rung <- 2
-```
-
-### convergence record
-
-```{r}
-cat(paste0(
-  "Rung used: ", selected_rung, "\n",
-  "Formula: ", paste(deparse(formula(selected_mod)), collapse = " "), "\n",
-  "Convergence warnings: [Andrew: fill in after running]\n",
-  "Optimizers tried: [Andrew: fill in — none needed / allFit() / bobyqa / Nelder_Mead / more iterations]\n",
-  "allFit() output: [Andrew: paste summary(allFit(...)) here if it was run]\n"
-))
-```
-
-### model comparison
-
-```{r}
-# rung2_mod is the reporting row (three-way ceiling); rung1_mod is selected_mod's
-# ML-fit twin (converged, interpreted model, unchanged). Each group tests every
-# row against the row directly above it (model_comparison_table() does i-1 -> i,
-# not first-row -> i), so the bottom row of each group is the rung2 -> rung1
-# (four-way) test and is identical in both groups.
-
-speeches_a_mods_final <- list(
-  speeches1a_mod = speeches1a_mod,
-  rung2_mod      = rung2_mod,
-  rung1_mod      = rung1_mod)
-
-speeches_b_mods_final <- list(
-  speeches1b_mod = speeches1b_mod,
-  rung2_mod      = rung2_mod,
-  rung1_mod      = rung1_mod)
-
-speech_tbls <- bind_rows(
-  model_comparison_table(speeches_a_mods_final) |> mutate(Group = "Ethnicity Models"),
-  model_comparison_table(speeches_b_mods_final) |> mutate(Group = "Spectrum Models")) |>
-
-  mutate(Model = gsub("_mod", "", Model))
-
-speech_tbl <- speech_tbls |> select(-Specification) |>
-
+speech_tbl <- comparison_data |>
   gt(groupname_col = "Group") |>
-
   cols_label(
-    Model           = "Model",
-    AIC             = "AIC",
-    Delta_AIC_prev  = html("$\\Delta$AIC"),
-    R2_marginal     = html("$R^2_m$"),
-    R2_conditional  = html("$R^2_c$"),
-    LRT_chisq       = html("$\\chi^2$"),
-    LRT_df          = html("df"),
-    LRT_p           = html("p")
-  ) |>
-
+    Model          = "Model",
+    Tested_against = "vs.",
+    AIC            = "AIC",
+    Delta_AIC      = html("$\\Delta$AIC"),
+    R2_marginal    = html("$R^2_m$"),
+    R2_conditional = html("$R^2_c$"),
+    LRT_chisq      = html("$\\chi^2$"),
+    LRT_df         = html("df"),
+    LRT_p          = html("p")) |>
   fmt_number(
-    columns = c(AIC, Delta_AIC_prev, R2_marginal, R2_conditional, LRT_chisq),
+    columns = c(AIC, Delta_AIC, R2_marginal, R2_conditional, LRT_chisq),
     decimals = 3) |>
-
-  tab_header(title = "Model Comparisons: Ethnicity, and Political Spectrum") |>
-
-  tab_source_note(source_note = "The rung1 row (four-way interaction test, rung2 vs rung1) is the same comparison in both groups, since rung1_mod and rung2_mod are shared across the Ethnicity and Spectrum ladders — the statistic is not independent between groups.")
+  sub_missing(columns = everything(), missing_text = "—") |>
+  tab_style(
+    style = cell_text(align = "center"),
+    locations = cells_row_groups()) |>
+  tab_header(
+    title    = "Model Comparisons: Ethnicity and Political Spectrum",
+    subtitle = "Best-fitting and combined models tested by likelihood ratio against nested references") |>
+  tab_source_note(
+    source_note = paste0(
+      "χ², df, and p are likelihood ratio tests of each model against the model named in the ",
+      "'vs.' column; ΔAIC is relative to that same reference. speeches_3a is shown twice in the ",
+      "Combined section because it is tested against both best-fitting models (speeches_2a and ",
+      "speeches_2b); it improves on both. speeches_3b (full four-way interaction) adds no fit over ",
+      "speeches_3a, so speeches_3a is selected on parsimony. Both combined models converge."))
 
 speech_tbl
+gtsave(speech_tbl, here("tables", "main_speech_model_comparisons.tex"))
 ```
 
-### model specification table
+## Model specification table
 
 ```{r}
-speeches_a_specs <- tibble(
-  Group = "Ethnicity Models",
-  Model = names(speeches_a_mods_final),
-  Specification = purrr::map(speeches_a_mods_final, extract_spec_pretty)
-)
+all_specs <- bind_rows(
+  tibble(
+    Group = "Ethnicity Models",
+    Model = c("speeches_1a", "speeches_2a"),
+    Specification = purrr::map(list(speeches_1a, speeches_2a), extract_spec_pretty)),
+  tibble(
+    Group = "Spectrum Models",
+    Model = c("speeches_1b", "speeches_2b"),
+    Specification = purrr::map(list(speeches_1b, speeches_2b), extract_spec_pretty)),
+  tibble(
+    Group = "Combined Models",
+    Model = c("speeches_3a", "speeches_3b"),
+    Specification = purrr::map(list(speeches_3a, speeches_3b), extract_spec_pretty)))
 
-speeches_b_specs <- tibble(
-  Group = "Political Spectrum Models",
-  Model = names(speeches_b_mods_final),
-  Specification = purrr::map(speeches_b_mods_final, extract_spec_pretty)
-)
-
-spec_table <- bind_rows(speeches_a_specs, speeches_b_specs) |> mutate(Model = gsub("_mod", "", Model))
-
-gt_specs <- spec_table |>
+gt_specs <- all_specs |>
   gt(groupname_col = "Group") |>
   cols_width(
-    Model ~ px(150),
-    Specification ~ px(400)
-  ) |>
+    Model ~ px(220),
+    Specification ~ px(400)) |>
   cols_align("left", columns = Specification) |>
   tab_style(
     style = cell_text(weight = "bold", align = "center"),
-    locations = cells_row_groups()
-  ) |>
-  tab_header(
-    title = "Models Specifications: Ethnicity, and Political Spectrum"
-  )
+    locations = cells_row_groups()) |>
+  tab_header(title = "Model Specifications")
 
 gt_specs
-```
-
-```{r}
-gtsave(speech_tbl, here("tables", "main_speech_model_comparisons.tex"))
 gtsave(gt_specs, here("tables", "main_speech_model_specifications.tex"))
 ```
 
-### final model (REML = TRUE)
+## Final model (REML = TRUE)
 
 ```{r}
-selected_mod <- update(selected_mod, REML = TRUE)
-# selected_rung noted above (selected_rung); rung 1 = full four-way interaction
-saveRDS(selected_mod, here(path, "wave_2_speeches_combined_mod.RDS"))
+# Refit the selected model with REML = TRUE for estimation, and save the ANOVA
+# and partial eta-squared. These three objects are read by the analysis notebook
+# (5_speech_model_analysis) under exactly these filenames.
 
-# after first run, comment the fit/save and switch to readRDS
-# selected_mod <- readRDS(here(path, "wave_2_speeches_combined_mod.RDS"))
+#selected_mod <- update(selected_mod, REML = TRUE)
+#saveRDS(selected_mod, here(path, "wave_2_speeches_mod_3b_REML.RDS"))
+selected_mod <- readRDS(here(path, "wave_2_speeches_mod_3b_REML.RDS"))
 
-anova <- anova(selected_mod, type = "III")
-anova
+# anova_selected <- anova(selected_mod, type = "III")
+# saveRDS(anova_selected, here(path, "wave_2_speeches_mod_3b_REML_anova.RDS"))
+anova_selected <- readRDS(here(path, "wave_2_speeches_mod_3b_REML_anova.RDS"))
+anova_selected
 
-eta_df <- eta_squared(selected_mod, partial = TRUE, ci = 0.95)
-eta_df <- eta_df |>
-  select(Parameter, Eta2_partial, CI_low, CI_high) |>
-  rename(Effect = Parameter)
+# eta_df <- eta_squared(selected_mod, partial = TRUE, ci = 0.95)
+# eta_df <- eta_df |>
+#   select(Parameter, Eta2_partial, CI_low, CI_high) |>
+#   rename(Effect = Parameter)
+# saveRDS(eta_df, here(path, "wave_2_speeches_mod_3b_REML_eta.RDS"))
+eta_df <- readRDS(here(path, "wave_2_speeches_mod_3b_REML_eta.RDS"))
 eta_df
 ```

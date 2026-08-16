@@ -6,7 +6,8 @@ author: "Andrew M. Demetriou"
 ```{r}
 library("here")
 library("tidyverse")
-library("cowplot")
+library("patchwork")
+
 ```
 
 ```{r}
@@ -15,6 +16,25 @@ file_path <- here("_data", "_intermediary_data")
 ethnicity_subsample_ICC_dfs <- readRDS(file = here(file_path, "wave_2_subsample_ethnicity_ICC_dfs.RDS"))
 spectrum_subsample_ICC_dfs <- readRDS(file = here(file_path, "wave_2_subsample_spectrum_ICC_dfs.RDS"))
 ```
+
+```{r}
+report_icc <- function(icc_df, text_type) {
+  summary <- icc_df %>%
+    filter(subset == "overall") %>%
+    summarise(
+      min  = round(min(ICC2k), 2),
+      max  = round(max(ICC2k), 2),
+      mean = round(mean(ICC2k), 2))
+  
+  cat(sprintf(
+    "For %s, ICC(2,k) ranged from %.2f to %.2f (M = %.2f).\n",
+    text_type, summary$min, summary$max, summary$mean))
+}
+
+report_icc(ethnicity_subsample_ICC_dfs[["lyrics"]],   "lyrics")
+report_icc(ethnicity_subsample_ICC_dfs[["speeches"]], "speeches")
+```
+
 
 ```{r include=FALSE}
 # apa formatting
@@ -29,85 +49,79 @@ theme_apa <- function(base_size = 12, base_family = "sans") {
       axis.text = element_text(size = base_size * 0.9),
       legend.position = "none",
       legend.title = element_text(face = "plain"))}
+
+plot_icc_overall <- function(df, option, title) {
+  df %>%
+    filter(subset == "overall") %>%
+    ggplot(aes(y = value, x = ICC2k, color = value)) +
+    geom_point() +
+    geom_errorbar(aes(xmin = ICC2k_lower, xmax = ICC2k_upper)) +
+    geom_vline(xintercept = 0.75, color = "red", linewidth = 0.4, linetype = "dashed") +
+    xlim(-0.5, 1) +
+    scale_color_viridis_d(option = option) +
+    labs(x = "ICC(2,k)", y = NULL, title = title) +
+    theme_apa()
+}
 ```
 
 ```{r}
-# plot_summary_by_metric <- function(df, metric, metric_lower, metric_upper, option) {
-#   
-#   subsets <- as.list(df$subset%>%unique())
-#   
-#   lapply(subsets, function(sub){
-#     df %>%
-#       filter(subset == str_wrap(sub)) %>%
-#       ggplot(aes(y=value, x={{metric}}, color = value)) +
-#       geom_point() +
-#       geom_errorbar(aes(xmin = {{metric_lower}}, xmax = {{metric_upper}})) +
-#       geom_vline(xintercept = 0.75, color = "red", size = .4, linetype = "dashed" )+
-#       xlim(-.5, 1) +
-#       scale_color_viridis_d(option = option) +
-#       theme(legend.position="none",
-#             plot.title = element_text(size = 10, hjust = 0.0)) +
-#       labs(x = "ICC[2,k]",y = "Value") +
-#       ggtitle(label = stringr::str_wrap(sub, width = 15)) +
-#       theme_apa()
-#     })}
+p_lyrics   <- plot_icc_overall(ethnicity_subsample_ICC_dfs[[1]], option = "plasma", title = "Lyrics")
+p_speeches <- plot_icc_overall(ethnicity_subsample_ICC_dfs[[2]], option = "D",       title = "Speeches")
+
+figure <- p_lyrics | p_speeches
+figure
+
+ggsave(here("images", "main_reliability_by_value.pdf"), figure, height = 6)
 ```
 
-
 ```{r}
-plot_summary_by_metric <- function(df, metric, metric_lower, metric_upper, text, option) {
+plot_icc_by_subset <- function(df, option, title) {
+  subsets <- unique(df$subset)
   
-  subsets <- as.list(df$subset%>%unique())
-  
-  lapply(subsets, function(sub){
-    
+  panels <- lapply(subsets, function(sub) {
     df %>%
-      filter(subset == str_wrap(sub)) %>%
-      ggplot(aes(y=value, x={{metric}}, color = value)) +
+      filter(subset == sub) %>%
+      ggplot(aes(y = value, x = ICC2k, color = value)) +
       geom_point() +
-      geom_errorbar(aes(xmin = {{metric_lower}}, xmax = {{metric_upper}})) +
-      geom_vline(xintercept = 0.75, color = "red", size = .4, linetype = "dashed" )+
-      xlim(-.5, 1) +
+      geom_errorbar(aes(xmin = ICC2k_lower, xmax = ICC2k_upper)) +
+      geom_vline(xintercept = 0.75, color = "red", linewidth = 0.4, linetype = "dashed") +
+      xlim(0.5, 1) +
       scale_color_viridis_d(option = option) +
-      theme(legend.position="none", 
-            plot.title = element_text(size = 10, hjust = 0.0)) +
-      ggtitle(label = stringr::str_wrap(sub, width = 15)) +
-      theme_apa()
-    })
-  }
+      labs(x = "ICC(2,k)", y = NULL, 
+           title = stringr::str_wrap(sub, width = 15)) +
+      theme_apa() +
+      theme(plot.title = element_text(size = 9, hjust = 0),
+            axis.text.y = element_text(size = 7))
+  })
+  
+  wrap_plots(panels, ncol = 1) +
+    plot_annotation(
+      title = title,
+      theme = theme(plot.title = element_text(size = 11, face = "bold")))
+}
+
+# lyrics: ethnicity breakdowns
+fig_lyrics_ethnicity <- plot_icc_by_subset(
+  ethnicity_subsample_ICC_dfs[["lyrics"]], 
+  option = "plasma", title = "Lyrics — by Ethnicity")
+fig_lyrics_ethnicity
+ggsave(here("images", "main_lyrics_reliability_by_value_by_ethnicity.pdf"), 
+       fig_lyrics_ethnicity, height = 6)
+
+# speeches: ethnicity breakdowns
+fig_speeches_ethnicity <- plot_icc_by_subset(
+  ethnicity_subsample_ICC_dfs[["speeches"]], 
+  option = "D", title = "Speeches — by Ethnicity")
+fig_speeches_ethnicity
+ggsave(here("images", "main_speeches_reliability_by_value_by_ethnicity.pdf"), 
+       fig_speeches_ethnicity, height = 6)
+
+fig_speeches_spectrum <- plot_icc_by_subset(
+  spectrum_subsample_ICC_dfs,
+  option = "D", title = "Speeches — by Political Spectrum")
+fig_speeches_spectrum
+ggsave(here("images", "main_speeches_reliability_by_value_by_spectrum.pdf"), 
+       fig_speeches_spectrum, height = 6)
+```
 ```
 
-```{r}
-# compute plots
-wave_2_lyrics_agreement_plots <- plot_summary_by_metric(ethnicity_subsample_ICC_dfs[[1]], ICC2k, ICC2k_lower, ICC2k_upper, "lyrics", option = "plasma")
-
-wave_2_speeches1_agreement_plots <- plot_summary_by_metric(ethnicity_subsample_ICC_dfs[[2]], ICC2k, ICC2k_lower, ICC2k_upper, "speeches", option = "D")
-
-wave_2_speeches2_agreement_plots <- plot_summary_by_metric(spectrum_subsample_ICC_dfs, ICC2k, ICC2k_lower, ICC2k_upper, "speeches", option = "D")
-```
-
-```{r}
-plots <- wave_2_lyrics_agreement_plots
-plot_grid(
-  plots[[1]]+xlim(.5, 1), #overall
-  plot_grid(plots[[2]], plots[[3]], plots[[4]], plots[[5]]), #by ethnicity
-  ncol = 1)
-ggsave(here("images", "main_lyrics_reliability_by_value_by_ethnicity.pdf"),
-       dpi = "retina", height=8.5)
-
-plots <- wave_2_speeches1_agreement_plots
-plot_grid(
-  plots[[1]]+xlim(.5, 1), #overall
-  plot_grid(plots[[2]], plots[[3]], plots[[4]], plots[[5]]), #by ethnicity
-  ncol = 1)
-ggsave(here("images", "main_speeches_reliability_by_value_by_ethnicity.pdf"),
-       dpi = "retina", height=8.5)
-
-plots <- wave_2_speeches2_agreement_plots
-plot_grid(
-  plots[[1]]+xlim(.5, 1), #overall
-  plot_grid(plots[[2]], plots[[3]], plots[[4]]), #by ethnicity
-  ncol = 1)
-ggsave(here("images", "main_speeches_reliability_by_value_by_spectrum.pdf"),
-       dpi = "retina", height=8.5)
-```

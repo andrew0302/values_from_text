@@ -55,16 +55,14 @@ build_anova_gt <- function(anova_obj,
         is.na(`Pr(>F)`)  ~ NA_character_,
         `Pr(>F)` < .0001 ~ "p < .0001",
         `Pr(>F)` < .001  ~ "p < .001",
-        TRUE             ~ sprintf("p = %.3f", `Pr(>F)`)
-      ),
+        TRUE             ~ sprintf("p = %.3f", `Pr(>F)`)),
 
       F_fmt = sprintf("F(%d, %s) = %.2f",
                       NumDF,
                       format(round(DenDF), scientific = FALSE),
                       `F value`),
 
-      eta_fmt = sprintf("%.3f", Eta2_partial)
-    )
+      eta_fmt = sprintf("%.3f", Eta2_partial))
 
   # 5. Group effects
   df <- df |>
@@ -73,9 +71,7 @@ build_anova_gt <- function(anova_obj,
         !str_detect(Effect, ":") ~ "Main Effects",
         str_count(Effect, ":") == 1 ~ "Two-Way Interactions",
         str_count(Effect, ":") == 2 ~ "Three-Way Interactions",
-        TRUE ~ "Four-Way Interactions"
-      )
-    )
+        TRUE ~ "Four-Way Interactions"))
 
   # 6. Build gt table
   gt_tbl <- df |>
@@ -85,13 +81,11 @@ build_anova_gt <- function(anova_obj,
       Effect  = "Effect",
       F_fmt   = md("$F$"),
       p_fmt   = md("$p$"),
-      eta_fmt = md("$\\eta^2_{partial}$")
-    ) |>
+      eta_fmt = md("$\\eta^2_{partial}$")) |>
     cols_align("center", columns = c(F_fmt, p_fmt, eta_fmt)) |>
     tab_style(
     style = cell_text(align = "center"),
-    locations = cells_row_groups()
-  ) |>
+    locations = cells_row_groups()) |>
   tab_header(title = title)
 
   gt_tbl
@@ -129,13 +123,18 @@ gtsave(tbl, here("tables", "wave_2_lyrics_mod_2_anova.tex"))
 # estimated marginal mean plots
 
 ```{r}
-emm <- emmeans(lyrics_mod_2, ~Ethnicity | genre)
+# emm <- emmeans(lyrics_mod_2, ~Ethnicity | genre)
+# saveRDS(emm, here(path, "wave_2_lyrics2_emm_ethnicity_genre.RDS"))
+emm <- readRDS(here(path, "wave_2_lyrics2_emm_ethnicity_genre.RDS"))
 
-contrasts <- emmeans::contrast(emm, "pairwise", adjust = "tukey") |>
-    broom::tidy()
+# contrasts <- emmeans::contrast(emm, "pairwise", adjust = "tukey") |>
+#     broom::tidy()
+# 
+# contrasts <- merge(contrasts, genre_df, by= "genre")
+# contrasts |> filter(adj.p.value < .05) |> select(contrast, estimate, adj.p.value, artist_topic_bin_labels)
+# saveRDS(contrasts, here(path, "wave_2_lyrics2_contrasts_ethnicity_genre.RDS"))
 
-contrasts <- merge(contrasts, genre_df, by= "genre")
-contrasts |> filter(adj.p.value < .05) |> select(contrast, estimate, adj.p.value, artist_topic_bin_labels)
+contrasts <- readRDS(here(path, "wave_2_lyrics2_contrasts_ethnicity_genre.RDS"))
 
 digits = 3
 resid_sd <- sigma(lyrics_mod_2)
@@ -154,8 +153,7 @@ resid_sd <- sigma(lyrics_mod_2)
       # APA p-value
       p   = dplyr::case_when(
         adj.p.value < .001 ~ "< .001",
-        TRUE ~ sprintf("= %.3f", adj.p.value)
-      ),
+        TRUE ~ sprintf("= %.3f", adj.p.value)),
 
       # Cohen's d approximation
       d = estimate / resid_sd,
@@ -172,18 +170,23 @@ resid_sd <- sigma(lyrics_mod_2)
       t,                    # 6
       p,                    # 7
       d_fmt                 # 8
-    )
-  ) |>
+    )) |>
+    
   dplyr::pull(apa)
 
   result
 ```
 
 ```{r}
-emm <- emmeans(lyrics_mod_2, ~Ethnicity | value)
+# emm <- emmeans(lyrics_mod_2, ~Ethnicity | value)
+# saveRDS(emm, here(path, "wave_2_lyrics2_emm_ethnicity_value.RDS"))
 
-contrasts <- emmeans::contrast(emm, "pairwise", adjust = "tukey") |>
-    broom::tidy()
+emm <- readRDS(here(path, "wave_2_lyrics2_emm_ethnicity_value.RDS"))
+
+# contrasts <- emmeans::contrast(emm, "pairwise", adjust = "tukey") |>
+#     broom::tidy()
+# saveRDS(contrasts, here(path, "wave_2_lyrics2_contrasts_ethnicity_value.RDS"))
+contrasts <- readRDS(here(path, "wave_2_lyrics2_contrasts_ethnicity_value.RDS"))
 
 contrasts |> 
   #filter(adj.p.value < .05) |> 
@@ -220,20 +223,37 @@ result <- contrasts |>
       t,            # 6
       p,            # 7
       d_fmt         # 8
-    )
-  ) |>
+    )) |>
   dplyr::pull(apa)
 
 result
 ```
 
 ```{r}
+pdat <- plot(emm, comparisons = TRUE, plotit = FALSE)
+
 labeller_value <- labeller(value = function(x) gsub("value: ", "", x))
+pdat_l <- pdat |> filter(!is.na(lcmpl))
+pdat_r <- pdat |> filter(!is.na(rcmpl))
 
-p1 <- plot(emmeans(lyrics_mod_2 , ~Ethnicity|value), comparisons =T) +
-  theme_classic() + facet_wrap(~value, labeller = labeller_value, ncol = 2) +
-  ggtitle("Lyrics") + xlab("Estimated Marginal Mean")
+ggplot(pdat, aes(x = the.emmean, y = Ethnicity)) +
+  geom_rect(aes(xmin = asymp.LCL, xmax = asymp.UCL,
+                ymin = as.numeric(Ethnicity) - 0.5,
+                ymax = as.numeric(Ethnicity) + 0.5,
+                fill = value),
+            alpha = 0.7) +
+  scale_fill_viridis_d(option = "magma") +
+  geom_segment(data = pdat_l,
+               aes(xend = lcmpl, yend = Ethnicity),
+               arrow = arrow(length = unit(0.15, "cm")), colour = "red") +
+  geom_segment(data = pdat_r,
+               aes(xend = rcmpl, yend = Ethnicity),
+               arrow = arrow(length = unit(0.15, "cm")), colour = "red") +
+  geom_point() +
+  facet_wrap(~ value, labeller = labeller_value, ncol = 2) +
+  theme_classic() + xlab("Estimated Marginal Mean") + ggtitle("Lyrics") +
+  theme(legend.position = "none") 
 
-p1
 ggsave(here("images", "main_emmeans_lyrics_by_ethnicity_value.pdf"))
 ```
+

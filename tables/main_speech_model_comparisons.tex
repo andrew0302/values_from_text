@@ -1,27 +1,32 @@
 \begin{table}[t]
 \caption*{
-{\large Model Comparisons: Ethnicity, and Political Spectrum}
+{\large Model Comparisons: Ethnicity and Political Spectrum} \\ 
+{\small Best-fitting and combined models tested by likelihood ratio against nested references}
 } 
 \fontsize{12.0pt}{14.4pt}\selectfont
-\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lrrrrrrl}
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}llrrrrrrl}
 \toprule
-Model & AIC & $\Delta$AIC & $R^2_m$ & $R^2_c$ & $\chi^2$ & df & p \\ 
+Model & vs. & AIC & $\Delta$AIC & $R^2_m$ & $R^2_c$ & $\chi^2$ & df & p \\ 
 \midrule\addlinespace[2.5pt]
-\multicolumn{8}{l}{Ethnicity Models} \\[2.5pt] 
+\multicolumn{9}{l}{{Ethnicity Models}} \\[2.5pt] 
 \midrule\addlinespace[2.5pt]
-speeches1a & 446,457.951 & NA & 0.106 & 0.272 & NA & NA & NA \\ 
-rung2 & 445,929.779 & -528.173 & 0.115 & 0.278 & 866.173 & 169 & < .0001 \\ 
-rung1 & 445,991.053 & 61.274 & 0.116 & 0.278 & 46.726 & 54 & = 0.748 \\ 
+speeches\_1a & — & 446,457.951 & — & 0.106 & 0.272 & — & — & — \\ 
+speeches\_2a & speeches\_1a & 446,076.512 & -381.439 & 0.109 & 0.276 & 507.439 & 63 & < .0001 \\ 
 \midrule\addlinespace[2.5pt]
-\multicolumn{8}{l}{Spectrum Models} \\[2.5pt] 
+\multicolumn{9}{l}{{Spectrum Models}} \\[2.5pt] 
 \midrule\addlinespace[2.5pt]
-speeches1b & 446,489.156 & NA & 0.103 & 0.272 & NA & NA & NA \\ 
-rung2 & 445,929.779 & -559.377 & 0.115 & 0.278 & 901.377 & 171 & < .0001 \\ 
-rung1 & 445,991.053 & 61.274 & 0.116 & 0.278 & 46.726 & 54 & = 0.748 \\ 
+speeches\_1b & — & 446,489.156 & — & 0.103 & 0.272 & — & — & — \\ 
+speeches\_2b & speeches\_1b & 446,137.122 & -352.034 & 0.106 & 0.275 & 442.034 & 45 & < .0001 \\ 
+\midrule\addlinespace[2.5pt]
+\multicolumn{9}{l}{{Combined Model}} \\[2.5pt] 
+\midrule\addlinespace[2.5pt]
+speeches\_3a & speeches\_2a & 445,929.779 & -146.734 & 0.115 & 0.278 & 358.734 & 106 & < .0001 \\ 
+speeches\_3a & speeches\_2b & 445,929.779 & -207.343 & 0.115 & 0.278 & 459.343 & 126 & < .0001 \\ 
+speeches\_3b & speeches\_3a & 445,991.053 & 61.274 & 0.116 & 0.278 & 46.726 & 54 & = 0.748 \\ 
 \bottomrule
 \end{tabular*}
 \begin{minipage}{\linewidth}
-The rung1 row (four-way interaction test, rung2 vs rung1) is the same comparison in both groups, since rung1\_mod and rung2\_mod are shared across the Ethnicity and Spectrum ladders — the statistic is not independent between groups.\\
+χ², df, and p are likelihood ratio tests of each model against the model named in the 'vs.' column; ΔAIC is relative to that same reference. speeches\_3a is shown twice in the Combined section because it is tested against both best-fitting models (speeches\_2a and speeches\_2b); it improves on both. speeches\_3b (full four-way interaction) adds no fit over speeches\_3a, so speeches\_3a is selected on parsimony. Both combined models converge.\\
 \end{minipage}
 \end{table}
 

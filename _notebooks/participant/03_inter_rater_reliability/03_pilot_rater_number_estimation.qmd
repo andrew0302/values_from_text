@@ -42,44 +42,6 @@ theme_apa <- function(base_size = 12, base_family = "sans") {
 ```
 
 ```{r include=FALSE}
-# plot ICC2k and 95% CI by value
-# plot_summary_by_metric <- function(df, metric, metric_lower, metric_upper, option) {
-#   
-#   subsets <- as.list(df$subset%>%unique())
-#   
-#   lapply(subsets, function(sub){
-#     df %>%
-#       filter(subset == str_wrap(sub)) %>%
-#       ggplot(aes(y=value, x={{metric}}, color = value)) +
-#       geom_point() +
-#       geom_errorbar(aes(xmin = {{metric_lower}}, xmax = {{metric_upper}})) +
-#       geom_vline(xintercept = 0.75, color = "red", size = .4, linetype = "dashed" )+
-#       xlim(-.5, 1) +
-#       scale_color_viridis_d(option = option) +
-#       theme(legend.position="none",
-#             plot.title = element_text(size = 10, hjust = 0.0)) +
-#       labs(x = "ICC[2,k]",y = "Value") +
-#       ggtitle(label = stringr::str_wrap(sub, width = 15)) +
-#       theme_apa()
-#     })}
-# 
-# # density plot of bootstrapping procedure
-plot_raters <- function(df, metric, name, option){
-  df %>%
-    ggplot(aes(x = {{metric}}, color = as.factor(n))) +
-    geom_line(stat = "density", alpha = .5, size = .75) +
-    xlim(0, 1) + ylim(0,10) +
-    scale_color_viridis_d(option = option, direction = -1) +
-    labs(color = "Rater n\n") +
-    ylab("Density") +
-    xlab({{name}}) +
-    theme_apa() +
-    theme(legend.position = "right") +
-    guides(color = guide_legend(nrow = 3))
-  }
-```
-
-```{r}
 plot_icc_by_metric_pair <- function(df, option, title) {
   
   subsets <- unique(df$subset)
@@ -119,8 +81,23 @@ plot_icc_by_metric_pair <- function(df, option, title) {
       theme = theme(plot.title = element_text(size = 11, face = "bold"))
     )
 }
-```
 
+
+# density plot of bootstrapping procedure
+plot_raters <- function(df, metric, name, option){
+  df %>%
+    ggplot(aes(x = {{metric}}, color = as.factor(n))) +
+    geom_line(stat = "density", alpha = .5, size = .75) +
+    xlim(0, 1) + ylim(0,10) +
+    scale_color_viridis_d(option = option, direction = -1) +
+    labs(color = "Rater n\n") +
+    ylab("Density") +
+    xlab({{name}}) +
+    theme_apa() +
+    theme(legend.position = "right") +
+    guides(color = guide_legend(nrow = 3))
+  }
+```
 
 ### Estimating the number of raters
 
@@ -219,235 +196,14 @@ rm(figure_2a, figure_2b, figure_2c, figure)
 
 ```{r}
 fig_lyrics    <- plot_icc_by_metric_pair(pilot_2_likert_summary_dfs[[1]], "inferno", "Pilot 1: Lyrics")
+fig_lyrics
 ggsave(here("images", "pilot_lyrics_reliability_by_value.pdf"), height=8.5)
 
 fig_speeches1 <- plot_icc_by_metric_pair(pilot_2_likert_summary_dfs[[2]], "D", "Pilot 2: Speeches (Ethnicity)")
+fig_speeches1
 ggsave(here("images", "pilot_speeches1_reliability_by_value.pdf"), height=8.5)
 
 fig_speeches2 <- plot_icc_by_metric_pair(pilot_2_likert_summary_dfs[[3]], "D", "Pilot 3: Speeches (Spectrum)")
+fig_speeches2
 ggsave(here("images", "pilot_speeches2_reliability_by_value.pdf"), height=8.5)
 ```
-
-```{r include=FALSE}
-# compute plots
-# pilot_2_lyrics_agreement_plots <- plot_summary_by_metric(
-#   pilot_2_likert_summary_dfs[[1]], 
-#   ICC2k, ICC2k_lower, ICC2k_upper, 
-#   option = "plasma")
-# 
-# pilot_2_speeches1_agreement_plots <- plot_summary_by_metric(
-#   pilot_2_likert_summary_dfs[[2]], 
-#   ICC2k, ICC2k_lower, ICC2k_upper, 
-#   option="viridis")
-# 
-# pilot_2_speeches2_agreement_plots <- plot_summary_by_metric(
-#   pilot_2_likert_summary_dfs[[3]], 
-#   ICC2k, ICC2k_lower, ICC2k_upper, 
-#   option = "viridis")
-
-
-# compute plots
-# pilot_2_lyrics_agreement_plots <- plot_summary_by_metric(
-#   pilot_2_likert_summary_dfs[[1]], 
-#   ICC2, ICC2_lower, ICC2_upper, 
-#   option = "plasma")
-# 
-# pilot_2_speeches1_agreement_plots <- plot_summary_by_metric(
-#   pilot_2_likert_summary_dfs[[2]], 
-#   ICC2, ICC2_lower, ICC2_upper, 
-#   option="viridis")
-# 
-# pilot_2_speeches2_agreement_plots <- plot_summary_by_metric(
-#   pilot_2_likert_summary_dfs[[3]], 
-#   ICC2, ICC2_lower, ICC2_upper, 
-#   option = "viridis")
-```
-
-```{r include=FALSE}
-# p1 <- pilot_2_lyrics_agreement_plots[[1]] 
-# 
-# p1 <- p1 + 
-#   ggtitle("Overall") +
-#   theme(plot.title = element_markdown(hjust = 0), 
-#         plot.subtitle = element_markdown(hjust = 0), 
-#         plot.caption = element_markdown(hjust = 0))
-# 
-# p1_1 <- pilot_2_lyrics_agreement_plots[[2]]
-# p1_2 <- pilot_2_lyrics_agreement_plots[[3]]
-# p1_3 <- pilot_2_lyrics_agreement_plots[[4]]
-# p1_4 <- pilot_2_lyrics_agreement_plots[[5]]
-# 
-# 
-# p2 <- (p1_1 | p1_2) / (p1_3 | p1_4) +
-#   
-#   theme(plot.title = element_markdown(hjust = 0), 
-#         plot.subtitle = element_markdown(hjust = 0), 
-#         plot.caption = element_markdown(hjust = 0))
-# 
-# figure <- p1 / p2
-# 
-# figure
-# 
-# ggsave(here("images", "pilot_lyrics_reliability_by_value.pdf"), height=8.5)
-```
-
-```{r}
-# p1 <- pilot_2_speeches1_agreement_plots[[1]]+ggtitle("")
-# 
-# p1 <- p1 + 
-#   ggtitle("Overall") +
-#   theme(plot.title = element_markdown(hjust = 0), 
-#         plot.subtitle = element_markdown(hjust = 0), 
-#         plot.caption = element_markdown(hjust = 0))
-# 
-# p1_1 <- pilot_2_speeches1_agreement_plots[[2]]
-# p1_2 <- pilot_2_speeches1_agreement_plots[[3]]
-# p1_3 <- pilot_2_speeches1_agreement_plots[[4]]
-# p1_4 <- pilot_2_speeches1_agreement_plots[[5]]
-# 
-# 
-# p2 <- (p1_1 | p1_2) / (p1_3 | p1_4) +
-#   
-#   theme(plot.title = element_markdown(hjust = 0), 
-#         plot.subtitle = element_markdown(hjust = 0), 
-#         plot.caption = element_markdown(hjust = 0))
-# 
-# figure <- p1 / p2
-# 
-# figure
-# 
-# ggsave(here("images", "pilot_speeches1_reliability_by_value.pdf"), height=8.5)
-```
-
-```{r}
-# p1 <- pilot_2_speeches2_agreement_plots[[1]]+ggtitle("")
-# 
-# p1 <- p1 + 
-#   ggtitle("Overall") +
-#   theme(plot.title = element_markdown(hjust = 0), 
-#         plot.subtitle = element_markdown(hjust = 0), 
-#         plot.caption = element_markdown(hjust = 0))
-# 
-# p1_1 <- pilot_2_speeches2_agreement_plots[[2]]
-# p1_2 <- pilot_2_speeches2_agreement_plots[[3]]
-# p1_3 <- pilot_2_speeches2_agreement_plots[[4]]
-# p1_4 <- patchwork::plot_spacer()
-# 
-# p2 <- ((p1_1 / p1_2) | (p1_3 / p1_4)) +
-#   
-#   theme(plot.title = element_markdown(hjust = 0), 
-#         plot.subtitle = element_markdown(hjust = 0), 
-#         plot.caption = element_markdown(hjust = 0))
-# 
-# figure <- p1 / p2
-# figure
-# 
-# ggsave(here("images", "pilot_speeches2_reliability_by_value.pdf"), height=8.5)
-```
-
-
-
-## ICC2
-
-
-```{r}
-# compute plots
-pilot_2_lyrics_agreement_plots <- plot_summary_by_metric(
-  pilot_2_likert_summary_dfs[[1]], 
-  ICC2, ICC2_lower, ICC2_upper, 
-  option = "plasma")
-
-pilot_2_speeches1_agreement_plots <- plot_summary_by_metric(
-  pilot_2_likert_summary_dfs[[2]], 
-  ICC2, ICC2_lower, ICC2_upper, 
-  option="viridis")
-
-pilot_2_speeches2_agreement_plots <- plot_summary_by_metric(
-  pilot_2_likert_summary_dfs[[3]], 
-  ICC2, ICC2_lower, ICC2_upper, 
-  option = "viridis")
-```
-
-```{r}
-p1 <- pilot_2_lyrics_agreement_plots[[1]] 
-
-p1 <- p1 + 
-  ggtitle("Overall") +
-  theme(plot.title = element_markdown(hjust = 0), 
-        plot.subtitle = element_markdown(hjust = 0), 
-        plot.caption = element_markdown(hjust = 0))
-
-p1_1 <- pilot_2_lyrics_agreement_plots[[2]] + labs(x = "ICC[2,1]",y = "Value")
-p1_2 <- pilot_2_lyrics_agreement_plots[[3]] + labs(x = "ICC[2,1]",y = "Value")
-p1_3 <- pilot_2_lyrics_agreement_plots[[4]] + labs(x = "ICC[2,1]",y = "Value")
-p1_4 <- pilot_2_lyrics_agreement_plots[[5]] + labs(x = "ICC[2,1]",y = "Value")
-
-
-p2 <- (p1_1 | p1_2) / (p1_3 | p1_4) +
-  
-  theme(plot.title = element_markdown(hjust = 0), 
-        plot.subtitle = element_markdown(hjust = 0), 
-        plot.caption = element_markdown(hjust = 0))
-
-figure <- p1 / p2
-
-figure
-
-ggsave(here("images", "pilot_lyrics_icc2_reliability_by_value.pdf"), height=8.5)
-```
-
-```{r}
-p1 <- pilot_2_speeches1_agreement_plots[[1]]+ggtitle("")
-
-p1 <- p1 + 
-  ggtitle("Overall") +
-  theme(plot.title = element_markdown(hjust = 0), 
-        plot.subtitle = element_markdown(hjust = 0), 
-        plot.caption = element_markdown(hjust = 0))
-
-p1_1 <- pilot_2_speeches1_agreement_plots[[2]] + labs(x = "ICC[2,1]",y = "Value")
-p1_2 <- pilot_2_speeches1_agreement_plots[[3]] + labs(x = "ICC[2,1]",y = "Value")
-p1_3 <- pilot_2_speeches1_agreement_plots[[4]] + labs(x = "ICC[2,1]",y = "Value")
-p1_4 <- pilot_2_speeches1_agreement_plots[[5]] + labs(x = "ICC[2,1]",y = "Value")
-
-
-p2 <- (p1_1 | p1_2) / (p1_3 | p1_4) +
-  
-  theme(plot.title = element_markdown(hjust = 0), 
-        plot.subtitle = element_markdown(hjust = 0), 
-        plot.caption = element_markdown(hjust = 0))
-
-figure <- p1 / p2
-
-figure
-
-ggsave(here("images", "pilot_speeches1_icc2_reliability_by_value.pdf"), height=8.5)
-```
-
-```{r}
-p1 <- pilot_2_speeches2_agreement_plots[[1]]+ggtitle("")
-
-p1 <- p1 + 
-  ggtitle("Overall") +
-  theme(plot.title = element_markdown(hjust = 0), 
-        plot.subtitle = element_markdown(hjust = 0), 
-        plot.caption = element_markdown(hjust = 0))
-
-p1_1 <- pilot_2_speeches2_agreement_plots[[2]] + labs(x = "ICC[2,1]",y = "Value")
-p1_2 <- pilot_2_speeches2_agreement_plots[[3]] + labs(x = "ICC[2,1]",y = "Value")
-p1_3 <- pilot_2_speeches2_agreement_plots[[4]] + labs(x = "ICC[2,1]",y = "Value")
-p1_4 <- patchwork::plot_spacer()
-
-p2 <- ((p1_1 / p1_2) | (p1_3 / p1_4)) +
-  
-  theme(plot.title = element_markdown(hjust = 0), 
-        plot.subtitle = element_markdown(hjust = 0), 
-        plot.caption = element_markdown(hjust = 0))
-
-figure <- p1 / p2
-figure
-
-ggsave(here("images", "pilot_speeches2_icc2_reliability_by_value.pdf"), height=8.5)
-```
-
-

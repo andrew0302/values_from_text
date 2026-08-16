@@ -15,7 +15,15 @@ library("ggridges")   # joy plots
 data_path <- here("_data", "_intermediary_data", "demog_dfs")
 
 # read in data
-pilot_2_dfs <- readRDS(here(data_path, "pilot_2_demog_dfs.RDS"))
+pilot_2_demog_dfs <- readRDS(here(data_path, "pilot_2_demog_dfs.RDS"))
+
+pilot_labels <- list(
+  lyrics    = "Pilot 1 (Lyrics)",
+  speeches1 = "Pilot 2 (Speeches: Ethnicity)",
+  speeches2 = "Pilot 3 (Speeches: Political)"
+)
+
+str(pilot_2_demog_dfs)
 ```
 
 The total participant pool consisted of `r nrow(pilot_2_demog_df)` participants 
