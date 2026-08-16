@@ -209,21 +209,6 @@ apa_emm_pairs(selected_mod, specs = ~ Ethnicity, total_sd = total_sd)
 apa_emm_pairs(selected_mod, specs = ~ spectrum, total_sd = total_sd)
 ```
 
-
-```{r}
-print_apa_comparisons <- function(df) {
-  df$Contrast_clean <- gsub("[()]", "", df$Contrast)
-  apply(df, 1, function(row) {
-    sprintf(
-      "For %s participants, %s showed a difference of %.2f (SE = %.2f), %s, p %s, d = %s.",
-      row[["spectrum"]], row[["Contrast_clean"]],
-      as.numeric(row[["Estimate"]]), as.numeric(row[["SE"]]),
-      row[["z"]], row[["p"]], row[["d"]])
-  }) |> paste(collapse = "\n")
-}
-cat(print_apa_comparisons(apa_ethspec))
-```
-
 ```{r}
 # Figure 13 (two panels): Ethnicity | spectrum and spectrum | Ethnicity
 # Panel A: Ethnicity contrasts within political spectrum

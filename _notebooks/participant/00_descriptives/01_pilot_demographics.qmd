@@ -17,6 +17,10 @@ data_path <- here("_data", "_intermediary_data", "demog_dfs")
 # read in data
 pilot_2_demog_dfs <- readRDS(here(data_path, "pilot_2_demog_dfs.RDS"))
 
+# combined pool across all three pilots (for the summary sentence below)
+pilot_2_demog_df <- dplyr::bind_rows(
+  lapply(pilot_2_demog_dfs, function(d) dplyr::select(d, participant_ID, Age, Sex)))
+
 pilot_labels <- list(
   lyrics    = "Pilot 1 (Lyrics)",
   speeches1 = "Pilot 2 (Speeches: Ethnicity)",

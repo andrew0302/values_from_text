@@ -5,7 +5,7 @@ author: "andrew demetriou"
 
 AIM: Produce multi-dimensional scaling plots
 
-```{r setup, include=FALSE}
+```{r, include=FALSE}
 library('here')       # file logistics
 library('tidyverse')  # data logistics
 library('smacof')     # multidimensional scaling
