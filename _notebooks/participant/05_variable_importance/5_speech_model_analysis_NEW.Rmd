@@ -1,4 +1,0 @@
----
-title: "R Notebook"
-# TEST WRITE 2026-08-16 — confirming direct edit via MCP connector works
----
