@@ -1,8 +1,5 @@
----
-title: "R Notebook"
----
 
-```{r}
+```{r include=FALSE}
 library("here")         # file logistics
 library("lme4")         # mixed effects metric
 library("lmerTest")     # p values
@@ -17,15 +14,17 @@ library("effectsize")   # partial eta sq calculations
 # TO "CENTER" CATEGORICAL PREDICTORS, set the coding to contr.sum (deviations from the average)
 options(scipen = 999, contrasts = c("contr.sum", "contr.poly"))
 path <- here("_data", "_intermediary_data", "models")
-```
 
-
-```{r}
 # read in data
 wave_2_dfs <- readRDS(here("_data", "_intermediary_data", "wave_2_dfs.RDS"))
 ```
 
-# lyrics: model selection
+### Appendix G
+
+#### models in multi-verse:
+
+lyrics1: pre-registered model
+lyrics2: best fitting model
 
 ```{r}
 # lyrics_mod_1 <- lmer(rating ~ value + Ethnicity * genre + (1|item_ID) + (1 | participant_ID),
@@ -43,14 +42,7 @@ anova <- readRDS(here(path, "wave_2_lyrics_mods_anova.RDS"))
 anova
 ```
 
-## two models in multi-verse
-
-estimate and report on:
-
-lyrics1: pre-registered model
-lyrics2: best fitting model
-
-```{r}
+```{r include=FALSE}
 # lyrics_mod_1 <- lmer(rating ~ value + Ethnicity * genre + (1|item_ID) + (1 | participant_ID),
 #   data = wave_2_dfs$wave_2_lyrics, REML = T)
 # saveRDS(lyrics_mod_1, here(path, "wave_2_lyrics_mod_1.RDS"))
@@ -72,7 +64,7 @@ eta_df <- readRDS(here(path, "wave_2_lyrics1_eta_df.RDS"))
 eta_df
 ```
 
-```{r}
+```{r include=FALSE}
 #lyrics_mod_2 <- lmer(rating ~ value * Ethnicity * genre + (1|item_ID) + (1 | participant_ID),
 #  data = wave_2_dfs$wave_2_lyrics, REML = T)
 # saveRDS(lyrics_mod_2, here(path, "wave_2_lyrics_mod_2.RDS"))

@@ -21,7 +21,11 @@ colors_2 <- viridisLite::viridis(2)
 options(scipen = 999)
 ```
 
-```{r}
+### Appendix E
+
+#### Figure E2: Subjectivity and Confidence
+
+```{r include=FALSE}
 wave_2_dfs <- readRDS(file = here("_data", "_participant_scores", "wave_2", "wave_2_dfs.RDS"))
 
 plot_dfs <- lapply(wave_2_dfs, function(df){
@@ -61,7 +65,7 @@ plot_df <- plot_dfs |> bind_rows(.id = "study") |>
   select(study, c, subjective, participant_ID, item_ID)
 ```
 
-```{r}
+```{r include=FALSE}
 plots <- lapply(names(plot_dfs), function(name) {
   df <- plot_dfs[[name]] |> select(participant_ID, c) |> unique()
   ggplot(df, aes(x = c)) +
@@ -84,7 +88,7 @@ main_confidence_plot <- (p1 | p2 | p3 | p4)
 #main_confidence_plot
 ```
 
-```{r}
+```{r include=FALSE}
 plots <- lapply(names(plot_dfs), function(name) {
   df <- plot_dfs[[name]] |> 
     select(participant_ID, subjective) |> 
@@ -130,6 +134,10 @@ df
 ggsave(here("images", "main_confidence_subjectivity.pdf"))
 ```
 
+
+### Results
+
+#### in-text: subjectivity by text type
 
 ```{r}
 # Prepare data
@@ -199,6 +207,7 @@ list(
 )
 ```
 
+#### in-text: confidence by text type
 
 ```{r}
 stats <- plot_df |>

@@ -1,8 +1,4 @@
----
-title: "R Notebook"
----
-
-```{r}
+```{r include=FALSE}
 library("here")         # file logistics
 library("lme4")         # mixed effects metric
 library("lmerTest")     # p values
@@ -22,9 +18,11 @@ path <- here("_data", "_intermediary_data", "models")
 wave_2_dfs <- readRDS(here("_data", "_intermediary_data", "wave_2_dfs.RDS"))
 ```
 
-# speeches: model selection
+### Appendix G
 
-## Models:
+#### models in multiverse
+
+Models:
 
  speeches_1a  pre-registered, ethnicity annotator trait
               rating ~ value + Ethnicity * party
@@ -44,9 +42,9 @@ wave_2_dfs <- readRDS(here("_data", "_intermediary_data", "wave_2_dfs.RDS"))
  (LRT p = .748, ΔAIC = +61.3 against speeches_3a).
 
 
-## Pre-registered and best-fitting models
+```{r include=FALSE}
+#### Pre-registered and best-fitting models
 
-```{r}
 # --- speeches_1a: pre-registered, ethnicity ---
 # speeches_1a <- lmer(
 #   rating ~ value + Ethnicity * party + (1|item_ID) + (1|participant_ID),
@@ -76,40 +74,36 @@ speeches_1b <- readRDS(here(path, "wave_2_speeches_1b_mod.RDS"))
 speeches_2b <- readRDS(here(path, "wave_2_speeches_2b_mod.RDS"))
 ```
 
+
+```{r include=FALSE}
 ## Combined models
 
-Roles: `Ethnicity` = annotator trait, `spectrum` = annotator trait, `party` = speaker trait.
-Both combined models converge cleanly. Selection rests on fit and parsimony (LRT/AIC),
-not convergence: speeches_3a is preferred because the four-way interaction in
-speeches_3b adds no improvement in fit.
+# Roles: `Ethnicity` = annotator trait, `spectrum` = annotator trait, `party` = speaker trait.
+# Both combined models converge cleanly. Selection rests on fit and parsimony (LRT/AIC),
+# not convergence: speeches_3a is preferred because the four-way interaction in
+# speeches_3b adds no improvement in fit.
 
-```{r}
 # --- speeches_3b: full four-way interaction ---
 # speeches_3b <- lmer(
 #   rating ~ value * Ethnicity * spectrum * party + (1|item_ID) + (1|participant_ID),
 #   data = wave_2_dfs$wave_2_speeches, REML = FALSE)
 # saveRDS(speeches_3b, here(path, "wave_2_speeches_3b_mod.RDS"))
 speeches_3b <- readRDS(here(path, "wave_2_speeches_3b_mod.RDS"))
-```
 
-```{r}
 # --- speeches_3a: all three-way interactions (SELECTED) ---
 # speeches_3a <- lmer(
 #   rating ~ (value + Ethnicity + spectrum + party)^3 + (1|item_ID) + (1|participant_ID),
 #   data = wave_2_dfs$wave_2_speeches, REML = FALSE)
 # saveRDS(speeches_3a, here(path, "wave_2_speeches_3a_mod.RDS"))
 speeches_3a <- readRDS(here(path, "wave_2_speeches_3a_mod.RDS"))
-```
 
-```{r}
 # --- Indirection object ---
 selected_mod  <- speeches_3a
 selected_name <- "speeches_3a"
 ```
 
-## Helpers
 
-```{r}
+```{r include=FALSE}
 # Nakagawa pseudo-R2 and AIC for a single model, as a one-row tibble.
 model_fit_row <- function(model, name) {
   r2 <- as.data.frame(performance::r2_nakagawa(model))
@@ -136,7 +130,7 @@ lrt_row <- function(reference, larger) {
 }
 ```
 
-```{r}
+```{r include=FALSE}
 extract_spec_pretty <- function(model) {
   f_raw     <- paste(deparse(model@call$formula, width.cutoff = 500), collapse = " ")
   f_raw     <- gsub("\\s+", " ", f_raw)
@@ -153,7 +147,7 @@ extract_spec_pretty <- function(model) {
 }
 ```
 
-## Model comparison table
+#### Model comparison table
 
 Three sections:
 
@@ -250,7 +244,7 @@ speech_tbl
 gtsave(speech_tbl, here("tables", "main_speech_model_comparisons.tex"))
 ```
 
-## Model specification table
+#### Model specification table
 
 ```{r}
 all_specs <- bind_rows(
@@ -282,7 +276,7 @@ gt_specs
 gtsave(gt_specs, here("tables", "main_speech_model_specifications.tex"))
 ```
 
-## Final model (REML = TRUE)
+#### Final model Parameter Estimates
 
 ```{r}
 # Refit the selected model with REML = TRUE for estimation, and save the ANOVA

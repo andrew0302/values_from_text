@@ -1,7 +1,3 @@
-## Main Studies
-
-### Participants
-
 ```{r, include=FALSE}
 library("here")
 library("rlang")
@@ -74,7 +70,6 @@ format_apa_table <- function(gt_tbl, title, subtitle = NULL) {
 }
 ```
 
-
 ```{r include=FALSE}
 summarize_demographics <- function(df, study_name) {
   df %>%
@@ -119,9 +114,11 @@ summarize_spectrum <- function(df, study_name) {
 }
 ```
 
-```{r}
-# demographics table
+### Methods
 
+#### Table 3: Sample Descriptives
+
+```{r}
 wave_demog_tbl <- imap_dfr(
   wave_2_demog_dfs,
   ~ summarize_demographics(.x, wave_labels[[.y]] %||% .y))
@@ -139,6 +136,8 @@ gtsave(table, here("tables", "main_demographics.tex"))
 
 rm(table)
 ```
+
+#### Table 4a: Ethnicity Descriptives
 
 ```{r}
 wave_ethnicity_tbl <- imap_dfr(
@@ -166,6 +165,8 @@ gtsave(table, here("tables", "main_ethnicity.tex"))
 rm(table)
 ```
 
+#### Table 4b: Spectrum descriptives
+
 ```{r}
 wave_spectrum_tbl <- imap_dfr(
   wave_2_demog_dfs[3:4],
@@ -189,14 +190,12 @@ gtsave(table, here("tables", "main_political_leaning.tex"))
 rm(table)
 ```
 
-```{r}
+```{r include=FALSE}
 wave_2_dfs <- readRDS(here("_data", "_intermediary_data", "wave_2_dfs.RDS"))
 
 lyrics_df    <- wave_2_dfs$wave_2_lyrics
 speeches_df  <- wave_2_dfs$wave_2_speeches
-```
 
-```{r}
 # there's a duplicate:
 bind_rows(
   Lyrics = lyrics_df |> select(item_ID, participant_ID, value, rating),
@@ -207,36 +206,38 @@ bind_rows(
   filter(n > 1)
 ```
 
-```{r}
-summarize_ratings <- function(df) {
-
-  df <- df |> select(participant_ID, item_ID) |> unique()
-  
-  
-  # total number of rows = total number of ratings
-  total_ratings <- nrow(df)
-  
-  item_summary <- df |> 
-    group_by(item_ID) |> 
-    summarise(n_ratings = n()) |> 
-    summarize(mean_n_ratings = mean(n_ratings), 
-              sd_n_ratings = sd(n_ratings)) |> 
-    ungroup()
-  
-  participant_summary <- df |>
-    group_by(participant_ID) |>     
-    summarise(n_ratings = n()) |> 
-    summarize(mean_n_ratings = mean(n_ratings), 
-              sd_n_ratings = sd(n_ratings)) |> 
-    ungroup()
-    
-  list(
-    total_ratings = total_ratings,
-    item_summary  = item_summary, 
-    participant_summary = participant_summary
-  )
-}
+```{r include=FALSE}
+# summarize_ratings <- function(df) {
+# 
+#   df <- df |> select(participant_ID, item_ID) |> unique()
+#   
+#   
+#   # total number of rows = total number of ratings
+#   total_ratings <- nrow(df)
+#   
+#   item_summary <- df |> 
+#     group_by(item_ID) |> 
+#     summarise(n_ratings = n()) |> 
+#     summarize(mean_n_ratings = mean(n_ratings), 
+#               sd_n_ratings = sd(n_ratings)) |> 
+#     ungroup()
+#   
+#   participant_summary <- df |>
+#     group_by(participant_ID) |>     
+#     summarise(n_ratings = n()) |> 
+#     summarize(mean_n_ratings = mean(n_ratings), 
+#               sd_n_ratings = sd(n_ratings)) |> 
+#     ungroup()
+#     
+#   list(
+#     total_ratings = total_ratings,
+#     item_summary  = item_summary, 
+#     participant_summary = participant_summary
+#   )
+# }
 ```
+
+#### In-text: ratings / items
 
 ```{r}
 summarize_ratings <- function(df) {
@@ -267,6 +268,10 @@ summarize_ratings <- function(df) {
 summarize_ratings(lyrics_df)
 summarize_ratings(speeches_df)
 ```
+
+### Results
+
+#### Figure 9: Ratings by Value / Text type
 
 ```{r}
 plot_value_histograms_with_na <- function(df, text_label, option) {
@@ -311,7 +316,7 @@ hist_plot
 ggsave(here("images", "main_histogram_by_text.pdf"))
 ```
 
-```{r}
+```{r include=FALSE}
 #(na_plot / hist_plot) + plot_annotation(tag_levels = "A")
 #ggsave(here("images", "main_dist_by_text.pdf"), width = 8, height = 8)
 ```

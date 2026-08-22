@@ -1,8 +1,5 @@
----
-title: "R Notebook"
----
 
-```{r}
+```{r include=FALSE}
 library("here")         # file logistics
 library("lme4")         # mixed effects metric
 library("lmerTest")     # p values
@@ -19,9 +16,41 @@ options(scipen = 999, contrasts = c("contr.sum", "contr.poly"))
 path <- here("_data", "_intermediary_data", "models")
 ```
 
-# does the presence of values on different text types differ?
+```{r include=FALSE}
+# read in data
+wave_2_dfs <- readRDS(here("_data", "_intermediary_data", "wave_2_dfs.RDS"))
+
+df <- bind_rows(wave_2_dfs$wave_2_lyrics |> 
+                  mutate(text = "Lyrics") |>
+                  select(participant_ID, item_ID, value, rating, text), 
+                wave_2_dfs$wave_2_speeches |> 
+                  mutate(text = "Speeches") |>
+                  select(participant_ID, item_ID, value, rating, text))
+
+df <- df |> mutate(value = as.factor(value), text = as.factor(text))
+```
+
+### Results
+
+#### in-text: value differences by text type
 
 ```{r}
+#text_mod <- lmer(rating ~ value * text + (1|item_ID) + (1|participant_ID), data = df, REML=T)
+#saveRDS(text_mod, here(path, "wave_2_text_mod.RDS"))
+
+text_mod <- readRDS(here(path, "wave_2_text_mod.RDS"))
+anova <- anova(text_mod)
+report(anova)
+```
+
+
+### Appendix F
+
+#### Table F1: values present by text type
+
+```{r include=FALSE}
+# main results: rating distribution by text type
+
 # read in data
 wave_2_dfs <- readRDS(here("_data", "_intermediary_data", "wave_2_dfs.RDS"))
 
@@ -104,9 +133,9 @@ gt_presence
 gtsave(gt_presence, filename = here("tables", "main_value_presence_by_text.tex"))
 ```
 
-# do ratings of values on different text types differ?
+#### Table F2: value ratings by text type
 
-```{r}
+```{r include=FALSE}
 # read in data
 wave_2_dfs <- readRDS(here("_data", "_intermediary_data", "wave_2_dfs.RDS"))
 
@@ -120,15 +149,15 @@ df <- bind_rows(wave_2_dfs$wave_2_lyrics |>
 df <- df |> mutate(value = as.factor(value), text = as.factor(text))
 ```
 
-```{r}
+
+```{r include=FALSE}
 #text_mod <- lmer(rating ~ value * text + (1|item_ID) + (1|participant_ID), data = df, REML=T)
 #saveRDS(text_mod, here(path, "wave_2_text_mod.RDS"))
 
 text_mod <- readRDS(here(path, "wave_2_text_mod.RDS"))
-anova <- anova(text_mod)
-report(anova)
+#anova <- anova(text_mod)
+#report(anova)
 ```
-
 
 ```{r}
 # turn into a table for appendix
@@ -179,6 +208,7 @@ gt_contrast
 gtsave(gt_contrast, here("tables", "main_emmeans_text_by_value.tex"))
 ```
 
+#### Figure F4: EMMs values by text type
 
 ```{r}
 plot <- plot(emm) + 

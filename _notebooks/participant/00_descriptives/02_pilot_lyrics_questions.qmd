@@ -1,4 +1,3 @@
-# Appendix C: Pilot Study Addendum
 
 ```{r, include=FALSE}
 library("here")       # file logistics
@@ -9,6 +8,8 @@ library("rlang")
 library("ggtext")     # text plots
 library("ggridges")   # joy plots
 ```
+
+#### Figure C1: lyric preference intensity
 
 ```{r}
 pilot_2_dfs <- readRDS(file = here("_data", "_participant_scores", "wave_2", "pilot_2_dfs.RDS"))

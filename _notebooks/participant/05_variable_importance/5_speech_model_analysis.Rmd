@@ -1,8 +1,6 @@
----
-title: "R Notebook"
----
 
-```{r}
+
+```{r include=FALSE}
 library("here")         # file logistics
 library("lme4")         # mixed effects metric
 library("lmerTest")     # p values
@@ -14,14 +12,10 @@ library("effectsize")   # partial eta sq calculations
 
 options(scipen = 999, contrasts = c("contr.sum", "contr.poly"))
 path <- here("_data", "_intermediary_data", "models")
-```
 
-```{r}
 wave_2_dfs <- readRDS(here("_data", "_intermediary_data", "wave_2_dfs.RDS"))
 speeches_dfs <- wave_2_dfs[["wave_2_speeches"]]
-```
 
-```{r}
 # Selected model (rung-2 combined, REML = TRUE)
 selected_mod <- readRDS(here(path, "wave_2_speeches_mod_3b_REML.RDS"))
 
@@ -29,7 +23,9 @@ selected_mod <- readRDS(here(path, "wave_2_speeches_mod_3b_REML.RDS"))
 total_sd <- sqrt(sum(sapply(lme4::VarCorr(selected_mod), function(v) sum(diag(as.matrix(v))))))
 ```
 
-## Subgroup deviation from overall sample
+### Results
+
+#### table: subgroup deviation from overall sample
 
 ```{r}
 # Mean rating per speech x value, for overall sample
@@ -84,9 +80,8 @@ gt_subgroup
 gtsave(gt_subgroup, here("tables", "wave_2_speeches_subgroup_deviation.tex"))
 ```
 
-## ANOVA tables
 
-```{r}
+```{r include=FALSE}
 build_anova_gt <- function(anova_obj, eta_df, title = "Type III ANOVA Results") {
 
   anova_df <- anova_obj |>
@@ -133,8 +128,15 @@ build_anova_gt <- function(anova_obj, eta_df, title = "Type III ANOVA Results") 
 }
 ```
 
+### Appendix G
+
+#### Table 10 — Pre-registered models (speeches1a, speeches1b)
+
+Type III ANOVAs for the two pre-registered models. These feed the hand-merged
+Table 10 comparator (`main_speeches_mod_1a_1b_anova.tex`).
+
 ```{r}
-# Pre-registered models (ethnicity and spectrum) — feed the appendix merge table
+# Pre-registered models (ethnicity and spectrum) — feed the Table 10 merge
 speeches_a_mods <- readRDS(here(path, "speeches_a_mods.RDS"))
 speeches_b_mods <- readRDS(here(path, "speeches_b_mods.RDS"))
 
@@ -160,8 +162,12 @@ tbl_1b
 gtsave(tbl_1b, here("tables", "wave_2_speeches_mod_1b_anova.tex"))
 ```
 
+#### Table 7 — Speeches ANOVA (selected combined model)
+
+Type III ANOVA and partial η² for the selected rung-2 combined model (speeches_3a).
+Reads cached objects from the model-selection notebook.
+
 ```{r}
-# Selected model ANOVA (rung-2 combined) — reads cached objects from 3_speech_model_selection
 anova_selected <- readRDS(here(path, "wave_2_speeches_combined_mod_anova.RDS"))
 eta_selected   <- readRDS(here(path, "wave_2_speeches_combined_mod_eta.RDS"))
 
@@ -171,13 +177,13 @@ tbl_selected
 gtsave(tbl_selected, here("tables", "wave_2_speeches_mod_4_anova.tex"))
 ```
 
-## Estimated marginal means
-
-```{r}
+```{r include=FALSE}
 labeller_value <- labeller(value = function(x) gsub("value: ", "", x))
 ```
 
-```{r}
+#### in-text: speeches model main effects
+
+```{r include=FALSE}
 # APA sentence helper: pairwise contrasts with z-tests and Cohen's d
 apa_emm_pairs <- function(model, specs, total_sd, digits = 2) {
 
@@ -192,16 +198,16 @@ apa_emm_pairs <- function(model, specs, total_sd, digits = 2) {
       z_fmt = sprintf(paste0("%.", digits, "f"), statistic),
       p     = dplyr::case_when(
         adj.p.value < .001 ~ "< .001",
-        TRUE ~ sprintf("= %.3f", adj.p.value)
-      ),
+        TRUE ~ sprintf("= %.3f", adj.p.value)),
       d_fmt = sprintf(paste0("%.", digits, "f"), estimate / total_sd),
       apa   = sprintf(
         "%s: difference = %s, SE = %s, z = %s, p %s, d = %s.",
-        contrast, est, se, z_fmt, p, d_fmt)
-    ) |>
+        contrast, est, se, z_fmt, p, d_fmt)) |>
     dplyr::pull(apa)
 }
+```
 
+```{r}
 apa_emm_pairs(selected_mod, specs = ~ Ethnicity, total_sd = total_sd)
 ```
 
@@ -209,27 +215,29 @@ apa_emm_pairs(selected_mod, specs = ~ Ethnicity, total_sd = total_sd)
 apa_emm_pairs(selected_mod, specs = ~ spectrum, total_sd = total_sd)
 ```
 
+#### Figure 13: EMM by ethnicity and political spectrum
+
+Two panels: ethnicity contrasts within spectrum (A), spectrum contrasts within
+ethnicity (B). *(Chunk currently disabled — re-enable to produce the figure.)*
+
 ```{r}
-# Figure 13 (two panels): Ethnicity | spectrum and spectrum | Ethnicity
-# Panel A: Ethnicity contrasts within political spectrum
-# p_A <- plot(emmeans(selected_mod, ~ Ethnicity | spectrum), comparisons = TRUE) +
-#   facet_wrap(~spectrum, ncol = 1) +
-#   ylab("Ethnicity") + xlab("Estimated Marginal Mean") +
-#   theme_classic()
-# 
-# # Panel B: Spectrum contrasts within ethnicity
-# p_B <- plot(emmeans(selected_mod, ~ spectrum | Ethnicity), comparisons = TRUE) +
-#   facet_wrap(~Ethnicity, ncol = 1) +
-#   ylab("Political Spectrum") + xlab("Estimated Marginal Mean") +
-#   theme_classic()
-# 
-# (p_A | p_B) + plot_annotation(tag_levels = "A")
+p_A <- plot(emmeans(selected_mod, ~ Ethnicity | spectrum), comparisons = TRUE) +
+  facet_wrap(~spectrum, ncol = 1) +
+  ylab("Ethnicity") + xlab("Estimated Marginal Mean") +
+  theme_classic()
+
+p_B <- plot(emmeans(selected_mod, ~ spectrum | Ethnicity), comparisons = TRUE) +
+  facet_wrap(~Ethnicity, ncol = 1) +
+  ylab("Political Spectrum") + xlab("Estimated Marginal Mean") +
+  theme_classic()
+
+(p_A | p_B) + plot_annotation(tag_levels = "A")
 # ggsave(here("images", "main_emmeans_speeches_by_ethnicity_spectrum.pdf"))
 ```
 
+#### Figure 15: EMM by ethnicity by political spectrum
 
 ```{r}
-# Figure 15: Ethnicity x spectrum EMMs, faceted by ethnicity
 emm <- emmeans(selected_mod, ~ spectrum | Ethnicity, lmer.df = "asymptotic")
 pdat <- plot(emm, comparisons = TRUE, plotit = FALSE)
 
@@ -259,19 +267,11 @@ ggsave(here("images", "main_emmeans_spectrum_ethnicity_by_party.pdf"))
 ```
 
 
-```{r}
-# Figure 15: Ethnicity x spectrum EMMs by party
-# emm_party <- emmeans(selected_mod, ~ Ethnicity * spectrum | party)
-# 
-# plot(emm_party, comparisons = TRUE) +
-#   theme_classic() +
-#   xlab("Estimated marginal mean") + ylab("Participant Characteristic")
-# 
-# ggsave(here("images", "main_emmeans_spectrum_ethnicity_by_party.pdf"))
-```
 
-```{r}
-# Significant contrasts table: Ethnicity x value x spectrum
+```{r include=FALSE}
+### Supporting — ethnicity × value × spectrum contrasts
+
+
 # cmp <- emmeans::emmeans(
 #   selected_mod,
 #   specs    = ~ Ethnicity | value * spectrum,
@@ -285,7 +285,7 @@ ggsave(here("images", "main_emmeans_spectrum_ethnicity_by_party.pdf"))
 #       adj.p.value < .0001 ~ "< .0001",
 #       adj.p.value < .001  ~ "< .001",
 #       TRUE ~ sprintf("= %.3f", adj.p.value)))
-# 
+#
 # put_black_first <- function(cmp_df, black_label = "(Black/African American)") {
 #   cmp_df |>
 #     dplyr::group_by(value, spectrum) |>
@@ -300,9 +300,9 @@ ggsave(here("images", "main_emmeans_spectrum_ethnicity_by_party.pdf"))
 #     dplyr::ungroup() |>
 #     dplyr::select(-g1, -g2, -g1_new, -g2_new, -flip)
 # }
-# 
+#
 # cmp_fixed <- put_black_first(cmp)
-# 
+#
 # contrasts_gt <- function(df, title = "Pairwise Comparisons") {
 #   df |>
 #     dplyr::mutate(
@@ -322,53 +322,9 @@ ggsave(here("images", "main_emmeans_spectrum_ethnicity_by_party.pdf"))
 #     gt::cols_align(align = "center", columns = c(Estimate, SE, Statistic, `p-value`)) |>
 #     gt::tab_options(table.font.size = 12, data_row.padding = px(4))
 # }
-# 
+#
 # gt_contrast_table <- contrasts_gt(cmp_fixed,
 #                                   title = "Significant Contrasts: Ethnicity and Political Leaning by Value")
 # gt_contrast_table
 # gtsave(gt_contrast_table, here("tables", "wave_2_speeches_ethnicity_value_contrasts.tex"))
-```
-
-```{r}
-# APA sentences: Ethnicity contrasts within each value. Console helper only.
-# apa_emm_ethnicity_by_value <- function(model, total_sd, sig_only = FALSE) {
-# 
-#   cmp <- emmeans::emmeans(model, specs = ~ Ethnicity | value,
-#                           lmer.df = "asymptotic") |>
-#     emmeans::contrast("pairwise", adjust = "tukey") |>
-#     broom::tidy() |>
-#     dplyr::mutate(
-#       SE    = std.error,
-#       p_fmt = dplyr::case_when(
-#         adj.p.value < .0001 ~ "< .0001",
-#         adj.p.value < .001  ~ "< .001",
-#         TRUE ~ sprintf("= %.3f", adj.p.value)),
-#       z_fmt = sprintf("z = %.2f", statistic),
-#       d     = estimate / total_sd)
-# 
-#   if (sig_only) cmp <- cmp |> dplyr::filter(adj.p.value < .05)
-# 
-#   cmp |>
-#     dplyr::transmute(
-#       value,
-#       Contrast = contrast,
-#       Estimate = round(estimate, 2),
-#       SE       = round(SE, 2),
-#       z        = z_fmt,
-#       p        = p_fmt,
-#       d        = sprintf("%.2f", d))
-# }
-# 
-# apa_print_pairs_by_value <- function(df) {
-#   df |>
-#     dplyr::mutate(
-#       sentence = sprintf(
-#         "[%s] %s: difference = %.2f, SE = %.2f, %s, p %s, d = %s.",
-#         value, Contrast, Estimate, SE, z, p, d)) |>
-#     dplyr::pull(sentence) |>
-#     paste(collapse = "\n")
-# }
-# 
-# eth_by_val <- apa_emm_ethnicity_by_value(selected_mod, total_sd = total_sd, sig_only = TRUE)
-# cat(apa_print_pairs_by_value(eth_by_val))
 ```

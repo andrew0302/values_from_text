@@ -1,8 +1,5 @@
----
-title: "R Notebook"
----
 
-```{r}
+```{r include=FALSE}
 library("here")         # file logistics
 library("lme4")         # mixed effects metric
 library("lmerTest")     # p values
@@ -16,7 +13,7 @@ path <- here("_data", "_intermediary_data", "models")
 ```
 
 
-```{r}
+```{r include=FALSE}
 # read in data
 wave_2_dfs <- readRDS(here("_data", "_intermediary_data", "wave_2_dfs.RDS"))
 lyrics_df <- readRDS(here("_data", "_primary_data", "lyrics_df.RDS"))
@@ -28,7 +25,7 @@ genre_df <- merge(wave_2_dfs$wave_2_lyrics |>
   select(genre, artist_topic_bin_labels) |> unique()
 ```
 
-```{r}
+```{r include=FALSE}
 build_anova_gt <- function(anova_obj,
                            eta_df,
                            title = "Type III ANOVA Results") {
@@ -92,8 +89,9 @@ build_anova_gt <- function(anova_obj,
 }
 ```
 
+### Results
 
-# tables
+#### ANOVA: lyrics model 1
 
 ```{r}
 lyrics_mod_1 <- readRDS(here(path, "wave_2_lyrics_mod_1.RDS"))
@@ -108,6 +106,8 @@ tbl
 gtsave(tbl, here("tables", "wave_2_lyrics_mod_1_anova.tex"))
 ```
 
+#### ANOVA: lyrics model 2
+
 ```{r}
 lyrics_mod_2 <- readRDS(here(path, "wave_2_lyrics_mod_2.RDS"))
 anova <- readRDS(here(path, "wave_2_lyrics_mod_2_anova.RDS"))
@@ -120,7 +120,7 @@ gtsave(tbl, here("tables", "wave_2_lyrics_mod_2_anova.tex"))
 ```
 
 
-# estimated marginal mean plots
+#### in-text: lyrics model 2 ethnicity by genre
 
 ```{r}
 # emm <- emmeans(lyrics_mod_2, ~Ethnicity | genre)
@@ -177,6 +177,8 @@ resid_sd <- sigma(lyrics_mod_2)
   result
 ```
 
+#### in-text: lyrics model 2 ethnicity by value
+
 ```{r}
 # emm <- emmeans(lyrics_mod_2, ~Ethnicity | value)
 # saveRDS(emm, here(path, "wave_2_lyrics2_emm_ethnicity_value.RDS"))
@@ -228,6 +230,8 @@ result <- contrasts |>
 
 result
 ```
+
+#### lyrics model 2: emm plot
 
 ```{r}
 pdat <- plot(emm, comparisons = TRUE, plotit = FALSE)

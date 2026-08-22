@@ -1,9 +1,3 @@
----
-title: "MDS plotting"
-author: "andrew demetriou"
----
-
-AIM: Produce multi-dimensional scaling plots
 
 ```{r, include=FALSE}
 library('here')       # file logistics
@@ -20,14 +14,12 @@ values <- c("POWER", "ACHIEVEMENT", "HEDONISM",
 options(scipen=999)
 # make default plot theme minimal
 theme_set(theme_minimal())
-```
 
-```{r}
 # read in data
 wave_2_dfs <- readRDS(here("_data", "_participant_scores", "wave_2", "wave_2_dfs.RDS"))
 ```
 
-```{r}
+```{r include=FALSE}
 # participants first complete the SSVS about themselves
 # subset dataset by these participant self-ratings
 
@@ -63,9 +55,7 @@ SSVS_df <- SSVS_dfs |> bind_rows(.id = "text") %>%
 
 
 
-
-
-```{r}
+```{r include=FALSE}
 # estimate mean per item
 mean_dfs <- lapply(wave_2_dfs, function(df){
     df %>% 
@@ -80,7 +70,7 @@ mean_dfs <- lapply(wave_2_dfs, function(df){
 ```
 
 
-```{r}
+```{r include=FALSE}
 # multi-method correlation matrices from Schwartz, 2001, Table 2:
 svs_mat <- rbind(
     c(   1,  .04, -.04, -.20, -.32, -.48,  -.11,  .01,  .09,   .50), #power
@@ -121,7 +111,7 @@ colnames(pvq_mat) <- c("power", "security", "conformity",
                                   "hedonism", "achievement") %>% toupper() 
 ```
 
-```{r}
+```{r include=FALSE}
 # takes a correlation matrix and computes MDS coordinates
 mds_data <- function(correlation_matrix){
   
@@ -145,7 +135,7 @@ mds_data <- function(correlation_matrix){
 }
 ```
 
-```{r}
+```{r include=FALSE}
 # rotates MDS plot
 rotate_mds <- function(df, degrees = 0) {
   radians <- degrees * pi / 180
@@ -158,7 +148,7 @@ rotate_mds <- function(df, degrees = 0) {
 }
 ```
 
-```{r}
+```{r include=FALSE}
 # plot MDS coordinates
 plot_mds_df <- function(mds.data, title, option){
 
@@ -182,8 +172,12 @@ plot_mds_df <- function(mds.data, title, option){
 }
 ```
 
+### Results
+
+#### Figure 8: MDS plots, prior vs. present studies
 
 ```{r}
+
 p1 <- svs_mat |> mds_data() %>% plot_mds_df("SVS: Schwartz, 2001", "turbo")
 p2 <- pvq_mat |> mds_data() %>% plot_mds_df("PVQ: Schwartz, 2001", "turbo")
 p3 <- SSVS_df |>
@@ -197,8 +191,11 @@ p3 <- SSVS_df |>
   plot_annotation(tag_levels = "A") &
   theme(plot.title = element_text(hjust = 0.5))
   
-ggsave(here("images", "main_SSVS_self.pdf"), height = 5, width = 11)
+#ggsave(here("images", "main_SSVS_self.pdf"), height = 5, width = 11)
 ```
+
+
+#### Figure 10: MDS plots, by text type
 
 ```{r}
 p1 <- bind_rows(mean_dfs[[1]], mean_dfs[[2]]) %>% 
@@ -217,7 +214,7 @@ p2 <- bind_rows(mean_dfs[[3]], mean_dfs[[4]]) %>%
   plot_annotation(tag_levels = "A") &
   theme(plot.title = element_text(hjust = 0.5))
 
-ggsave(here("images", "main_SSVS_text.pdf"))
+#ggsave(here("images", "main_SSVS_text.pdf"))
 ```
 
 

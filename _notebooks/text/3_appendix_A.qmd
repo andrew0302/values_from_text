@@ -1,6 +1,5 @@
-# Appendix A: Stimuli
 
-```{r setup, include=FALSE}
+```{r include=FALSE}
 library(tidyverse)
 library(here)
 library(viridis)
@@ -38,7 +37,7 @@ lyrics_df <- lyrics_df |>
     .default = selected))
 ```
 
-```{r, include=FALSE}
+```{r include=FALSE}
 # apa formatting
 theme_apa <- function(base_size = 12, base_family = "sans") {
   theme_minimal(base_size = base_size, base_family = base_family) +
@@ -52,8 +51,7 @@ theme_apa <- function(base_size = 12, base_family = "sans") {
       legend.title = element_text(face = "plain"))}
 ```
 
-
-```{r plot_function, include=FALSE}
+```{r include=FALSE}
 make_removed_counts <- function(df, col) {
   
   df |>  
@@ -89,7 +87,7 @@ make_removed_counts <- function(df, col) {
 }
 ```
 
-```{r table_function, include=FALSE}
+```{r include=FALSE}
 make_apa_freq_table <- function(df, bin_col,
                                 title = "Table",
                                 subtitle = "Frequencies by bin") {
@@ -180,7 +178,7 @@ make_apa_freq_table <- function(df, bin_col,
 
 ```
 
-```{r}
+```{r include=FALSE}
 make_apa_freq_table <- function(df, bin_col,
                                 title = "Table",
                                 subtitle = "Frequencies by bin") {
@@ -272,8 +270,7 @@ make_apa_freq_table <- function(df, bin_col,
 }
 ```
 
-
-```{r genre_function, include=FALSE}
+```{r include=FALSE}
 make_genre_comparison_table <- function(df,
                                         title = "Table X",
                                         subtitle = "Top tf-ifd Terms of sample") {
@@ -316,10 +313,40 @@ make_genre_comparison_table <- function(df,
 
 ```
 
-### Release Date
+### Appendix A
 
-<span style="font-size: 90%">**Figure A1**  
-*Manual screening outcome by year bin range*</span>
+#### Figure A1: Word Counts
+
+```{r}
+lyrics_summary <- lyrics_df |> filter(item_ID %in% lyrics_IDs) |> 
+  summarize(mean = mean(word_count), sd = sd(word_count))
+
+speech_summary <- speech_df |> filter(item_ID %in% speech_IDs) |> 
+  summarize(mean = mean(word_count), sd = sd(word_count))
+```
+
+```{r}
+df <- bind_rows(
+  lyrics_df |> filter(item_ID %in% lyrics_IDs) |> 
+    select(item_ID, word_count) |> mutate(source = "Lyrics", item_ID = as.character(item_ID)), 
+  speech_df |> filter(item_ID %in% speech_IDs) |> 
+    select(item_ID, word_count) |> 
+    mutate(source = "Speeches")) |> rename(Source = source)
+
+df |>
+  
+  ggplot(aes(x = word_count, fill = Source)) +
+    geom_density(alpha = 0.7) +
+  scale_fill_manual(values = c("Speeches" = "#21908C", "Lyrics" = "#440154")) +
+    labs(
+    x = "Word count",
+    y = "Density") +
+  theme_apa()
+
+ggsave(here("images", "general_wordcount.pdf"))
+```
+
+#### Figure A2: Lyrics, Release Date
 
 ```{r, warning=FALSE, echo=FALSE}
 colors <- viridis(10, option="plasma") 
@@ -327,7 +354,8 @@ make_removed_counts(lyrics_df, year_bin_range)
 
 ggsave(here("images", "general_lyric_year.pdf"))
 ```
-<span style="font-size: 80%"><em>Note.</em> “Removed”, "Kept", indicate songs excluded  and included respectively, from the manual screening process. "Annotated" indicate the subset of "Kept" that were reviewed by participants. Bins presented in order of number of songs labelled "Annotated". Each row indicates a decade-range year bin, with x axis labels showing the observed metadata range per year bin.</span>
+
+#### Table A1: Lyrics, Release Date
 
 ```{r}
 table <- make_apa_freq_table(
@@ -340,9 +368,8 @@ table
 
 gtsave(table, here("tables", "general_lyric_year.tex"))
 ```
-<span style="font-size: 80%"><em>Note.</em> “Removed” indicates songs excluded due to manual screening criteria. Bins presented in reverse order of number of songs removed. Each row indicates a decade-range year bin, with column Year Range showing the observed metadata range per year bin.</span>
 
-### Popularity
+#### Figure A3: Lyrics, Popularity
 
 Popularity was extremely exponentially distributed, with an extreme left skew. We manually binned to make the quantiles per each of the 7 bins as similar as possible. Thus, the first bin contained the lowest 40% of the population in terms of popularity, while the 7th bin contained the highest 9%:
 
@@ -354,15 +381,14 @@ Popularity was extremely exponentially distributed, with an extreme left skew. W
 - **Bin 6:** 15–60 appearances (81–91%)
 - **Bin 7:** 61–203,345 appearances (top 9% of artists; 91–100%)
 
-<span style="font-size: 90%">**Figure A2**  
-*Manual screening outcome by popularity bin percentile range*</span>
 
 ```{r}
 colors <- viridis(10, option="plasma") 
 make_removed_counts(lyrics_df, artist_playlist_frequency_bin_label) 
 ggsave(here("images", "general_lyric_popularity.pdf"))
 ```
-<span style="font-size: 80%"><em>Note.</em> “Removed”, "Kept", indicate songs excluded  and included respectively, from the manual screening process. "Annotated" indicate the subset of "Kept" that were reviewed by participants. Bins presented in order of number of songs labelled "Annotated".</span>
+
+#### Table A2: Lyrics, Popularity
 
 ```{r}
 table <- make_apa_freq_table(
@@ -377,9 +403,8 @@ table
 gtsave(table, here("tables", "general_lyric_popularity.tex"))
 ```
 
-<span style="font-size: 80%"><em>Note.</em> “Removed” indicates songs excluded due to manual screening criteria. Bins presented in reverse order of number of songs removed. Each row indicates a popularity percentile range bin, with column Artist Popularity showing the observed percentile range per popularity bin.</span>
 
-### Genre
+#### Table A3: Lyrics, Genre
 
 ```{r}
 table <- make_genre_comparison_table(lyrics_df,
@@ -394,8 +419,7 @@ table
 gtsave(table, here("tables", "general_lyric_genre_terms.tex"))
 ```
 
-<span style="font-size: 90%">**Figure A3**  
-*Manual screening outcome by genre*</span>
+#### Figure A4: Lyrics, Genre
 
 ```{r screening_by_genre}
 make_removed_counts(lyrics_df, artist_topic_bin_labels) +
@@ -404,7 +428,8 @@ make_removed_counts(lyrics_df, artist_topic_bin_labels) +
 ggsave(here("images", "general_lyric_genre.pdf"))
 ```
 
-<span style="font-size: 80%"><em>Note.</em> “Removed”, "Kept", indicate songs excluded  and included respectively, from the manual screening process. "Annotated" indicate the subset of "Kept" that were reviewed by participants. Bins presented in order of number of songs labelled "Annotated". </span>
+
+#### Table A4: Lyrics, Artist Topic Tags
 
 ```{r}
 table <- make_apa_freq_table(
@@ -420,26 +445,16 @@ gtsave(table, here("tables", "general_lyric_genre.tex"))
 ```
 
 
-#### Topic
-
-<span style="font-size: 90%">**Figure A4**  
-*Manual screening outcome by lyric topic*</span>
+#### Figure A5: Lyrics, Topic Tags
 
 ```{r}
 make_removed_counts(lyrics_df, topic_label) 
 ggsave(here("images", "general_lyric_topic.pdf"))
 ```
 
-<span style="font-size: 80%"><em>Note.</em> “Removed”, "Kept", indicate songs excluded  and included respectively, from the manual screening process. "Annotated" indicate the subset of "Kept" that were reviewed by participants. Bins presented in order of number of songs labelled "Annotated". </span>
-
-## Political Speech Stimuli
-
-
 Repository of sampling procedure can be found here: https://github.com/Gargant0373/PresidentialSpeechSampling/blob/master/sample.py
 
-
-<span style="font-size: 90%">**Figure A5**  
-*Number of speech excerpts per President*</span>
+#### Figure A6: Speeches, Excerpts by President
 
 ```{r}
 colors <- viridis(10) 
@@ -472,8 +487,7 @@ speech_df |>
 ggsave(here("images", "general_speeches_president.pdf"))
 ```
 
-
-
+#### Table A5: Speeches, Excerpts by party
 
 ```{r}
 df <- speech_df
@@ -555,37 +569,4 @@ table
 
 gtsave(table, here("tables", "general_speeches_party.tex"))
 ``` 
-
-## Word Counts
-
-```{r}
-lyrics_summary <- lyrics_df |> filter(item_ID %in% lyrics_IDs) |> 
-  summarize(mean = mean(word_count), sd = sd(word_count))
-
-speech_summary <- speech_df |> filter(item_ID %in% speech_IDs) |> 
-  summarize(mean = mean(word_count), sd = sd(word_count))
-```
-
-<span style="font-size: 90%">**Figure 6**  
-*Density plot of word counts in speech and lyric excerpts*</span>
-```{r}
-df <- bind_rows(
-  lyrics_df |> filter(item_ID %in% lyrics_IDs) |> 
-    select(item_ID, word_count) |> mutate(source = "Lyrics", item_ID = as.character(item_ID)), 
-  speech_df |> filter(item_ID %in% speech_IDs) |> 
-    select(item_ID, word_count) |> 
-    mutate(source = "Speeches")) |> rename(Source = source)
-
-df |>
-  
-  ggplot(aes(x = word_count, fill = Source)) +
-    geom_density(alpha = 0.7) +
-  scale_fill_manual(values = c("Speeches" = "#21908C", "Lyrics" = "#440154")) +
-    labs(
-    x = "Word count",
-    y = "Density") +
-  theme_apa()
-
-ggsave(here("images", "general_wordcount.pdf"))
-```
 

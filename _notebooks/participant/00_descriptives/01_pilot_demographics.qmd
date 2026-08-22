@@ -1,4 +1,3 @@
-# Appendix C: Pilot Study Addendum
 
 ```{r, include=FALSE}
 library("here")       # file logistics
@@ -29,6 +28,8 @@ pilot_labels <- list(
 
 str(pilot_2_demog_dfs)
 ```
+
+### Methods
 
 The total participant pool consisted of `r nrow(pilot_2_demog_df)` participants 
 (`r round(mean(pilot_2_demog_df$Sex == "Female", na.rm = TRUE) * 100, 1)`% female, 
@@ -81,8 +82,10 @@ summarize_spectrum <- function(df, study_name) {
 }
 ```
 
-```{r pilot_demogs}
-# demographics table
+#### Table 1: pilot demographics
+
+```{r}
+# Pilot Methods: 
 table <- imap_dfr(
   pilot_2_demog_dfs,
   ~ summarize_demographics(.x, pilot_labels[[.y]] %||% .y))
@@ -100,6 +103,7 @@ gtsave(table, here("tables", "pilot_demographics.tex"))
 rm(table)
 ```
 
+#### Table 2a: Ethnicity
 
 ```{r}
 table <- imap_dfr(
@@ -127,6 +131,8 @@ gtsave(table, here("tables", "pilot_ethnicity.tex"))
 rm(table)
 ```
 
+#### Table 2b: spectrum
+
 ```{r}
 table <- pilot_spectrum_tbl <- imap_dfr(
   pilot_2_demog_dfs["speeches2"],
@@ -148,7 +154,9 @@ gtsave(table, here("tables", "pilot_political_leaning.tex"))
 rm(table)
 ```
 
+### Appendix C
 
+#### Table C1: Spectrum pilot ethnicity
 
 ```{r}
 table <- pilot_2_demog_dfs[[3]] |> 

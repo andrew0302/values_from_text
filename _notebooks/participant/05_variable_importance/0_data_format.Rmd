@@ -1,6 +1,4 @@
----
-title: "data format basic"
----
+
 
 ```{r}
 library("tidyverse")

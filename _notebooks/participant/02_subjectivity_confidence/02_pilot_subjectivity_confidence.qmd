@@ -16,6 +16,8 @@ options(scipen = 999)
 
 ```
 
+### Methods
+
 ```{r}
 pilot_2_dfs <- readRDS(file = here("_data", "_participant_scores", "wave_2", "pilot_2_dfs.RDS"))
 
@@ -54,6 +56,7 @@ p1 <- plots[['lyrics']]
 p2 <- plots[['speeches1']]
 p3 <- plots[['speeches2']]
 
+print("confidence:")
 pilot_confidence_plot <- (p1 | p2 | p3 )
 ```
 
@@ -77,8 +80,14 @@ pilot_subjectivity_summary_stats <- plot_dfs |> bind_rows(.id = "Pilot") |>
       median_value = median(subjective, na.rm = TRUE),
       pct_over_4 = sum(subjective >= 5, na.rm = TRUE) / sum(!is.na(subjective)) * 100)
 
+
+print("subjectivity:")
 pilot_subjectivity_summary_stats
 ```
+
+### Appendix E
+
+#### Figure E1
 
 ```{r include=FALSE}
 plots <- lapply(names(plot_dfs), function(name) {
@@ -106,5 +115,5 @@ pilot_subjectivity_plot <- (p1 | p2 | p3 )
 (pilot_confidence_plot / pilot_subjectivity_plot) + 
   plot_annotation(tag_levels = "A")
 
-ggsave(here("images", "pilot_confidence_subjectivity.pdf"))
+#ggsave(here("images", "pilot_confidence_subjectivity.pdf"))
 ```

@@ -198,7 +198,7 @@ lyrics_df <- left_join(
     group_by(release_year_bin) |>
     # compute the observed range of values
     summarise(year_bin_range = paste0(
-      min(release_year), "–", 
+      min(release_year), "-", 
       max(release_year)), 
       .groups = "drop"),  by = "release_year_bin")
 ```

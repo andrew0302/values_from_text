@@ -1,21 +1,20 @@
----
-title: "reliability_comparison"
-author: "Andrew M. Demetriou"
----
 
-```{r}
+```{r include=FALSE}
 library("here")
 library("tidyverse")
 library("patchwork")
-
 ```
 
-```{r}
+```{r include=FALSE}
 file_path <- here("_data", "_intermediary_data")
 
 ethnicity_subsample_ICC_dfs <- readRDS(file = here(file_path, "wave_2_subsample_ethnicity_ICC_dfs.RDS"))
 spectrum_subsample_ICC_dfs <- readRDS(file = here(file_path, "wave_2_subsample_spectrum_ICC_dfs.RDS"))
 ```
+
+### Results
+
+#### in-text: ICC by text type
 
 ```{r}
 report_icc <- function(icc_df, text_type) {
@@ -64,6 +63,10 @@ plot_icc_overall <- function(df, option, title) {
 }
 ```
 
+### Appendix F
+
+#### Unused ICC by text type 
+
 ```{r}
 p_lyrics   <- plot_icc_overall(ethnicity_subsample_ICC_dfs[[1]], option = "plasma", title = "Lyrics")
 p_speeches <- plot_icc_overall(ethnicity_subsample_ICC_dfs[[2]], option = "D",       title = "Speeches")
@@ -73,6 +76,8 @@ figure
 
 ggsave(here("images", "main_reliability_by_value.pdf"), figure, height = 6)
 ```
+
+#### Figures F1, F2, F3
 
 ```{r}
 plot_icc_by_subset <- function(df, option, title) {
@@ -123,5 +128,3 @@ fig_speeches_spectrum
 ggsave(here("images", "main_speeches_reliability_by_value_by_spectrum.pdf"), 
        fig_speeches_spectrum, height = 6)
 ```
-```
-

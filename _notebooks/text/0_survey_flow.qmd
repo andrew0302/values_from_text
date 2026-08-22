@@ -1,6 +1,5 @@
-## Survey Flow
 
-```{r}
+```{r include=FALSE}
 library(DiagrammeR)     # flow charts
 library(DiagrammeRsvg)  # convert flow chart to svg
 library(rsvg)           # convert svg to other formats
@@ -37,7 +36,7 @@ digraph survey_flow {
 diagram
 ```
 
-```{r}
+```{r include=FALSE}
 # Export as SVG
 svg <- export_svg(diagram)
 

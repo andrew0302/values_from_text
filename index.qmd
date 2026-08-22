@@ -2,9 +2,9 @@
 title: "Values from Text — Reproducible Notebooks"
 ---
 
-This site renders the analysis notebooks in the order their outputs appear in the
-manuscript. Each section below is a rendered notebook. Data-preparation notebooks
-are noted by path but not executed on render.
+This site renders the analysis notebooks that produce the various analyses, 
+figures, tables, and in-text statistical reporting that appears in the 
+manuscript. 
 
 # General Methods
 
@@ -13,37 +13,19 @@ are noted by path but not executed on render.
 ```{r, child = "_notebooks/text/0_survey_flow.qmd"}
 ```
 
-# Appendix A: Stimuli
-
-## Genre tag preparation
-
-Prep only (requires live Spotify/Last.fm credentials; output cached):
-`_notebooks/text/1_lyric_get_genre_tags_api.Rmd`
-
-## Bin labels
-
-Prep only: `_notebooks/text/2_lyric_bin_labels.Rmd`
-
-## Stimuli screening
+## Stimuli Descriptives
 
 ```{r, child = "_notebooks/text/3_appendix_A.qmd"}
 ```
 
-# Participant Analyses
+# Pilot Study
 
-## Descriptives — pilot demographics
+## Demographics
 
 ```{r, child = "_notebooks/participant/00_descriptives/01_pilot_demographics.qmd"}
 ```
 
-## Descriptives — pilot lyric questions
-
 ```{r, child = "_notebooks/participant/00_descriptives/02_pilot_lyrics_questions.qmd"}
-```
-
-## Descriptives — main
-
-```{r, child = "_notebooks/participant/00_descriptives/03_main_descriptives.qmd"}
 ```
 
 ## Quiz results
@@ -51,57 +33,64 @@ Prep only: `_notebooks/text/2_lyric_bin_labels.Rmd`
 ```{r, child = "_notebooks/participant/01_quiz_results/01_quiz_results.qmd"}
 ```
 
-## Subjectivity & confidence — pilot
+## Subjectivity & confidence
 
 ```{r, child = "_notebooks/participant/02_subjectivity_confidence/02_pilot_subjectivity_confidence.qmd"}
 ```
 
-## Subjectivity & confidence — main
-
-```{r, child = "_notebooks/participant/02_subjectivity_confidence/02_main_subjectivity_confidence.qmd"}
-```
-
-## Inter-rater reliability — pilot rater number estimation
+## Rater number estimation & Inter-rater reliability
 
 ```{r, child = "_notebooks/participant/03_inter_rater_reliability/03_pilot_rater_number_estimation.qmd"}
 ```
 
-## Inter-rater reliability — wave 2
+# Main Study
+
+## Descriptives
+
+```{r, child = "_notebooks/participant/00_descriptives/03_main_descriptives.qmd"}
+```
+
+## Subjectivity & confidence
+
+```{r, child = "_notebooks/participant/02_subjectivity_confidence/02_main_subjectivity_confidence.qmd"}
+```
+
+## Inter-rater reliability
 
 ```{r, child = "_notebooks/participant/03_inter_rater_reliability/05_wave_2_reliabilities.Rmd"}
 ```
 
-## MDS plots
+## Multi-Dimensional Scaling
 
 ```{r, child = "_notebooks/participant/04_mds_plots/2_MDS_plots.Rmd"}
 ```
 
-## Variable importance — preliminary analysis
+## Preliminary analysis
 
 ```{r, child = "_notebooks/participant/05_variable_importance/1_preliminary_analysis.Rmd"}
 ```
 
-## Variable importance — lyric model selection
+## Lyric model selection
 
 ```{r, child = "_notebooks/participant/05_variable_importance/2_lyric_model_selection.Rmd"}
 ```
 
-## Variable importance — speech model selection
-
-```{r, child = "_notebooks/participant/05_variable_importance/3_speech_model_selection.Rmd"}
-```
-
-## Variable importance — lyric model analysis
+## Lyric model analysis
 
 ```{r, child = "_notebooks/participant/05_variable_importance/4_lyric_model_analysis.Rmd"}
 ```
 
-## Variable importance — speech model analysis
+## Speech model selection
+
+```{r, child = "_notebooks/participant/05_variable_importance/3_speech_model_selection.Rmd"}
+```
+
+## Speech model analysis
 
 ```{r, child = "_notebooks/participant/05_variable_importance/5_speech_model_analysis.Rmd"}
 ```
 
-## Variable importance — RRA descriptives
+# Grounding
 
 ```{r, child = "_notebooks/participant/05_variable_importance/6_RRA_descriptives.Rmd"}
 ```

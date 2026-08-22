@@ -1,8 +1,6 @@
----
-title: "R Notebook"
----
 
-```{r}
+
+```{r include=TRUE}
 library("here")             # file logistics
 library("tidyverse")        # code logistics
 library("emmeans")          # estimated marginal means
@@ -14,7 +12,7 @@ library("viridis")          # colors
 options(scipen = 999)
 ```
 
-```{r}
+```{r include=FALSE}
 # read in data
 wave_2_dfs <- readRDS(here("_data", "_intermediary_data", "wave_2_dfs.RDS"))
 
@@ -33,7 +31,7 @@ df <- bind_rows(
 lyrics_df <- readRDS(here("_data", "_primary_data", "lyrics_df.RDS"))
 ```
 
-```{r}
+```{r include=FALSE}
 lyrics_rank_df <- df |>
   filter(text == "lyrics") |>
   filter(!is.na(rating)) |>
@@ -51,7 +49,7 @@ lyrics_rank_df <- df |>
       by = "item_ID")
 ```
 
-```{r}
+```{r include=FALSE}
 rra_lyrics <- bind_rows(
   
   # ranking from the top
@@ -93,7 +91,7 @@ rra_lyrics <- bind_rows(
     by = "item_ID")
 ```
 
-```{r}
+```{r include=FALSE}
 magma_col <- viridis(10, option = "magma")[6]
 
 lyrics_plot_df <- rra_lyrics |>
@@ -115,6 +113,12 @@ p1 <- ggplot(lyrics_plot_df, aes(x = agreement, y = n)) +
 
 #p1
 ```
+
+## RRA 
+
+### Descriptives
+
+#### Table: Value Agreement in lyrics by genre
 
 ```{r}
 lyrics_agreement_per_item_genre <- rra_lyrics |>
@@ -151,7 +155,7 @@ gt_lyrics_agreement
 gtsave(gt_lyrics_agreement, filename = here("tables", "main_lyrics_RRA_by_genre.tex"))
 ```
 
-```{r}
+```{r include=FALSE}
 lyric_genre_rra_df <- bind_rows(
   
   lyrics_rank_df |>
@@ -183,7 +187,7 @@ lyric_genre_rra_df <- bind_rows(
   mutate(agree = Score < 0.05)
 ```
 
-```{r}
+```{r include=FALSE}
 lyric_genre_rra_df <- lyric_genre_rra_df |> 
   
   select(
@@ -206,6 +210,8 @@ lyric_genre_rra_df <- lyric_genre_rra_df |>
       agree_bottom ~ -(1 - Score_bottom),
       TRUE         ~   0))
 ```
+
+#### Figure: Values by genre
 
 ```{r}
 magma_col <- viridis(10, option = "magma")
@@ -244,7 +250,7 @@ lyric_genre_rra_df |>
 ggsave(here("images", "main_lyrics_RRA_genre.pdf"))
 ```
 
-```{r}
+```{r include=FALSE}
 speeches_rank_df <- df |>
   filter(text == "speeches") |>
   filter(!is.na(rating)) |>
@@ -261,7 +267,7 @@ speeches_rank_df <- df |>
 ```
 
 
-```{r}
+```{r include=FALSE}
 rra_speeches <- bind_rows(
   
   # ranking from the top
@@ -295,6 +301,8 @@ rra_speeches <- bind_rows(
   mutate(agree = ifelse(Score < .05, 1, 0))
 ```
 
+#### Figure: Values by genre
+
 ```{r}
 viridis_col <- viridis(10, option = "D")[6]
 
@@ -326,7 +334,7 @@ ggsave(here("images", "main_values_RRA.pdf"), height = 5, width = 8)
 ```
 
 
-```{r}
+```{r include=FALSE}
 run_rra_by_group <- function(df) {
 
   df <- df |>
@@ -362,7 +370,7 @@ run_rra_by_group <- function(df) {
 )}
 ```
 
-```{r}
+```{r include=FALSE}
 # add in party labels
 speeches_rank_df <- speeches_rank_df |> 
   left_join(
@@ -403,8 +411,9 @@ value_order <- rra_speeches_by_party[[1]] |>
   pull(value)
 ```
 
+#### Figure: Values by party \ rater characteristic
 
-```{r}
+```{r include=FALSE}
 plots <- lapply(rra_speeches_by_party, function(df){
   
   # format df
